@@ -34,37 +34,15 @@ import avro.schema as schema
 import avro.io as io
 import avro.ipc as ipc
 
-def validate(schm, object):
- """Returns True if a python datum matches a schema."""
-
- if schm.gettype() == schema.NULL:
- return object is None
- elif schm.gettype() == schema.STRING:
- return isinstance(object, unicode)
- elif schm.gettype() == schema.INT:
- if ((isinstance(object, long) or isinstance(object, int))
- and io._INT_MIN_VALUE <= object <= io._INT_MAX_VALUE):
- return True
- elif schm.gettype() == schema.LONG:
- if ((isinstance(object, long) or isinstance(object, int))
- and io._LONG_MIN_VALUE <= object <= io._LONG_MAX_VALUE):
- return True
- elif schm.gettype() == schema.FLOAT:
- return isinstance(object, float)
- elif schm.gettype() == schema.DOUBLE:
- return isinstance(object, float)
- elif schm.gettype() == schema.BYTES:
- return isinstance(object, str)
- elif schm.gettype() == schema.BOOLEAN:
- return isinstance(object, bool)
- elif schm.gettype() == schema.ARRAY:
+def _validatearray(schm, object):
  if not isinstance(object, list):
  return False
  for elem in object:
  if not validate(schm.getelementtype(), elem):
  return False
  return True
- elif schm.gettype() == schema.MAP:
+
+def _validatemap(schm, object):
  if not isinstance(object, dict):
  return False
  for k,v in object.items():
@@ -72,18 +50,45 @@ def validate(schm, object):
  validate(schm.getvaluetype(), v)):
  return False
  return True
- elif schm.gettype() == schema.RECORD:
+
+def _validaterecord(schm, object):
  if not isinstance(object, dict):
  return False
  for field,fieldschema in schm.getfields():
  if not validate(fieldschema, object.get(field)):
  return False
  return True
- elif schm.gettype() == schema.UNION:
+
+def _validateunion(schm, object):
  for elemtype in schm.getelementtypes():
  if validate(elemtype, object):
  return True
  return False
+
+_validatefn = {
+ schema.NULL : lambda schm, object: object is None,
+ schema.BOOLEAN : lambda schm, object: isinstance(object, bool),
+ schema.STRING : lambda schm, object: isinstance(object, unicode),
+ schema.FLOAT : lambda schm, object: isinstance(object, float),
+ schema.DOUBLE : lambda schm, object: isinstance(object, float),
+ schema.BYTES : lambda schm, object: isinstance(object, str),
+ schema.INT : lambda schm, object: ((isinstance(object, long) or
+ isinstance(object, int)) and
+ io._INT_MIN_VALUE <= object <= io._INT_MAX_VALUE),
+ schema.LONG : lambda schm, object: ((isinstance(object, long) or
+ isinstance(object, int)) and
+ io._LONG_MIN_VALUE <= object <= io._LONG_MAX_VALUE),
+ schema.ARRAY : _validatearray,
+ schema.MAP : _validatemap,
+ schema.RECORD : _validaterecord,
+ schema.UNION : _validateunion
+ }
+
+def validate(schm, object):
+ """Returns True if a python datum matches a schema."""
+ fn = _validatefn.get(schm.gettype())
+ if fn is not None:
+ return fn(schm, object)
  else:
  return False
 
