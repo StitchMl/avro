@@ -53,6 +53,7 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  throws IOException {
  switch (schema.getType()) {
  case RECORD: writeRecord(schema, datum, out); break;
+ case ENUM: writeEnum(schema, datum, out); break;
  case ARRAY: writeArray(schema, datum, out); break;
  case MAP: writeMap(schema, datum, out); break;
  case UNION:
@@ -87,6 +88,13 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  * GenericRecord}.*/
  protected Object getField(Object record, String field, int position) {
  return ((GenericRecord) record).get(field);
+ }
+
+ /** Called to write an enum value. May be overridden for alternate enum
+ * representations.*/
+ protected void writeEnum(Schema schema, Object datum, ValueWriter out)
+ throws IOException {
+ out.writeInt(schema.getEnumOrdinal((String)datum));
  }
 
  /** Called to write a array. May be overridden for alternate array
@@ -178,6 +186,7 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  if (!isRecord(datum)) return false;
  return (schema.getName() == null) ||
  schema.getName().equals(((GenericRecord)datum).getSchema().getName());
+ case ENUM: return isEnum(datum);
  case ARRAY: return isArray(datum);
  case MAP: return isMap(datum);
  case STRING: return isString(datum);
@@ -200,6 +209,11 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  /** Called by the default implementation of {@link #instanceOf}.*/
  protected boolean isRecord(Object datum) {
  return datum instanceof GenericRecord;
+ }
+
+ /** Called by the default implementation of {@link #instanceOf}.*/
+ protected boolean isEnum(Object datum) {
+ return datum instanceof String;
  }
 
  /** Called by the default implementation of {@link #instanceOf}.*/
