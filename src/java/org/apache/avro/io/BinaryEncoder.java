@@ -46,7 +46,7 @@ public class BinaryEncoder extends Encoder {
  protected OutputStream out;
 
  private interface ByteWriter {
- public void write(ByteBuffer bytes) throws IOException;
+ void write(ByteBuffer bytes) throws IOException;
  }
 
  private static final class SimpleByteWriter implements ByteWriter {
@@ -248,3 +248,4 @@ public class BinaryEncoder extends Encoder {
  return pos;
  }
 }
+
