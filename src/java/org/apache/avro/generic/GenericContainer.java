@@ -15,14 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.avro.specific;
+package org.apache.avro.generic;
 
-import org.apache.avro.generic.GenericContainer;
+import org.apache.avro.Schema;
 
-/** Implemented by generated record classes. Permits efficient access to
- * fields.*/
-public interface SpecificRecord extends GenericContainer {
- Object get(int field);
- void set(int field, Object value);
+/** Contains data of other types. */
+public interface GenericContainer {
+ /** The schema of this instance. */
+ Schema getSchema();
 }
 

@@ -19,7 +19,7 @@ package org.apache.avro.generic;
 
 
 /** An array of objects. */
-public interface GenericArray<T> extends Iterable<T> {
+public interface GenericArray<T> extends Iterable<T>, GenericContainer {
  /** The number of elements contained in this array. */
  long size();
 
