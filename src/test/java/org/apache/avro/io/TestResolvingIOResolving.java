@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Arrays;
 
 @RunWith(Parameterized.class)
-public class TestResolvingIO_resolving {
+public class TestResolvingIOResolving {
  protected TestValidatingIO.Encoding eEnc;
  protected final int iSkipL;
  protected final String sJsWrtSchm;
@@ -38,7 +38,7 @@ public class TestResolvingIO_resolving {
  protected final Object[] oaWrtVals;
  protected final Object[] oaRdrVals;
 
- public TestResolvingIO_resolving(TestValidatingIO.Encoding encoding,
+ public TestResolvingIOResolving(TestValidatingIO.Encoding encoding,
  int skipLevel, String jsonWriterSchema,
  String writerCalls,
  Object[] writerValues,
@@ -56,7 +56,7 @@ public class TestResolvingIO_resolving {
  }
 
  @Test
- public void test_resolving()
+ public void testResolving()
  throws IOException {
  Schema writerSchema = Schema.parse(sJsWrtSchm);
  byte[] bytes = TestValidatingIO.make(writerSchema, sWrtCls,

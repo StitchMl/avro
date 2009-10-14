@@ -209,6 +209,9 @@
 	<fileset dir="${java.src.dir}">
  <include name="**/*.java"/>
  </fileset>
+	<fileset dir="${test.java.src.dir}">
+ <include name="**/*.java"/>
+ </fileset>
  </checkstyle>
  </target>
 

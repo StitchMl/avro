@@ -119,15 +119,6 @@ public class BlockingBinaryEncoder extends BinaryEncoder {
  this.items = 1; // Makes various assertions work out
  }
 
- /** Create a REGULAR instance. (Gets changed to OVERFLOW by
- * {@link #compact}.) */
- public BlockedValue(Schema.Type type, int start) {
- this.type = type;
- this.state = State.REGULAR;
- this.start = this.lastFullItem = start;
- this.items = 0;
- }
-
  /**
  * Check invariants of <code>this</code> and also the
  * <code>BlockedValue</code> containing <code>this</code>.
