@@ -16,29 +16,36 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 */
+#ifndef CONTAINER_OF_H
+#define CONTAINER_OF_H
 
-#ifndef JSON_TOKENIZER_H
-#define JSON_TOKENIZER_H
+/* This simple macro is found in stddef.h on most os */
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
 
-#include <wchar.h>
-#include "json_parser.h"
+/*
+The container_of macro allows us to find the address of the outer
+structure when passed the address of an inner function.
 
-/* Tokens which are not part of the schema */
-enum json_tokens
-{
- TK_SPACE = 42424242,
- TK_ILLEGAL
+e.g.
+struct innerstruct {
+ int foo;
+};
+struct outerstruct {
+ int bar;
+ struct innerstruct inner;
 };
 
-struct Token
-{
- char *z;
- double d;
- int b;
-};
-typedef struct Token Token;
+If we have a ptr to an inner structure called "in",
+we can find the address of the outer struct with...
 
-int json_get_token (const wchar_t * z, const size_t len, int *tokenType,
- double *number);
+struct outer *out = container_of (in, struct outerstruct, inner);
+*/
+#define container_of(ptr, type, member) (\
+{ \
+ const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+ (type *)( (char *)__mptr - offsetof(type,member) ); \
+})
 
 #endif
