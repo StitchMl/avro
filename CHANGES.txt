@@ -42,6 +42,8 @@ Trunk (unreleased changes)
 
  BUG FIXES
 
+ AVRO-176. Safeguard against bad istreams before reading. (sbanacho)
+
  AVRO-141. Fix a NullPointerException in ReflectData#isRecord().
  (Isabel Drost via cutting)
 
