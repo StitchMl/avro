@@ -91,10 +91,10 @@ main (int argc, char *argv[])
  apr_pool_create (&pool, NULL);
 
  /* Run the tests that should pass */
- path = apr_pstrcat (pool, srcdir, "/avro_schema_tests/pass", NULL);
+ path = apr_pstrcat (pool, srcdir, "/tests/schema_tests/pass", NULL);
  fprintf (stderr, "RUNNING %s\n", path);
  run_tests (path, 1);
- path = apr_pstrcat (pool, srcdir, "/avro_schema_tests/fail", NULL);
+ path = apr_pstrcat (pool, srcdir, "/tests/schema_tests/fail", NULL);
  fprintf (stderr, "RUNNING %s\n", path);
  run_tests (path, 0);
 

@@ -29,7 +29,7 @@ under the License.
 
 #include "avro.h"
 #include "avro_private.h"
-#include "json.h"
+#include "json/json.h"
 
 apr_pool_t *pool;
 
@@ -116,9 +116,9 @@ main (int argc, char *argv[], char *envp[])
 
  apr_pool_create (&pool, NULL);
 
- dirpath = apr_pstrcat (pool, srcdir, "/json_tests/pass", NULL);
+ dirpath = apr_pstrcat (pool, srcdir, "/tests/json_tests/pass", NULL);
  run_tests (dirpath, 1);
- dirpath = apr_pstrcat (pool, srcdir, "/json_tests/fail", NULL);
+ dirpath = apr_pstrcat (pool, srcdir, "/tests/json_tests/fail", NULL);
  run_tests (dirpath, 0);
 
  return EXIT_SUCCESS;
