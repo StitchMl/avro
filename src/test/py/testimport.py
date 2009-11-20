@@ -14,5 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['schema', 'protocol', 'io', 'ipc', 'genericio', 'genericipc',
+import unittest
+
+# need to do this here since "import *" in only allowed at module level
+from avro import *
+
+_PUBLIC_MODULES = ['schema', 'protocol', 'io', 'ipc', 'genericio', 'genericipc',
  'reflectio', 'reflectipc', 'datafile']
+
+class Test(unittest.TestCase):
+ def testimport_star(self):
+ found_modules = []
+ for module_ in _PUBLIC_MODULES:
+ if module_ in globals():
+ found_modules.append(module_)
+ self.assertEqual(_PUBLIC_MODULES, found_modules)
