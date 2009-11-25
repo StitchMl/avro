@@ -105,6 +105,8 @@ Trunk (unreleased changes)
 
  AVRO-236. Add protocol support to avroj induce tool. (cutting)
 
+ AVRO-234. C++ code cleanup. (sbanacho)
+
  OPTIMIZATIONS
 
  AVRO-172. More efficient schema processing (massie)
