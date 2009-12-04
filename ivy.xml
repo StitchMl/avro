@@ -19,7 +19,7 @@
  xmlns:e="http://ant.apache.org/ivy/extra">
 
  <info organisation="org.apache.hadoop"
-	module="${name}" revision="${version}">
+ module="${name}" revision="${version}">
  <license name="Apache 2.0"/>
  <ivyauthor name="Apache Hadoop" url="http://hadoop.apache.org"/>
  <description>Avro</description>
@@ -28,6 +28,7 @@
  <configurations defaultconfmapping="default">
  <conf name="default"/>
  <conf name="test"/>
+ <conf name="eclipse"/>
  </configurations>
 
  <dependencies>
@@ -47,6 +48,10 @@
  conf="test->default"/>
  <dependency org="org.apache.rat" name="apache-rat" rev="0.6"
  conf="test->default"/>
+ <dependency org="ant-eclipse" name="ant-eclipse" rev="1.0"
+ conf="eclipse->default">
+ <artifact name="ant-eclipse" type="bz2" />
+ </dependency>
  </dependencies>
 
 </ivy-module>
