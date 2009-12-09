@@ -199,6 +199,13 @@ public class TestSchema {
  assertEquals(null, s.getProp("foo"));
  }
 
+ @Test
+ public void testParseInputStream() throws IOException {
+ Schema s = Schema.parse(
+ new ByteArrayInputStream("\"boolean\"".getBytes("UTF-8")));
+ assertEquals(Schema.parse("\"boolean\""), s);
+ }
+
  private static void checkParseError(String json) {
  try {
  Schema schema = Schema.parse(json);
