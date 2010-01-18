@@ -66,6 +66,8 @@ Trunk (unreleased changes)
 
  AVRO-274. Make Java's data file sync interval configurable. (cutting)
 
+ AVRO-346. Add function to validate a datum against a schema. (massie)
+
  IMPROVEMENTS
 
  AVRO-157. Changes from code review comments for C++. (sbanacho)
