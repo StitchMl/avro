@@ -182,8 +182,13 @@ extern "C"
  avro_datum_t avro_fixed (const char *name, const int64_t len,
  const char *bytes);
 
- avro_datum_t avro_map (const avro_datum_t values);
- avro_datum_t avro_array (const avro_datum_t items);
+ avro_datum_t avro_map (void);
+ int avro_map_set (const avro_datum_t map, const char *key,
+ const avro_datum_t value);
+
+ avro_datum_t avro_array (void);
+ int avro_array_append_datum (const avro_datum_t array_datum,
+ const avro_datum_t datum);
 
  avro_datum_t avro_union (void);
  int avro_union_append (const avro_datum_t union_value,
