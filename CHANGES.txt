@@ -70,6 +70,8 @@ Trunk (unreleased changes)
 
  AVRO-306. Add Ruby implementation. (Jeff Hodges via cutting)
 
+ AVRO-135. Add compression to data files. (philz)
+
  IMPROVEMENTS
 
  AVRO-157. Changes from code review comments for C++. (sbanacho)
