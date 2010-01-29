@@ -247,6 +247,7 @@ public class BlockingBinaryEncoder extends BinaryEncoder {
 
  @Override
  public void flush() throws IOException {
+ if (out != null) {
  BlockedValue bv = blockStack[stackTop];
  if (bv.state == BlockedValue.State.ROOT) {
  out.write(buf, 0, pos);
@@ -257,6 +258,7 @@ public class BlockingBinaryEncoder extends BinaryEncoder {
  }
  }
  out.flush();
+ }
 
  assert check();
  }
