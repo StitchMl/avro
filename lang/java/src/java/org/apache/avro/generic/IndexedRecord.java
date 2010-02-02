@@ -15,30 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.avro.generic;
 
-package org.apache.avro.specific;
-
-import org.apache.avro.Schema;
-import org.apache.avro.ipc.AvroRemoteException;
-
-/** Base class for specific exceptions. */
-public abstract class SpecificExceptionBase extends AvroRemoteException
- implements SpecificRecord {
-
- public abstract Schema getSchema();
- public abstract Object get(int field);
- public abstract void put(int field, Object value);
-
- public boolean equals(Object that) {
- if (that == this) return true; // identical object
- if (!(that instanceof SpecificExceptionBase)) return false; // not a record
- if (this.getClass() != that.getClass()) return false; // not same schema
- return SpecificData.get().compare(this, that, this.getSchema()) == 0;
- }
-
- public int hashCode() {
- return SpecificData.get().hashCode(this, this.getSchema());
- }
-
+/** A record implementation that permits field access by integer index.*/
+public interface IndexedRecord extends GenericContainer {
+ /** Set the value of a field given its position in the schema. */
+ void put(int i, Object v);
+ /** Return the value of a field given its position in the schema. */
+ Object get(int i);
 }
-

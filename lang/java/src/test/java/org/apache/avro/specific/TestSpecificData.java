@@ -15,30 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.avro.specific;
 
-import org.apache.avro.Schema;
-import org.apache.avro.ipc.AvroRemoteException;
+import static org.junit.Assert.*;
 
-/** Base class for specific exceptions. */
-public abstract class SpecificExceptionBase extends AvroRemoteException
- implements SpecificRecord {
+import org.junit.Test;
 
- public abstract Schema getSchema();
- public abstract Object get(int field);
- public abstract void put(int field, Object value);
+import org.apache.avro.test.TestRecord;
 
- public boolean equals(Object that) {
- if (that == this) return true; // identical object
- if (!(that instanceof SpecificExceptionBase)) return false; // not a record
- if (this.getClass() != that.getClass()) return false; // not same schema
- return SpecificData.get().compare(this, that, this.getSchema()) == 0;
+public class TestSpecificData {
+
+ @Test
+ /** Make sure that even with nulls, hashCode() doesn't throw NPE. */
+ public void testHashCode() {
+ new TestRecord().hashCode();
+ SpecificData.get().hashCode(null, TestRecord.SCHEMA$);
  }
 
- public int hashCode() {
- return SpecificData.get().hashCode(this, this.getSchema());
+ @Test
+ /** Make sure that even with nulls, toString() doesn't throw NPE. */
+ public void testToString() {
+ new TestRecord().toString();
  }
 
 }
-
