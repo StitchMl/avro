@@ -51,6 +51,7 @@ SCHEMAS_TO_VALIDATE = (
 )
 
 FILENAME = 'test_datafile.out'
+CODECS_TO_VALIDATE = ('null', 'deflate')
 
 # TODO(hammer): clean up written files with ant, not os.remove
 class TestDataFile(unittest.TestCase):
@@ -61,18 +62,20 @@ class TestDataFile(unittest.TestCase):
  print ''
  correct = 0
  for i, (example_schema, datum) in enumerate(SCHEMAS_TO_VALIDATE):
+ for codec in CODECS_TO_VALIDATE:
  print ''
  print 'SCHEMA NUMBER %d' % (i + 1)
  print '================'
  print ''
  print 'Schema: %s' % example_schema
  print 'Datum: %s' % datum
+ print 'Codec: %s' % codec
 
  # write data in binary to file 10 times
  writer = open(FILENAME, 'wb')
  datum_writer = io.DatumWriter()
  schema_object = schema.parse(example_schema)
- dfw = datafile.DataFileWriter(writer, datum_writer, schema_object)
+ dfw = datafile.DataFileWriter(writer, datum_writer, schema_object, codec=codec)
  for i in range(10):
  dfw.append(datum)
  dfw.close()
@@ -92,7 +95,7 @@ class TestDataFile(unittest.TestCase):
  print 'Correct Round Trip: %s' % is_correct
  print ''
  os.remove(FILENAME)
- self.assertEquals(correct, len(SCHEMAS_TO_VALIDATE))
+ self.assertEquals(correct, len(CODECS_TO_VALIDATE)*len(SCHEMAS_TO_VALIDATE))
 
  def test_append(self):
  print ''
@@ -101,18 +104,20 @@ class TestDataFile(unittest.TestCase):
  print ''
  correct = 0
  for i, (example_schema, datum) in enumerate(SCHEMAS_TO_VALIDATE):
+ for codec in CODECS_TO_VALIDATE:
  print ''
  print 'SCHEMA NUMBER %d' % (i + 1)
  print '================'
  print ''
  print 'Schema: %s' % example_schema
  print 'Datum: %s' % datum
+ print 'Codec: %s' % codec
 
  # write data in binary to file once
  writer = open(FILENAME, 'wb')
  datum_writer = io.DatumWriter()
  schema_object = schema.parse(example_schema)
- dfw = datafile.DataFileWriter(writer, datum_writer, schema_object)
+ dfw = datafile.DataFileWriter(writer, datum_writer, schema_object, codec=codec)
  dfw.append(datum)
  dfw.close()
 
@@ -138,7 +143,7 @@ class TestDataFile(unittest.TestCase):
  print 'Correct Appended: %s' % is_correct
  print ''
  os.remove(FILENAME)
- self.assertEquals(correct, len(SCHEMAS_TO_VALIDATE))
+ self.assertEquals(correct, len(CODECS_TO_VALIDATE)*len(SCHEMAS_TO_VALIDATE))
 
 if __name__ == '__main__':
  unittest.main()
