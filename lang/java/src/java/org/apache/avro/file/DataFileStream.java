@@ -155,11 +155,7 @@ public class DataFileStream<D> implements Iterator<D>, Iterable<D> {
  throw new IOException("Block size too large: " + compressedSize);
  }
  byte[] block = new byte[(int)compressedSize];
- // if vin buffers in, the below will needs to handle it
- int sizeRead = in.read(block);
- if (sizeRead != compressedSize) {
- throw new IOException("Incomplete Block");
- }
+ vin.readFixed(block, 0, (int)compressedSize);
  datumIn = codec.decompress(block);
  }
  return blockRemaining != 0;
