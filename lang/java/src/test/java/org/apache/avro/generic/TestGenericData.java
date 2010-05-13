@@ -69,4 +69,19 @@ public class TestGenericData {
  assertNull(record.get("does not exist"));
  }
 
+ @Test
+ public void testArrayReversal() {
+ Schema schema = Schema.createArray(Schema.create(Schema.Type.INT));
+ GenericArray<Integer> forward = new GenericData.Array<Integer>(10, schema);
+ GenericArray<Integer> backward = new GenericData.Array<Integer>(10, schema);
+ for (int i = 0; i <= 9; i++) {
+ forward.add(i);
+ }
+ for (int i = 9; i >= 0; i--) {
+ backward.add(i);
+ }
+ forward.reverse();
+ assertTrue(forward.equals(backward));
+ }
+
 }
