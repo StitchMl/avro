@@ -79,7 +79,7 @@ public class TestWordCountSpecific {
  String dir = System.getProperty("test.dir", ".") + "/mapred";
  Path outputPath = new Path(dir + "/out");
 
- try {
+ outputPath.getFileSystem(job).delete(outputPath);
  WordCountUtil.writeLinesFile();
 
  job.setJobName("wordcount");
@@ -98,10 +98,6 @@ public class TestWordCountSpecific {
  JobClient.runJob(job);
 
  WordCountUtil.validateCountsFile();
- } finally {
- outputPath.getFileSystem(job).delete(outputPath);
- }
-
  }
 
 }
