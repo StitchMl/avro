@@ -50,6 +50,7 @@ public class RPCPlugin {
  */
  public void clientSendRequest(RPCContext context) { }
 
+
  /**
  * This method is invoked at the RPC server when the request is received,
  * but before the call itself is executed
@@ -58,8 +59,8 @@ public class RPCPlugin {
  public void serverReceiveRequest(RPCContext context) { }
 
  /**
- * This method is invoked at the server after the call is executed,
- * but before the response is returned to the client
+ * This method is invoked at the server before the response is executed,
+ * but before the response has been formulated
  * @param context the per-call rpc context (in/out parameter)
  */
  public void serverSendResponse(RPCContext context) { }
@@ -70,5 +71,6 @@ public class RPCPlugin {
  * @param context the per-call rpc context
  */
  public void clientReceiveResponse(RPCContext context) { }
+
 
 }
