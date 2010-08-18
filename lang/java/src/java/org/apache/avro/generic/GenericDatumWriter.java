@@ -58,6 +58,7 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  /** Called to write data.*/
  protected void write(Schema schema, Object datum, Encoder out)
  throws IOException {
+ try {
  switch (schema.getType()) {
  case RECORD: writeRecord(schema, datum, out); break;
  case ENUM: writeEnum(schema, datum, out); break;
@@ -79,14 +80,28 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  case NULL: out.writeNull(); break;
  default: error(schema,datum);
  }
+ } catch (NullPointerException e) {
+ throw npe(e, " of "+schema.getName());
+ }
+ }
+
+ private NullPointerException npe(NullPointerException e, String s) {
+ NullPointerException result = new NullPointerException(e.getMessage()+s);
+ result.initCause(e.getCause() == null ? e : e.getCause());
+ return result;
  }
 
  /** Called to write a record. May be overridden for alternate record
  * representations.*/
  protected void writeRecord(Schema schema, Object datum, Encoder out)
  throws IOException {
- for (Field field : schema.getFields()) {
- write(field.schema(), getField(datum, field.name(), field.pos()), out);
+ for (Field f : schema.getFields()) {
+ Object value = getField(datum, f.name(), f.pos());
+ try {
+ write(f.schema(), value, out);
+ } catch (NullPointerException e) {
+ throw npe(e, " in field "+f.name());
+ }
  }
  }
 
