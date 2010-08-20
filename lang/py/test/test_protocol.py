@@ -318,6 +318,7 @@ class TestProtocol(unittest.TestCase):
  num_correct = 0
  for example in EXAMPLES:
  try:
+ try:
  protocol.parse(example.protocol_string)
  if example.valid: num_correct += 1
  debug_msg = "%s: PARSE SUCCESS" % example.name
@@ -345,6 +346,7 @@ class TestProtocol(unittest.TestCase):
  for example in VALID_EXAMPLES:
  protocol_data = protocol.parse(example.protocol_string)
  try:
+ try:
  protocol.parse(str(protocol_data))
  debug_msg = "%s: STRING CAST SUCCESS" % example.name
  num_correct += 1
@@ -371,6 +373,7 @@ class TestProtocol(unittest.TestCase):
 
  num_correct = 0
  for example in VALID_EXAMPLES:
+ try:
  try:
  original_protocol = protocol.parse(example.protocol_string)
  round_trip_protocol = protocol.parse(str(original_protocol))

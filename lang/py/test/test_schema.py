@@ -275,11 +275,18 @@ class TestSchema(unittest.TestCase):
  correct = 0
  for example in EXAMPLES:
  try:
+ try:
  schema.parse(example.schema_string)
- if example.valid: correct += 1
+ if example.valid:
+ correct += 1
+ else:
+ self.fail("Invalid schema was parsed: " + example.schema_string)
  debug_msg = "%s: PARSE SUCCESS" % example.name
  except:
- if not example.valid: correct += 1
+ if not example.valid:
+ correct += 1
+ else:
+ self.fail("Valid schema failed to parse: " + example.schema_string)
  debug_msg = "%s: PARSE FAILURE" % example.name
  finally:
  print debug_msg
@@ -297,6 +304,7 @@ class TestSchema(unittest.TestCase):
  correct = 0
  for example in VALID_EXAMPLES:
  schema_data = schema.parse(example.schema_string)
+ try:
  try:
  schema.parse(str(schema_data))
  debug_msg = "%s: STRING CAST SUCCESS" % example.name
@@ -320,6 +328,7 @@ class TestSchema(unittest.TestCase):
  print_test_name('TEST ROUND TRIP')
  correct = 0
  for example in VALID_EXAMPLES:
+ try:
  try:
  original_schema = schema.parse(example.schema_string)
  round_trip_schema = schema.parse(str(original_schema))
