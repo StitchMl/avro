@@ -232,6 +232,28 @@ EOS
  end
  end
 
+ def test_skip_union
+ ["hello", -1, 32, nil].each do |value_to_skip|
+ value_to_read = 6253
+
+ schema = Avro::Schema.parse('["int", "string", "null"]')
+ writer = StringIO.new
+ encoder = Avro::IO::BinaryEncoder.new(writer)
+ datum_writer = Avro::IO::DatumWriter.new(schema)
+ datum_writer.write(value_to_skip, encoder)
+ datum_writer.write(value_to_read, encoder)
+
+ reader = StringIO.new(writer.string)
+ decoder = Avro::IO::BinaryDecoder.new(reader)
+ datum_reader = Avro::IO::DatumReader.new(schema)
+ datum_reader.skip_data(schema, decoder)
+ read_value = datum_reader.read(decoder)
+
+ assert_equal value_to_read, read_value
+ end
+ end
+
+
  def test_schema_promotion
  promotable_schemas = ['"int"', '"long"', '"float"', '"double"']
  incorrect = 0
