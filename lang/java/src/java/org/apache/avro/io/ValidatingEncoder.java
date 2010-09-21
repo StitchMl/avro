@@ -107,6 +107,18 @@ public class ValidatingEncoder extends ParsingEncoder
  }
 
  @Override
+ public void writeString(String str) throws IOException {
+ parser.advance(Symbol.STRING);
+ out.writeString(str);
+ }
+
+ @Override
+ public void writeString(CharSequence charSequence) throws IOException {
+ parser.advance(Symbol.STRING);
+ out.writeString(charSequence);
+ }
+
+ @Override
  public void writeBytes(ByteBuffer bytes) throws IOException {
  parser.advance(Symbol.BYTES);
  out.writeBytes(bytes);
