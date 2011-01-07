@@ -70,6 +70,8 @@ public class NettyTransceiver extends Transceiver {
 
  private Protocol remote;
 
+ NettyTransceiver() {}
+
  public NettyTransceiver(InetSocketAddress addr) {
  // Set up.
  channelFactory = new NioClientSocketChannelFactory(Executors
