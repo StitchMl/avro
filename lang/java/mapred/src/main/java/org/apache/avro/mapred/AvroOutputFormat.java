@@ -19,6 +19,7 @@
 package org.apache.avro.mapred;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.net.URLDecoder;
 
@@ -65,20 +66,8 @@ public class AvroOutputFormat <T>
  job.setInt(SYNC_INTERVAL_KEY, syncIntervalInBytes);
  }
 
- @Override
- public RecordWriter<AvroWrapper<T>, NullWritable>
- getRecordWriter(FileSystem ignore, JobConf job,
- String name, Progressable prog)
- throws IOException {
-
- boolean isMapOnly = job.getNumReduceTasks() == 0;
- Schema schema = isMapOnly
- ? AvroJob.getMapOutputSchema(job)
- : AvroJob.getOutputSchema(job);
-
- final DataFileWriter<T> writer =
- new DataFileWriter<T>(new ReflectDatumWriter<T>());
-
+ static <T> void configureDataFileWriter(DataFileWriter<T> writer,
+ JobConf job) throws UnsupportedEncodingException {
  if (FileOutputFormat.getCompressOutput(job)) {
  int level = job.getInt(DEFLATE_LEVEL_KEY, DEFAULT_DEFLATE_LEVEL);
  String codecName = job.get(AvroJob.OUTPUT_CODEC, DEFLATE_CODEC);
@@ -100,6 +89,23 @@ public class AvroOutputFormat <T>
  URLDecoder.decode(e.getValue(), "ISO-8859-1")
  .getBytes("ISO-8859-1"));
  }
+ }
+
+ @Override
+ public RecordWriter<AvroWrapper<T>, NullWritable>
+ getRecordWriter(FileSystem ignore, JobConf job,
+ String name, Progressable prog)
+ throws IOException {
+
+ boolean isMapOnly = job.getNumReduceTasks() == 0;
+ Schema schema = isMapOnly
+ ? AvroJob.getMapOutputSchema(job)
+ : AvroJob.getOutputSchema(job);
+
+ final DataFileWriter<T> writer =
+ new DataFileWriter<T>(new ReflectDatumWriter<T>());
+
+ configureDataFileWriter(writer, job);
 
  Path path = FileOutputFormat.getTaskOutputPath(job, name+EXT);
  writer.create(schema, path.getFileSystem(job).create(path));
