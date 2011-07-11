@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 
 import org.xerial.snappy.Snappy;
-import org.xerial.snappy.SnappyException;
 
 /** * Implements Snappy compression and decompression. */
 class SnappyCodec extends Codec {
@@ -41,7 +40,6 @@ class SnappyCodec extends Codec {
 
  @Override
  ByteBuffer compress(ByteBuffer in) throws IOException {
- try {
  ByteBuffer out =
  ByteBuffer.allocate(Snappy.maxCompressedLength(in.remaining())+4);
  int size = Snappy.compress(in.array(), in.position(), in.remaining(),
@@ -53,14 +51,10 @@ class SnappyCodec extends Codec {
  out.limit(size+4);
 
  return out;
- } catch (SnappyException e) {
- throw new IOException(e);
- }
  }
 
  @Override
  ByteBuffer decompress(ByteBuffer in) throws IOException {
- try {
  ByteBuffer out = ByteBuffer.allocate
  (Snappy.uncompressedLength(in.array(),in.position(),in.remaining()-4));
  int size = Snappy.uncompress(in.array(),in.position(),in.remaining()-4,
@@ -73,9 +67,6 @@ class SnappyCodec extends Codec {
  throw new IOException("Checksum failure");
 
  return out;
- } catch (SnappyException e) {
- throw new IOException(e);
- }
  }
 
  @Override public int hashCode() { return getName().hashCode(); }
