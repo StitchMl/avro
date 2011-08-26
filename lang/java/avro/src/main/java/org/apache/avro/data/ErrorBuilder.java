@@ -15,19 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.avro.specific;
+package org.apache.avro.data;
 
-import org.apache.avro.generic.GenericData;
+/** Interface for error builders */
+public interface ErrorBuilder<T> extends RecordBuilder<T> {
 
-/** Base class for generated fixed-sized data classes. */
-public abstract class SpecificFixed extends GenericData.Fixed {
- public SpecificFixed() {
- setSchema(SpecificData.get().getSchema(getClass()));
- }
+ /** Gets the value */
+ Object getValue();
 
- public SpecificFixed(byte[] bytes) {
- this();
- bytes(bytes);
- }
+ /** Sets the value */
+ ErrorBuilder<T> setValue(Object value);
+
+ /** Checks whether the value has been set */
+ boolean hasValue();
+
+ /** Clears the value */
+ ErrorBuilder<T> clearValue();
+
+ /** Gets the error cause */
+ Throwable getCause();
+
+ /** Sets the error cause */
+ ErrorBuilder<T> setCause(Throwable cause);
+
+ /** Checks whether the cause has been set */
+ boolean hasCause();
+
+ /** Clears the cause */
+ ErrorBuilder<T> clearCause();
+
 }
-

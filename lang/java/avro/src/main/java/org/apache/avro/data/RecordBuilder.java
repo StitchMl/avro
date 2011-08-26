@@ -15,19 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.avro.specific;
+package org.apache.avro.data;
 
-import org.apache.avro.generic.GenericData;
 
-/** Base class for generated fixed-sized data classes. */
-public abstract class SpecificFixed extends GenericData.Fixed {
- public SpecificFixed() {
- setSchema(SpecificData.get().getSchema(getClass()));
- }
-
- public SpecificFixed(byte[] bytes) {
- this();
- bytes(bytes);
- }
+/** Interface for record builders */
+public interface RecordBuilder<T> {
+ /**
+ * Constructs a new instance using the values set in the RecordBuilder.
+ * If a particular value was not set and the schema defines a default
+ * value, the default value will be used.
+ * @return a new instance using values set in the RecordBuilder.
+ */
+ T build();
 }
-
