@@ -43,23 +43,24 @@
  </dependency>
  </dependencies>
 
+ <profiles>
+ <profile>
+ <id>protobuf-generate</id>
  <build>
  <plugins>
  <plugin>
  <artifactId>maven-antrun-plugin</artifactId>
  <executions>
  <execution>
- <id>generate-test-sources</id>
- <phase>generate-sources</phase>
+ <phase>generate-test-sources</phase>
  <configuration>
  <tasks>
- <mkdir dir="target/generated-test-sources"/>
+ <mkdir dir="target/protobuf-tmp" />
  <exec executable="protoc">
- <arg value="--java_out=target/generated-test-sources"/>
+ <arg value="--java_out=src/test/java/"/>
  <arg value="src/test/protobuf/test.proto"/>
  </exec>
  </tasks>
- <sourceRoot>target/generated-test-sources</sourceRoot>
  </configuration>
  <goals>
  <goal>run</goal>
@@ -69,5 +70,7 @@
  </plugin>
  </plugins>
  </build>
+ </profile>
+ </profiles>
 
 </project>
