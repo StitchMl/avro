@@ -117,6 +117,8 @@ Avro 1.6.0 (unreleased)
 
  AVRO-913. CMake/C++ build should work for out-of-tree builds. (Nebojsa Sabovic via thiru)
 
+ AVRO-925. CMake/C++ Unable to build debug version of libavrocpp. (Nebojsa Sabovic via thiru)
+
  BUG FIXES
 
  AVRO-824. Java: Fix usage message of BinaryFragmentToJsonTool.
