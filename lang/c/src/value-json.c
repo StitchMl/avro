@@ -16,14 +16,16 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "avro/allocation.h"
 #include "avro/errors.h"
 #include "avro/legacy.h"
+#include "avro/schema.h"
+#include "avro/value.h"
 #include "avro_private.h"
-#include "datum.h"
 #include "jansson.h"
 
 /*
@@ -91,26 +93,37 @@ encode_utf8_bytes(const void *src, size_t src_len,
  return result; \
 	}
 
+#define check_return(retval, call) \
+	do { \
+ int __rc; \
+ __rc = call; \
+ if (__rc != 0) { \
+ return retval; \
+ } \
+	} while (0)
+
 static json_t *
-avro_datum_to_json_t(const avro_datum_t datum)
+avro_value_to_json_t(const avro_value_t *value)
 {
-	switch (avro_typeof(datum)) {
+	switch (avro_value_get_type(value)) {
  case AVRO_BOOLEAN:
+ {
+ int val;
+ check_return(NULL, avro_value_get_boolean(value, &val));
  return_json("boolean",
- avro_datum_to_boolean(datum)->i?
- json_true():
- json_false());
+ val? json_true(): json_false());
+ }
 
  case AVRO_BYTES:
  {
- struct avro_bytes_datum_t *bytes =
- avro_datum_to_bytes(datum);
-
+ const void *val;
+ size_t size;
  void *encoded = NULL;
  size_t encoded_size = 0;
 
- if (encode_utf8_bytes(bytes->bytes, bytes->size,
- &encoded, &encoded_size)) {
+ check_return(NULL, avro_value_get_bytes(value, &val, &size));
+
+ if (encode_utf8_bytes(val, size, &encoded, &encoded_size)) {
  return NULL;
  }
 
@@ -123,42 +136,73 @@ avro_datum_to_json_t(const avro_datum_t datum)
  }
 
  case AVRO_DOUBLE:
- return_json("double", json_real(avro_datum_to_double(datum)->d));
+ {
+ double val;
+ check_return(NULL, avro_value_get_double(value, &val));
+ return_json("double", json_real(val));
+ }
 
  case AVRO_FLOAT:
- return_json("float", json_real(avro_datum_to_float(datum)->f));
+ {
+ float val;
+ check_return(NULL, avro_value_get_float(value, &val));
+ return_json("float", json_real(val));
+ }
 
  case AVRO_INT32:
- return_json("int", json_integer(avro_datum_to_int32(datum)->i32));
+ {
+ int32_t val;
+ check_return(NULL, avro_value_get_int(value, &val));
+ return_json("int", json_integer(val));
+ }
 
  case AVRO_INT64:
- return_json("long", json_integer(avro_datum_to_int64(datum)->i64));
+ {
+ int64_t val;
+ check_return(NULL, avro_value_get_long(value, &val));
+ return_json("long", json_integer(val));
+ }
 
  case AVRO_NULL:
+ {
+ check_return(NULL, avro_value_get_null(value));
  return_json("null", json_null());
+ }
 
  case AVRO_STRING:
- return_json("string", json_string(avro_datum_to_string(datum)->s));
+ {
+ const char *val;
+ size_t size;
+ check_return(NULL, avro_value_get_string(value, &val, &size));
+ return_json("string", json_string(val));
+ }
 
  case AVRO_ARRAY:
  {
+ int rc;
+ size_t element_count, i;
  json_t *result = json_array();
- if (!result) {
+ if (result == NULL) {
  avro_set_error("Cannot allocate JSON array");
  return NULL;
  }
 
- int num_elements = avro_array_size(datum);
- int i;
- for (i = 0; i < num_elements; i++) {
- avro_datum_t element = NULL;
- if (avro_array_get(datum, i, &element)) {
+ rc = avro_value_get_size(value, &element_count);
+ if (rc != 0) {
  json_decref(result);
  return NULL;
  }
 
- json_t *element_json = avro_datum_to_json_t(element);
- if (!element_json) {
+ for (i = 0; i < element_count; i++) {
+ avro_value_t element;
+ rc = avro_value_get_by_index(value, i, &element, NULL);
+ if (rc != 0) {
+ json_decref(result);
+ return NULL;
+ }
+
+ json_t *element_json = avro_value_to_json_t(&element);
+ if (element_json == NULL) {
  json_decref(result);
  return NULL;
  }
@@ -174,18 +218,27 @@ avro_datum_to_json_t(const avro_datum_t datum)
  }
 
  case AVRO_ENUM:
- return_json("enum", json_string(avro_enum_get_name(datum)));
+ {
+ avro_schema_t enum_schema;
+ int symbol_value;
+ const char *symbol_name;
+
+ check_return(NULL, avro_value_get_enum(value, &symbol_value));
+ enum_schema = avro_value_get_schema(value);
+ symbol_name = avro_schema_enum_get(enum_schema, symbol_value);
+ return_json("enum", json_string(symbol_name));
+ }
 
  case AVRO_FIXED:
  {
- struct avro_fixed_datum_t *fixed =
- avro_datum_to_fixed(datum);
-
+ const void *val;
+ size_t size;
  void *encoded = NULL;
  size_t encoded_size = 0;
 
- if (encode_utf8_bytes(fixed->bytes, fixed->size,
- &encoded, &encoded_size)) {
+ check_return(NULL, avro_value_get_fixed(value, &val, &size));
+
+ if (encode_utf8_bytes(val, size, &encoded, &encoded_size)) {
  return NULL;
  }
 
@@ -199,29 +252,32 @@ avro_datum_to_json_t(const avro_datum_t datum)
 
  case AVRO_MAP:
  {
+ int rc;
+ size_t element_count, i;
  json_t *result = json_object();
- if (!result) {
+ if (result == NULL) {
  avro_set_error("Cannot allocate JSON map");
  return NULL;
  }
 
- int num_elements = avro_map_size(datum);
- int i;
- for (i = 0; i < num_elements; i++) {
- const char *key = NULL;
- if (avro_map_get_key(datum, i, &key)) {
+ rc = avro_value_get_size(value, &element_count);
+ if (rc != 0) {
  json_decref(result);
  return NULL;
  }
 
- avro_datum_t element = NULL;
- if (avro_map_get(datum, key, &element)) {
+ for (i = 0; i < element_count; i++) {
+ const char *key;
+ avro_value_t element;
+
+ rc = avro_value_get_by_index(value, i, &element, &key);
+ if (rc != 0) {
  json_decref(result);
  return NULL;
  }
 
- json_t *element_json = avro_datum_to_json_t(element);
- if (!element_json) {
+ json_t *element_json = avro_value_to_json_t(&element);
+ if (element_json == NULL) {
  json_decref(result);
  return NULL;
  }
@@ -238,27 +294,32 @@ avro_datum_to_json_t(const avro_datum_t datum)
 
  case AVRO_RECORD:
  {
+ int rc;
+ size_t field_count, i;
  json_t *result = json_object();
- if (!result) {
+ if (result == NULL) {
  avro_set_error("Cannot allocate new JSON record");
  return NULL;
  }
 
- avro_schema_t schema = avro_datum_to_record(datum)->schema;
- int num_fields = avro_schema_record_size(schema);
- int i;
- for (i = 0; i < num_fields; i++) {
- const char *field_name =
- avro_schema_record_field_name(schema, i);
-
- avro_datum_t field = NULL;
- if (avro_record_get(datum, field_name, &field)) {
+ rc = avro_value_get_size(value, &field_count);
+ if (rc != 0) {
  json_decref(result);
  return NULL;
  }
 
- json_t *field_json = avro_datum_to_json_t(field);
- if (!field_json) {
+ for (i = 0; i < field_count; i++) {
+ const char *field_name;
+ avro_value_t field;
+
+ rc = avro_value_get_by_index(value, i, &field, &field_name);
+ if (rc != 0) {
+ json_decref(result);
+ return NULL;
+ }
+
+ json_t *field_json = avro_value_to_json_t(&field);
+ if (field_json == NULL) {
  json_decref(result);
  return NULL;
  }
@@ -275,30 +336,36 @@ avro_datum_to_json_t(const avro_datum_t datum)
 
  case AVRO_UNION:
  {
- int64_t discriminant = avro_union_discriminant(datum);
- avro_datum_t branch = avro_union_current_branch(datum);
+ int disc;
+ avro_value_t branch;
+ avro_schema_t union_schema;
+ avro_schema_t branch_schema;
+ const char *branch_name;
 
- avro_schema_t schema = avro_datum_to_union(datum)->schema;
- avro_schema_t branch_schema =
- avro_schema_union_branch(schema, discriminant);
+ check_return(NULL, avro_value_get_current_branch(value, &branch));
 
- if (is_avro_null(branch_schema)) {
+ if (avro_value_get_type(&branch) == AVRO_NULL) {
  return_json("null", json_null());
  }
 
+ check_return(NULL, avro_value_get_discriminant(value, &disc));
+ union_schema = avro_value_get_schema(value);
+ branch_schema =
+ avro_schema_union_branch(union_schema, disc);
+ branch_name = avro_schema_type_name(branch_schema);
+
  json_t *result = json_object();
- if (!result) {
+ if (result == NULL) {
  avro_set_error("Cannot allocate JSON union");
  return NULL;
  }
 
- json_t *branch_json = avro_datum_to_json_t(branch);
- if (!branch_json) {
+ json_t *branch_json = avro_value_to_json_t(&branch);
+ if (branch_json == NULL) {
  json_decref(result);
  return NULL;
  }
 
- const char *branch_name = avro_schema_type_name(branch_schema);
  if (json_object_set_new(result, branch_name, branch_json)) {
  avro_set_error("Cannot append branch to union");
  json_decref(result);
@@ -313,60 +380,38 @@ avro_datum_to_json_t(const avro_datum_t datum)
 	}
 }
 
-int avro_datum_to_json(const avro_datum_t datum,
+int
+avro_value_to_json(const avro_value_t *value,
  int one_line, char **json_str)
 {
-	check_param(EINVAL, is_avro_datum(datum), "datum");
+	check_param(EINVAL, value, "value");
 	check_param(EINVAL, json_str, "string buffer");
 
-	json_t *json = avro_datum_to_json_t(datum);
-	if (!json) {
+	json_t *json = avro_value_to_json_t(value);
+	if (json == NULL) {
  return ENOMEM;
 	}
 
-	// Jansson will only encode an object or array as the root
-	// element.
+	/*
+ * Jansson will only encode an object or array as the root
+ * element.
+ */
 
-	if (json_is_array(json) || json_is_object(json)) {
- *json_str = json_dumps
+	*json_str = json_dumps
  (json,
+ JSON_ENCODE_ANY |
  JSON_INDENT(one_line? 0: 2) |
  JSON_ENSURE_ASCII |
  JSON_PRESERVE_ORDER);
- json_decref(json);
- return 0;
-	}
-
-	// Otherwise we have to play some games. We'll wrap the JSON
-	// value in an array, and then strip off the leading and
-	// trailing square brackets.
-
-	json_t *array = json_array();
-	json_array_append_new(array, json);
-	char *array_str = json_dumps
- (array,
- JSON_INDENT(one_line? 0: 2) |
- JSON_ENSURE_ASCII |
- JSON_PRESERVE_ORDER);
-	json_decref(array);
-
-	// If the caller requested a one-line string, then we strip off
-	// "[" from the front and "]" from the back. Otherwise, we
-	// strip off "[\n " from the front and "\n]" from the back.
-
-	size_t length = strlen(array_str);
-	size_t front_chop = one_line? 1: 4;
-	size_t back_chop = one_line? 1: 2;
-	length -= (front_chop + back_chop);
-
-	// We don't use the custom allocator, because we need to mimic
-	// the string that Jansson would have returned.
-
-	char *result = malloc(length + 1);
-	memcpy(result, array_str + front_chop, length);
-	result[length] = '\0';
-	free(array_str);
-
-	*json_str = result;
+	json_decref(json);
 	return 0;
+}
+
+int
+avro_datum_to_json(const avro_datum_t datum,
+ int one_line, char **json_str)
+{
+	avro_value_t value;
+	avro_datum_as_value(&value, datum);
+	return avro_value_to_json(&value, one_line, json_str);
 }
