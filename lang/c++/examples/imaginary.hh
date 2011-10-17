@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -16,40 +16,31 @@
  * limitations under the License.
  */
 
-#ifndef avro_Resolver_hh__
-#define avro_Resolver_hh__
 
-#include <boost/noncopyable.hpp>
-#include <stdint.h>
+#ifndef IMAGINARY_HH_3460301992__H_
+#define IMAGINARY_HH_3460301992__H_
 
-#include "Reader.hh"
 
-/// \file Resolver.hh
-///
+#include "boost/any.hpp"
+#include "avro/Specific.hh"
+#include "avro/Encoder.hh"
+#include "avro/Decoder.hh"
 
-namespace avro {
-
-class ValidSchema;
-class Layout;
-
-class Resolver : private boost::noncopyable
-{
-
- public:
-
- virtual void parse(Reader &reader, uint8_t *address) const = 0;
- virtual ~Resolver() {}
-
+namespace i {
+struct cpx {
+ double im;
 };
 
-Resolver *constructResolver(
- const ValidSchema &rwriterSchema,
- const ValidSchema &readerSchema,
- const Layout &readerLayout
- );
+}
+namespace avro {
+template<> struct codec_traits<i::cpx> {
+ static void encode(Encoder& e, const i::cpx& v) {
+ avro::encode(e, v.im);
+ }
+ static void decode(Decoder& d, i::cpx& v) {
+ avro::decode(d, v.im);
+ }
+};
 
-
-
-} // namespace avro
-
+}
 #endif
