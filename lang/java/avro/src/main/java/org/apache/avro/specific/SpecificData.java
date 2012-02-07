@@ -33,6 +33,7 @@ import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.io.DatumReader;
 
 /** Utilities for generated Java classes and interfaces. */
 public class SpecificData extends GenericData {
@@ -52,6 +53,11 @@ public class SpecificData extends GenericData {
  /** Construct with a specific classloader. */
  public SpecificData(ClassLoader classLoader) {
  this.classLoader = classLoader;
+ }
+
+ @Override
+ public DatumReader createDatumReader(Schema schema) {
+ return new SpecificDatumReader(schema, schema, this);
  }
 
  /** Return the singleton instance. */
