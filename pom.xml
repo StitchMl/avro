@@ -43,12 +43,11 @@
  <avro.distDir>dist</avro.distDir>
  <avro.docDir>build/avro-doc-${project.version}/api</avro.docDir>
  <!-- dependency plugin versions -->
- <apache-rat-tasks-version>0.7</apache-rat-tasks-version>
+ <apache-rat-tasks.version>0.7</apache-rat-tasks.version>
 
  <!-- plugin versions -->
- <antrun-plugin-version>1.6</antrun-plugin-version>
- <enforcer-plugin-version>1.0.1</enforcer-plugin-version>
-
+ <antrun-plugin.version>1.6</antrun-plugin.version>
+ <enforcer-plugin.version>1.0.1</enforcer-plugin.version>
  </properties>
 
  <modules>
@@ -97,7 +96,7 @@
  <plugin>
  <groupId>org.apache.maven.plugins</groupId>
  <artifactId>maven-enforcer-plugin</artifactId>
- <version>${enforcer-plugin-version}</version>
+ <version>${enforcer-plugin.version}</version>
  <configuration>
  <rules>
  <requireProperty>
@@ -203,7 +202,7 @@
  <plugin>
  <groupId>org.apache.maven.plugins</groupId>
  <artifactId>maven-antrun-plugin</artifactId>
- <version>${antrun-plugin-version}</version>
+ <version>${antrun-plugin.version}</version>
  <configuration>
  <target name="rat">
  <rat:report xmlns:rat="antlib:org.apache.rat.anttasks"
@@ -223,7 +222,7 @@
  <dependency>
  <groupId>org.apache.rat</groupId>
  <artifactId>apache-rat-tasks</artifactId>
- <version>${apache-rat-tasks-version}</version>
+ <version>${apache-rat-tasks.version}</version>
  </dependency>
  </dependencies>
  </plugin>
@@ -237,7 +236,7 @@
  <plugin>
  <groupId>org.apache.maven.plugins</groupId>
  <artifactId>maven-antrun-plugin</artifactId>
- <version>${antrun-plugin-version}</version>
+ <version>${antrun-plugin.version}</version>
  <configuration>
  <target name="copy-java-artifacts">
  <mkdir dir="${avro.distDir}/java"/>
@@ -259,4 +258,5 @@
  </build>
  </profile>
  </profiles>
+
 </project>
