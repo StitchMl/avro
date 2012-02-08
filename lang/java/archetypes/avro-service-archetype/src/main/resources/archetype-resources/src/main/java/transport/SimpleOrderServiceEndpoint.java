@@ -33,22 +33,22 @@ import org.slf4j.LoggerFactory;
 import ${package}.service.OrderProcessingService;
 
 /**
- * <code>SimpleOrderProcessingServer</code> provides a very basic example Netty endpoint for the
+ * {@code SimpleOrderProcessingServer} provides a very basic example Netty endpoint for the
  * {@link SimpleOrderService} implementation
  */
 public class SimpleOrderServiceEndpoint {
 
-	private static final Logger log = LoggerFactory.getLogger(SimpleOrderServiceEndpoint.class);
+ private static final Logger log = LoggerFactory.getLogger(SimpleOrderServiceEndpoint.class);
 
-	private InetSocketAddress endpointAddress;
+ private InetSocketAddress endpointAddress;
 
-	private Server service;
+ private Server service;
 
-	public SimpleOrderServiceEndpoint(InetSocketAddress endpointAddress) {
+ public SimpleOrderServiceEndpoint(InetSocketAddress endpointAddress) {
  this.endpointAddress = endpointAddress;
-	}
+ }
 
-	public synchronized void start() throws Exception {
+ public synchronized void start() throws Exception {
  if (log.isInfoEnabled()) {
  log.info("Starting Simple Ordering Netty Server on '{}'", endpointAddress);
  }
@@ -56,12 +56,12 @@ public class SimpleOrderServiceEndpoint {
  SpecificResponder responder = new SpecificResponder(OrderProcessingService.class, new SimpleOrderService());
  service = new NettyServer(responder, endpointAddress);
  service.start();
-	}
+ }
 
-	public synchronized void stop() throws Exception {
+ public synchronized void stop() throws Exception {
  if (log.isInfoEnabled()) {
  log.info("Stopping Simple Ordering Server on '{}'", endpointAddress);
  }
  service.start();
-	}
+ }
 }
