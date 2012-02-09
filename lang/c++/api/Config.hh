@@ -16,40 +16,24 @@
  * limitations under the License.
  */
 
-#ifndef avro_SchemaResolution_hh__
-#define avro_SchemaResolution_hh__
+#ifndef avro_Config_hh
+#define avro_Config_hh
 
-#include "Config.hh"
+// Windows DLL suport
 
-namespace avro {
+#ifdef _WIN32
+#if defined(AVRO_DYN_LINK)
+#ifdef AVRO_SOURCE
+# define AVRO_DECL __declspec(dllexport)
+#else
+# define AVRO_DECL __declspec(dllimport)
+#endif // AVRO_SOURCE
+#endif // AVRO_DYN_LINK
+#endif // _WIN32
 
-
-enum SchemaResolution {
-
- /// The schemas definitely do not match
-
- RESOLVE_NO_MATCH,
-
- /// The schemas match at a cursory level
- ///
- /// For records and enums, this means the name is the same, but it does not
- /// necessarily mean that every symbol or field is an exact match.
-
- RESOLVE_MATCH,
-
- /// For primitives, the matching may occur if the type is promotable. This means that the
- /// writer matches reader if the writer's type is promoted the specified type.
-
- //@{
-
- RESOLVE_PROMOTABLE_TO_LONG,
- RESOLVE_PROMOTABLE_TO_FLOAT,
- RESOLVE_PROMOTABLE_TO_DOUBLE,
-
- //@}
-
-};
-
-} // namespace avro
+#ifndef AVRO_DECL
+#define AVRO_DECL
+#endif
 
 #endif
+
