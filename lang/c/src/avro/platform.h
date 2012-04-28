@@ -15,8 +15,8 @@
  * permissions and limitations under the License.
  */
 
-#ifndef AVRO_ERRORS_H
-#define AVRO_ERRORS_H
+#ifndef AVRO_PLATFORM_H
+#define AVRO_PLATFORM_H
 #ifdef __cplusplus
 extern "C" {
 #define CLOSE_EXTERN }
@@ -24,18 +24,22 @@ extern "C" {
 #define CLOSE_EXTERN
 #endif
 
-/*
- * Returns a textual description of the last error condition returned by
- * an Avro function.
- */
+/* Use this header file to include platform specific definitions */
 
-const char *avro_strerror(void);
+#ifdef _WIN32
+ #include <avro/msinttypes.h>
+#else
+ #include <inttypes.h>
+#endif
 
-void
-avro_set_error(const char *fmt, ...);
-
-void
-avro_prefix_error(const char *fmt, ...);
+// Defines for printing size_t.
+#if defined(_WIN64)
+ #define PRIsz PRIu64
+#elif defined(_WIN32)
+ #define PRIsz PRIu32
+#else // GCC
+ #define PRIsz "zu"
+#endif
 
 CLOSE_EXTERN
 #endif
