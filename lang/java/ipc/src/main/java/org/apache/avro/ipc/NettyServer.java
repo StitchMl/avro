@@ -75,14 +75,17 @@ public class NettyServer implements Server {
  }
 
  /**
- *
  * @param executionHandler if not null, will be inserted into the Netty
  * pipeline. Use this when your responder does
  * long, non-cpu bound processing (see Netty's
  * ExecutionHandler javadoc).
+ * @param pipelineFactory Avro-related handlers will be added on top of
+ * what this factory creates
  */
  public NettyServer(Responder responder, InetSocketAddress addr,
- ChannelFactory channelFactory, final ExecutionHandler executionHandler) {
+ ChannelFactory channelFactory,
+ final ChannelPipelineFactory pipelineFactory,
+ final ExecutionHandler executionHandler) {
  this.responder = responder;
  this.channelFactory = channelFactory;
  this.executionHandler = executionHandler;
@@ -90,7 +93,7 @@ public class NettyServer implements Server {
  bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
  @Override
  public ChannelPipeline getPipeline() throws Exception {
- ChannelPipeline p = Channels.pipeline();
+ ChannelPipeline p = pipelineFactory.getPipeline();
  p.addLast("frameDecoder", new NettyFrameDecoder());
  p.addLast("frameEncoder", new NettyFrameEncoder());
  if (executionHandler != null) {
@@ -102,6 +105,23 @@ public class NettyServer implements Server {
  });
  serverChannel = bootstrap.bind(addr);
  allChannels.add(serverChannel);
+ }
+
+ /**
+ * @param executionHandler if not null, will be inserted into the Netty
+ * pipeline. Use this when your responder does
+ * long, non-cpu bound processing (see Netty's
+ * ExecutionHandler javadoc).
+ */
+ public NettyServer(Responder responder, InetSocketAddress addr,
+ ChannelFactory channelFactory,
+ final ExecutionHandler executionHandler) {
+ this(responder, addr, channelFactory, new ChannelPipelineFactory() {
+ @Override
+ public ChannelPipeline getPipeline() throws Exception {
+ return Channels.pipeline();
+ }
+ }, executionHandler);
  }
 
  @Override
