@@ -371,9 +371,11 @@ public class DataFileWriter<D> implements Closeable, Flushable {
  /** Close the file. */
  @Override
  public void close() throws IOException {
+ if (isOpen) {
  flush();
  out.close();
  isOpen = false;
+ }
  }
 
  private class BufferedFileOutputStream extends BufferedOutputStream {
