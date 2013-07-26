@@ -136,6 +136,7 @@ if (ZLIB_FOUND)
  message("Enabled deflate codec")
 else (ZLIB_FOUND)
  set(ZLIB_PKG "")
+ set(ZLIB_LIBRARIES "")
  message("Disabled deflate codec. zlib not found.")
 endif (ZLIB_FOUND)
 
@@ -145,7 +146,8 @@ if (SNAPPY_FOUND AND ZLIB_FOUND) # Snappy borrows crc32 from zlib
  add_definitions(-DSNAPPY_CODEC)
  message("Enabled snappy codec")
 else (SNAPPY_FOUND AND ZLIB_FOUND)
- set (SNAPPY_PKG "")
+ set(SNAPPY_PKG "")
+ set(SNAPPY_LIBRARIES "")
  message("Disabled snappy codec. libsnappy not found or zlib not found.")
 endif (SNAPPY_FOUND AND ZLIB_FOUND)
 
@@ -159,6 +161,7 @@ if (LZMA_FOUND)
  message("Enabled lzma codec")
 else (LZMA_FOUND)
  set(LZMA_PKG "")
+ set(LZMA_LIBRARIES "")
  message("Disabled lzma codec. liblzma not found.")
 endif (LZMA_FOUND)
 
@@ -173,4 +176,3 @@ add_subdirectory(docs)
 
 add_custom_target(pretty
  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake_pretty.cmake")
-
