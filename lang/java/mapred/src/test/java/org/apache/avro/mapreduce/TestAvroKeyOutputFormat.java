@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileConstants;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapred.AvroOutputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -127,6 +128,7 @@ public class TestAvroKeyOutputFormat {
  // Expect the record writer factory to be called with appropriate parameters.
  Capture<CodecFactory> capturedCodecFactory = new Capture<CodecFactory>();
  expect(recordWriterFactory.create(eq(writerSchema),
+ anyObject(GenericData.class),
  capture(capturedCodecFactory), // Capture for comparison later.
  anyObject(OutputStream.class))).andReturn(expectedRecordWriter);
 
