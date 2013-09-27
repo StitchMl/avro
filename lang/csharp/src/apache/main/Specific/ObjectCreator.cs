@@ -314,12 +314,15 @@ namespace Avro.Specific
  NameCtorKey key = new NameCtorKey(name, schemaType);
 
  CtorDelegate ctor;
+ lock(ctors)
+ {
  if (!ctors.TryGetValue(key, out ctor))
  {
  Type type = GetType(name, schemaType);
  ctor = GetConstructor(name, schemaType, type);
 
  ctors.Add(key, ctor);
+ }
  }
  return ctor();
  }
