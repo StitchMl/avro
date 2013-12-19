@@ -22,7 +22,7 @@ module Avro
 
  attr_reader :name, :namespace, :types, :messages, :md5
  def self.parse(protocol_string)
- json_data = Yajl.load(protocol_string)
+ json_data = MultiJson.load(protocol_string)
 
  if json_data.is_a? Hash
  name = json_data['protocol']
@@ -58,7 +58,7 @@ module Avro
  end
 
  def to_s
- Yajl.dump to_avro
+ MultiJson.dump to_avro
  end
 
  def ==(other)
