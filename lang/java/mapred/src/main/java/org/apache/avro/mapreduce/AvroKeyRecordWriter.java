@@ -36,7 +36,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  *
  * @param <T> The Java type of the Avro data to write.
  */
-public class AvroKeyRecordWriter<T> extends RecordWriter<AvroKey<T>, NullWritable> {
+public class AvroKeyRecordWriter<T> extends RecordWriter<AvroKey<T>, NullWritable> implements Syncable {
  /** A writer for the Avro container file. */
  private final DataFileWriter<T> mAvroFileWriter;
 
@@ -81,5 +81,11 @@ public class AvroKeyRecordWriter<T> extends RecordWriter<AvroKey<T>, NullWritabl
  @Override
  public void close(TaskAttemptContext context) throws IOException {
  mAvroFileWriter.close();
+ }
+
+ /** {@inheritDoc} */
+ @Override
+ public long sync() throws IOException {
+ return mAvroFileWriter.sync();
  }
 }
