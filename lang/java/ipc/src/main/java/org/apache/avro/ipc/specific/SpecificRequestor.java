@@ -72,6 +72,36 @@ public class SpecificRequestor extends Requestor implements InvocationHandler {
  @Override
  public Object invoke(Object proxy, Method method, Object[] args)
  throws Throwable {
+ String name = method.getName();
+ if (name.equals("hashCode")) {
+ return hashCode();
+ }
+ else if (name.equals("equals")) {
+ Object obj = args[0];
+ return (proxy == obj) || (obj != null && Proxy.isProxyClass(obj.getClass())
+ && this.equals(Proxy.getInvocationHandler(obj)));
+ }
+ else if (name.equals("toString")) {
+ String protocol = "unknown";
+ String remote = "unknown";
+ Class<?>[] interfaces = proxy.getClass().getInterfaces();
+ if (interfaces.length > 0) {
+ try {
+ protocol = Class.forName(interfaces[0].getName()).getSimpleName();
+ } catch (ClassNotFoundException e) {
+ }
+
+ InvocationHandler handler = Proxy.getInvocationHandler(proxy);
+ if (handler instanceof Requestor) {
+ try {
+ remote = ((Requestor) handler).getTransceiver().getRemoteName();
+ } catch (IOException e) {
+ }
+ }
+ }
+ return "Proxy[" + protocol + "," + remote + "]";
+ }
+ else {
  try {
  // Check if this is a callback-based RPC:
  Type[] parameterTypes = method.getParameterTypes();
@@ -102,6 +132,7 @@ public class SpecificRequestor extends Requestor implements InvocationHandler {
 
  // Not an expected Exception, so wrap it in AvroRemoteException:
  throw new AvroRemoteException(e);
+ }
  }
  }
 
