@@ -41,10 +41,14 @@ public class TestUtil {
  seed = Long.valueOf(configured);
  else
  seed = System.currentTimeMillis();
- System.out.println("test.seed="+seed);
+ System.err.println("test.seed="+seed);
  seedSet = true;
  }
  return seed;
+ }
+
+ public static void resetRandomSeed() {
+ seedSet = false;
  }
 
  public static Random createRandom() {
