@@ -66,7 +66,9 @@ public class TestThrift {
  Test test = new Test();
  test.setBoolField(true);
  test.setByteField((byte)2);
+ test.setByteOptionalField((byte)4);
  test.setI16Field((short)3);
+ test.setI16OptionalField((short)15);
  test.setI64Field(5L);
  test.setDoubleField(2.0);
 
@@ -74,7 +76,6 @@ public class TestThrift {
 
  check(test);
  }
-
 
  private void check(Test test) throws Exception {
 
