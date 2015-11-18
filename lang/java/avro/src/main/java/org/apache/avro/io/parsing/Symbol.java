@@ -131,8 +131,8 @@ public abstract class Symbol {
  }
 
  private static class Fixup {
- public final Symbol[] symbols;
- public final int pos;
+ public Symbol[] symbols;
+ public int pos;
 
  public Fixup(Symbol[] symbols, int pos) {
  this.symbols = symbols;
