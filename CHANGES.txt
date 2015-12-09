@@ -17,6 +17,8 @@ Trunk (not yet released)
 
  BUG FIXES
 
+ AVRO-1493. Java: Avoid the "Turkish Locale Problem". Schema fingerprints are
+ now consistent regardless of the environment's locale.
 
 Avro 1.8.0 (22 January 2016)
 

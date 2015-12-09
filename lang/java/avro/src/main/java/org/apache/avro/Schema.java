@@ -32,6 +32,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -93,7 +94,7 @@ public abstract class Schema extends JsonProperties {
  RECORD, ENUM, ARRAY, MAP, UNION, FIXED, STRING, BYTES,
  INT, LONG, FLOAT, DOUBLE, BOOLEAN, NULL;
  private String name;
- private Type() { this.name = this.name().toLowerCase(); }
+ private Type() { this.name = this.name().toLowerCase(Locale.ENGLISH); }
  public String getName() { return name; }
  };
 
@@ -377,7 +378,7 @@ public abstract class Schema extends JsonProperties {
  public enum Order {
  ASCENDING, DESCENDING, IGNORE;
  private String name;
- private Order() { this.name = this.name().toLowerCase(); }
+ private Order() { this.name = this.name().toLowerCase(Locale.ENGLISH); }
  };
 
  private final String name; // name of the field.
@@ -1269,7 +1270,7 @@ public abstract class Schema extends JsonProperties {
  Field.Order order = Field.Order.ASCENDING;
  JsonNode orderNode = field.get("order");
  if (orderNode != null)
- order = Field.Order.valueOf(orderNode.getTextValue().toUpperCase());
+ order = Field.Order.valueOf(orderNode.getTextValue().toUpperCase(Locale.ENGLISH));
  JsonNode defaultValue = field.get("default");
  if (defaultValue != null
  && (Type.FLOAT.equals(fieldSchema.getType())
