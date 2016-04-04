@@ -28,12 +28,13 @@ import org.apache.avro.Schema;
 import org.codehaus.jackson.JsonNode;
 
 /**
- *
- * @author zoly
+ * Utility class to resolve schemas that are unavailable at the time they are referenced in the IDL.
  */
+
 final class SchemaResolver {
 
- private SchemaResolver() { }
+ private SchemaResolver() {
+ }
 
  private static final String UR_SCHEMA_ATTR = "org.apache.avro.compiler.idl.unresolved.name";
 
@@ -56,8 +57,6 @@ final class SchemaResolver {
  return name;
  }
  }
-
-
 
  static Protocol resolve(final Protocol protocol) {
  Protocol result = new Protocol(protocol.getName(), protocol.getDoc(), protocol.getNamespace());
@@ -95,7 +94,6 @@ final class SchemaResolver {
  to.addProp(entry.getKey(), entry.getValue());
  }
  }
-
 
  static Schema resolve(final Schema schema, final Protocol protocol, final Map<String, Schema> processed) {
  final String fullName = schema.getFullName();
@@ -222,8 +220,5 @@ final class SchemaResolver {
  }
  }
  }
-
-
-
 
 }
