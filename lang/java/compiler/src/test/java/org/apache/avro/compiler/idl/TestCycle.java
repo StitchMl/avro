@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
@@ -36,12 +36,16 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author zoly
  */
 public class TestCycle {
+
+ private static final Logger LOG = LoggerFactory.getLogger(TestCycle.class);
 
  @Test
  public void testCycleGeneration() throws ParseException, IOException {
@@ -50,7 +54,7 @@ public class TestCycle {
  "UTF-8");
  Protocol protocol = idl.CompilationUnit();
  String json = protocol.toString();
- System.out.println(json);
+ LOG.info(json);
 
  SpecificCompiler compiler = new SpecificCompiler(protocol);
  compiler.setStringType(GenericData.StringType.String);
@@ -78,7 +82,6 @@ public class TestCycle {
  spb.set("node", node);
  GenericData.Record sp = spb.build();
 
-
  GenericRecordBuilder rb = new GenericRecordBuilder(schemas.get("SampleNode"));
  rb.set("count", 10);
  rb.set("subNodes", Arrays.asList(sp));
@@ -100,6 +103,5 @@ public class TestCycle {
  GenericData.Record read = (GenericData.Record) reader.read(null, directBinaryDecoder);
  Assert.assertEquals(data.toString(), read.toString());
  }
-
 
 }
