@@ -31,7 +31,7 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import example.avro.User;
 
 public class SpecificMain {
-	public static void main(String[] args) throws IOException {
+ public static void main(String[] args) throws IOException {
  User user1 = new User();
  user1.setName("Alyssa");
  user1.setFavoriteNumber(256);
@@ -69,5 +69,5 @@ public class SpecificMain {
  System.out.println(user);
  }
 
-	}
+ }
 }

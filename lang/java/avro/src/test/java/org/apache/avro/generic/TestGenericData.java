@@ -236,8 +236,8 @@ public class TestGenericData {
  assertEquals(new Integer(6), array.get(0));
  assertEquals(8, array.size());
  try {
-	array.get(9);
-	fail("Expected IndexOutOfBoundsException after adding elements");
+ array.get(9);
+ fail("Expected IndexOutOfBoundsException after adding elements");
  } catch (IndexOutOfBoundsException e){}
  }
  @Test

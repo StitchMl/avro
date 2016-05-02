@@ -35,159 +35,156 @@ set -x # echo commands
 
 for target in "$@"
 do
-
-case "$target" in
+ case "$target" in
 
  test)
-	# run lang-specific tests
+ # run lang-specific tests
  (cd lang/java; mvn test)
-	(cd lang/py; ant test)
-	(cd lang/py3; python3 setup.py test)
-	(cd lang/c; ./build.sh test)
-	(cd lang/c++; ./build.sh test)
-	(cd lang/csharp; ./build.sh test)
-	(cd lang/js; ./build.sh test)
-	(cd lang/ruby; ./build.sh test)
-	(cd lang/php; ./build.sh test)
-	(cd lang/perl; perl ./Makefile.PL && make test)
+ (cd lang/py; ant test)
+ (cd lang/py3; python3 setup.py test)
+ (cd lang/c; ./build.sh test)
+ (cd lang/c++; ./build.sh test)
+ (cd lang/csharp; ./build.sh test)
+ (cd lang/js; ./build.sh test)
+ (cd lang/ruby; ./build.sh test)
+ (cd lang/php; ./build.sh test)
+ (cd lang/perl; perl ./Makefile.PL && make test)
 
-	# create interop test data
+ # create interop test data
  mkdir -p build/interop/data
-	(cd lang/java/avro; mvn -P interop-data-generate generate-resources)
-	(cd lang/py; ant interop-data-generate)
-	(cd lang/c; ./build.sh interop-data-generate)
-	#(cd lang/c++; make interop-data-generate)
-	(cd lang/ruby; rake generate_interop)
-	(cd lang/php; ./build.sh interop-data-generate)
+ (cd lang/java/avro; mvn -P interop-data-generate generate-resources)
+ (cd lang/py; ant interop-data-generate)
+ (cd lang/c; ./build.sh interop-data-generate)
+ #(cd lang/c++; make interop-data-generate)
+ (cd lang/ruby; rake generate_interop)
+ (cd lang/php; ./build.sh interop-data-generate)
 
-	# run interop data tests
-	(cd lang/java; mvn test -P interop-data-test)
-	(cd lang/py; ant interop-data-test)
-	(cd lang/c; ./build.sh interop-data-test)
-	#(cd lang/c++; make interop-data-test)
-	(cd lang/ruby; rake interop)
-	(cd lang/php; ./build.sh test-interop)
+ # run interop data tests
+ (cd lang/java; mvn test -P interop-data-test)
+ (cd lang/py; ant interop-data-test)
+ (cd lang/c; ./build.sh interop-data-test)
+ #(cd lang/c++; make interop-data-test)
+ (cd lang/ruby; rake interop)
+ (cd lang/php; ./build.sh test-interop)
 
-	# java needs to package the jars for the interop rpc tests
+ # java needs to package the jars for the interop rpc tests
  (cd lang/java; mvn package -DskipTests)
-	# run interop rpc test
+ # run interop rpc test
  /bin/bash share/test/interop/bin/test_rpc_interop.sh
-
-	;;
+ ;;
 
  dist)
  # ensure version matches
  # FIXME: enforcer is broken:MENFORCER-42
  # mvn enforcer:enforce -Davro.version=$VERSION
 
-	# build source tarball
+ # build source tarball
  mkdir -p build
 
  SRC_DIR=avro-src-$VERSION
  DOC_DIR=avro-doc-$VERSION
 
-	rm -rf build/${SRC_DIR}
-	if [ -d .svn ];
-	then
+ rm -rf build/${SRC_DIR}
+ if [ -d .svn ];
+ then
  svn export --force . build/${SRC_DIR}
-	elif [ -d .git ];
-	then
+ elif [ -d .git ];
+ then
  mkdir -p build/${SRC_DIR}
  git archive HEAD | tar -x -C build/${SRC_DIR}
-	else
+ else
  echo "Not SVN and not GIT .. cannot continue"
  exit -1;
-	fi
+ fi
 
-	#runs RAT on artifacts
+ #runs RAT on artifacts
  mvn -N -P rat antrun:run
 
-	mkdir -p dist
+ mkdir -p dist
  (cd build; tar czf ../dist/${SRC_DIR}.tar.gz ${SRC_DIR})
 
-	# build lang-specific artifacts
+ # build lang-specific artifacts
 
-	(cd lang/java; mvn package -DskipTests -Dhadoop.version=1;
+ (cd lang/java; mvn package -DskipTests -Dhadoop.version=1;
  rm -rf mapred/target/{classes,test-classes}/;
  rm -rf trevni/avro/target/{classes,test-classes}/;
  mvn -P dist package -DskipTests -Davro.version=$VERSION javadoc:aggregate)
  (cd lang/java/trevni/doc; mvn site)
  (mvn -N -P copy-artifacts antrun:run)
 
-	(cd lang/py; ant dist)
-	(cd lang/py3; python3 setup.py sdist; cp -r dist ../../dist/py3)
+ (cd lang/py; ant dist)
+ (cd lang/py3; python3 setup.py sdist; cp -r dist ../../dist/py3)
 
-	(cd lang/c; ./build.sh dist)
+ (cd lang/c; ./build.sh dist)
 
-	(cd lang/c++; ./build.sh dist)
+ (cd lang/c++; ./build.sh dist)
 
-	(cd lang/csharp; ./build.sh dist)
+ (cd lang/csharp; ./build.sh dist)
 
-	(cd lang/js; ./build.sh dist)
+ (cd lang/js; ./build.sh dist)
 
-	(cd lang/ruby; ./build.sh dist)
+ (cd lang/ruby; ./build.sh dist)
 
-	(cd lang/php; ./build.sh dist)
+ (cd lang/php; ./build.sh dist)
 
  mkdir -p dist/perl
-	(cd lang/perl; perl ./Makefile.PL && make dist)
+ (cd lang/perl; perl ./Makefile.PL && make dist)
  cp lang/perl/Avro-$VERSION.tar.gz dist/perl/
 
-	# build docs
-	(cd doc; ant)
+ # build docs
+ (cd doc; ant)
  # add LICENSE and NOTICE for docs
  mkdir -p build/$DOC_DIR
  cp doc/LICENSE build/$DOC_DIR
  cp doc/NOTICE build/$DOC_DIR
-	(cd build; tar czf ../dist/avro-doc-$VERSION.tar.gz $DOC_DIR)
+ (cd build; tar czf ../dist/avro-doc-$VERSION.tar.gz $DOC_DIR)
 
-	cp DIST_README.txt dist/README.txt
-	;;
+ cp DIST_README.txt dist/README.txt
+ ;;
 
  sign)
+ set +x
 
-	set +x
+ echo -n "Enter password: "
+ stty -echo
+ read password
+ stty echo
 
-	echo -n "Enter password: "
-	stty -echo
-	read password
-	stty echo
-
-	for f in $(find dist -type f \
+ for f in $(find dist -type f \
  \! -name '*.md5' \! -name '*.sha1' \
  \! -name '*.asc' \! -name '*.txt' );
-	do
+ do
  (cd `dirname $f`; md5sum `basename $f`) > $f.md5
  (cd `dirname $f`; sha1sum `basename $f`) > $f.sha1
  gpg --passphrase $password --armor --output $f.asc --detach-sig $f
-	done
+ done
 
-	set -x
-	;;
+ set -x
+ ;;
 
  clean)
-	rm -rf build dist
-	(cd doc; ant clean)
+ rm -rf build dist
+ (cd doc; ant clean)
 
  (mvn clean)
 
-	(cd lang/py; ant clean)
-	(cd lang/py3; python3 setup.py clean)
+ (cd lang/py; ant clean)
+ (cd lang/py3; python3 setup.py clean)
 
-	(cd lang/c; ./build.sh clean)
+ (cd lang/c; ./build.sh clean)
 
-	(cd lang/c++; ./build.sh clean)
+ (cd lang/c++; ./build.sh clean)
 
-	(cd lang/csharp; ./build.sh clean)
+ (cd lang/csharp; ./build.sh clean)
 
-	(cd lang/js; ./build.sh clean)
+ (cd lang/js; ./build.sh clean)
 
-	(cd lang/ruby; ./build.sh clean)
+ (cd lang/ruby; ./build.sh clean)
 
-	(cd lang/php; ./build.sh clean)
+ (cd lang/php; ./build.sh clean)
 
-	(cd lang/perl; [ ! -f Makefile ] || make clean)
-	;;
+ (cd lang/perl; [ ! -f Makefile ] || make clean)
+ ;;
 
  docker)
  docker build -t avro-build share/docker
@@ -226,7 +223,7 @@ UserSpecificDocker
  *)
  usage
  ;;
-esac
+ esac
 
 done
 

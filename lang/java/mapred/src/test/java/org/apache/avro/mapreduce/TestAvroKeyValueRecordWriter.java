@@ -202,14 +202,14 @@ public class TestAvroKeyValueRecordWriter {
 
  verify(context);
 
-	Configuration conf = new Configuration();
-	conf.set("fs.default.name", "file:///");
-	Path avroFile = new Path("target/temp.avro");
-	DataFileReader<GenericData.Record> avroFileReader = new DataFileReader<GenericData.Record>(new FsInput(avroFile,
+ Configuration conf = new Configuration();
+ conf.set("fs.default.name", "file:///");
+ Path avroFile = new Path("target/temp.avro");
+ DataFileReader<GenericData.Record> avroFileReader = new DataFileReader<GenericData.Record>(new FsInput(avroFile,
  conf), new SpecificDatumReader<GenericData.Record>());
 
 
-	avroFileReader.seek(pointTwo);
+ avroFileReader.seek(pointTwo);
  // Verify that the second record was written;
  assertTrue(avroFileReader.hasNext());
  AvroKeyValue<CharSequence, TextStats> secondRecord
@@ -219,7 +219,7 @@ public class TestAvroKeyValueRecordWriter {
  assertEquals("banana", secondRecord.getValue().name.toString());
 
 
-	avroFileReader.seek(pointOne);
+ avroFileReader.seek(pointOne);
  // Verify that the first record was written.
  assertTrue(avroFileReader.hasNext());
  AvroKeyValue<CharSequence, TextStats> firstRecord
