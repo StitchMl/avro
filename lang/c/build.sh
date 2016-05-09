@@ -39,6 +39,8 @@ function clean {
  find $build_dir | xargs chmod 755
  rm -rf $build_dir
  fi
+ rm -f VERSION.txt
+ rm -f examples/quickstop.db
 }
 
 case "$1" in
