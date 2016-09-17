@@ -29,33 +29,34 @@ export TARGETFRAMEWORKVERSION=v3.5
 case "$1" in
 
  test)
-	xbuild
-	nunit-console -framework=4.0 Avro.nunit
-	;;
+ xbuild
+ nunit-console -framework=4.0 Avro.nunit
+ ;;
 
  perf)
-	xbuild
-	mono build/perf/Release/Avro.perf.exe
-	;;
+ xbuild
+ mono build/perf/Release/Avro.perf.exe
+ ;;
 
  dist)
  # build binary tarball
-	xbuild
+ xbuild
  # add the binary LICENSE and NOTICE to the tarball
  cp LICENSE NOTICE build/
-	mkdir -p $ROOT/dist/csharp
+ mkdir -p $ROOT/dist/csharp
  (cd build; tar czf $ROOT/../dist/csharp/avro-csharp-$VERSION.tar.gz main codegen ipc LICENSE NOTICE)
 
  # build documentation
  doxygen Avro.dox
-	mkdir -p $ROOT/build/avro-doc-$VERSION/api/csharp
+ mkdir -p $ROOT/build/avro-doc-$VERSION/api/csharp
  cp -pr build/doc/* $ROOT/build/avro-doc-$VERSION/api/csharp
-	;;
+ ;;
 
  clean)
-	rm -rf src/apache/{main,test,codegen,ipc}/obj
+ rm -rf src/apache/{main,test,codegen,ipc,msbuild,perf}/obj
  rm -rf build
-	;;
+ rm -f TestResult.xml
+ ;;
 
  *)
  echo "Usage: $0 {test|clean|dist|perf}"

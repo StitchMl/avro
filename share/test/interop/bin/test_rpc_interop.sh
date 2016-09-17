@@ -52,9 +52,9 @@ for server in "${servers[@]}"
 do
  for msgDir in share/test/interop/rpc/*
  do
-	msg=`basename "$msgDir"`
-	for c in ${msgDir}/*
-	do
+ msg=`basename "$msgDir"`
+ for c in ${msgDir}/*
+ do
  echo TEST: $c
  for client in "${clients[@]}"
  do
@@ -76,7 +76,7 @@ do
  $client http://127.0.0.1:$port $proto $msg -file $c/request.avro
  wait
  done
-	done
+ done
  done
 done
 

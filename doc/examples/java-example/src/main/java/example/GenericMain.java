@@ -33,7 +33,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
 
 public class GenericMain {
-	public static void main(String[] args) throws IOException {
+ public static void main(String[] args) throws IOException {
  Schema schema = new Parser().parse(new File("/home/skye/code/cloudera/avro/doc/examples/user.avsc"));
 
  GenericRecord user1 = new GenericData.Record(schema);
@@ -67,5 +67,5 @@ public class GenericMain {
  System.out.println(user);
  }
 
-	}
+ }
 }

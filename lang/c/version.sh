@@ -42,9 +42,9 @@ libavro_binary_age=0
 
 # IGNORE EVERYTHING ELSE FROM HERE DOWN.........
 if test $# != 1; then
-	echo "USAGE: $0 CMD"
+ echo "USAGE: $0 CMD"
  echo " where CMD is one of: project, libtool, libcurrent, librevision, libage"
-	exit 1
+ exit 1
 fi
 
 # http://sources.redhat.com/autobook/autobook/autobook_91.html
@@ -58,24 +58,24 @@ librevision=$libavro_interface_age
 libage=$(($libavro_binary_age - $libavro_interface_age))
 
 if test "$1" = "project"; then
-	project_ver="undef"
-	version_file="VERSION.txt"
-	if test -f $version_file; then
+ project_ver="undef"
+ version_file="VERSION.txt"
+ if test -f $version_file; then
  project_ver=$(cat $version_file)
-	else
+ else
  version_file="../../share/VERSION.txt"
  if test -f $version_file; then
  project_ver=$(cat $version_file)
  fi
-	fi
-	printf "%s" $project_ver
+ fi
+ printf "%s" $project_ver
 elif test "$1" = "libtool"; then
-	# useful for the -version-info flag for libtool
-	printf "%d:%d:%d" $libcurrent $librevision $libage
+ # useful for the -version-info flag for libtool
+ printf "%d:%d:%d" $libcurrent $librevision $libage
 elif test "$1" = "libcurrent"; then
-	printf "%d" $libcurrent
+ printf "%d" $libcurrent
 elif test "$1" = "librevision"; then
-	printf "%d" $librevision
+ printf "%d" $librevision
 elif test "$1" = "libage"; then
-	printf "%d" $libage
+ printf "%d" $libage
 fi

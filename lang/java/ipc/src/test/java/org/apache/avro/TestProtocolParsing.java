@@ -18,6 +18,7 @@
 package org.apache.avro;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -30,8 +31,7 @@ import org.apache.avro.Protocol.Message;
 public class TestProtocolParsing {
  public static Protocol getSimpleProtocol() throws IOException {
  File file = new File("../../../share/test/schemas/simple.avpr");
- Protocol protocol = Protocol.parse(file);
- return protocol;
+ return Protocol.parse(file);
  }
 
  @Test
@@ -51,7 +51,8 @@ public class TestProtocolParsing {
  + "}}").getMessages().values().iterator().next();
  }
 
- @Test public void oneWay() throws Exception {
+ @Test
+ public void oneWay() throws Exception {
  Message m;
  // permit one-way messages w/ null resposne
  m = parseMessage("\"ack\": {"
@@ -84,4 +85,23 @@ public class TestProtocolParsing {
  +"\"one-way\": true}");
  }
 
+ @Test
+ public void testMessageFieldAliases() throws IOException{
+ Protocol protocol = getSimpleProtocol();
+ final Message msg = protocol.getMessages().get("hello");
+ assertNotNull(msg);
+ final Schema.Field field = msg.getRequest().getField("greeting");
+ assertNotNull(field);
+ assertTrue(field.aliases().contains("salute"));
+ }
+
+ @Test
+ public void testMessageCustomProperties() throws IOException{
+ Protocol protocol = getSimpleProtocol();
+ final Message msg = protocol.getMessages().get("hello");
+ assertNotNull(msg);
+ final Schema.Field field = msg.getRequest().getField("greeting");
+ assertNotNull(field);
+ assertEquals("customValue", field.getProp("customProp"));
+ }
 }

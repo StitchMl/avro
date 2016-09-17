@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.google.common.collect.MapMaker;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.AvroTypeException;
@@ -230,12 +231,11 @@ public class ReflectData extends SpecificData {
  static final ConcurrentHashMap<Class<?>, ClassAccessorData>
  ACCESSOR_CACHE = new ConcurrentHashMap<Class<?>, ClassAccessorData>();
 
- private static class ClassAccessorData {
+ static class ClassAccessorData {
  private final Class<?> clazz;
  private final Map<String, FieldAccessor> byName =
  new HashMap<String, FieldAccessor>();
- private final IdentityHashMap<Schema, FieldAccessor[]> bySchema =
- new IdentityHashMap<Schema, FieldAccessor[]>();
+ final Map<Schema, FieldAccessor[]> bySchema = new MapMaker().weakKeys().makeMap();
 
  private ClassAccessorData(Class<?> c) {
  clazz = c;

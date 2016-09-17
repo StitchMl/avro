@@ -29,9 +29,9 @@ fi
 
 if [ -f VERSION.txt ]
 then
-VERSION=`cat VERSION.txt`
+ VERSION=`cat VERSION.txt`
 else
-VERSION=`cat ../../share/VERSION.txt`
+ VERSION=`cat ../../share/VERSION.txt`
 fi
 
 BUILD=../../build
@@ -84,7 +84,7 @@ case "$target" in
  && ./build/SpecificTests \
  && ./build/AvrogencppTests \
  && ./build/DataFileTests)
-	;;
+ ;;
 
  dist)
  do_dist
@@ -97,7 +97,8 @@ case "$target" in
 
  clean)
  (cd build && make clean)
-	;;
+ rm -rf doc test.avro test6.df
+ ;;
 
  install)
  (cd build && make install)

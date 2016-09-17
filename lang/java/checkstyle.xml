@@ -21,7 +21,14 @@
  "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
  "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 
+
 <module name="Checker">
+ <module name="SuppressionFilter">
+ <property name="file" value="${checkstyle.suppressions.file}"/>
+ </module>
+
+ <module name="SuppressionCommentFilter"/>
+
  <module name="FileTabCharacter"/>
  <module name="NewlineAtEndOfFile">
  <property name="lineSeparator" value="lf"/>
@@ -42,11 +49,10 @@
  <module name="RedundantImport"/>
  <module name="UnusedImports"/>
 
- <module name="RedundantModifier"/>
+ <!--<module name="RedundantModifier"/>-->
 
  <module name="EmptyStatement"/>
  <module name="IllegalInstantiation"/>
- <module name="RedundantThrows"/>
  <module name="SimplifyBooleanExpression"/>
  <module name="SimplifyBooleanReturn"/>
 
@@ -55,5 +61,10 @@
  <module name="ArrayTypeStyle"/>
  <module name="UpperEll"/>
 
+ <module name="Regexp">
+ <property name="format" value="[ \t]+$"/>
+ <property name="illegalPattern" value="true"/>
+ <property name="message" value="Trailing whitespace"/>
+ </module>
  </module>
 </module>
