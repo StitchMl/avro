@@ -182,7 +182,11 @@ public class Player extends org.apache.avro.specific.SpecificRecordBase implemen
  * @return A new Player RecordBuilder
  */
  public static avro.examples.baseball.Player.Builder newBuilder(avro.examples.baseball.Player.Builder other) {
+ if (other == null) {
+ return new avro.examples.baseball.Player.Builder();
+ } else {
  return new avro.examples.baseball.Player.Builder(other);
+ }
  }
 
  /**
@@ -191,7 +195,11 @@ public class Player extends org.apache.avro.specific.SpecificRecordBase implemen
  * @return A new Player RecordBuilder
  */
  public static avro.examples.baseball.Player.Builder newBuilder(avro.examples.baseball.Player other) {
+ if (other == null) {
+ return new avro.examples.baseball.Player.Builder();
+ } else {
  return new avro.examples.baseball.Player.Builder(other);
+ }
  }
 
  /**
