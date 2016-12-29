@@ -270,17 +270,22 @@ public class SpecificCompiler {
  if (src != null && f.exists() && f.lastModified() >= src.lastModified())
  return f; // already up to date: ignore
  f.getParentFile().mkdirs();
- Writer fw;
+ Writer fw = null;
+ FileOutputStream fos = null;
+ try {
  if (outputCharacterEncoding != null) {
- fw = new OutputStreamWriter(new FileOutputStream(f), outputCharacterEncoding);
+ fos = new FileOutputStream(f);
+ fw = new OutputStreamWriter(fos, outputCharacterEncoding);
  } else {
  fw = new FileWriter(f);
  }
- try {
  fw.write(FILE_HEADER);
  fw.write(contents);
  } finally {
+ if (fw != null)
  fw.close();
+ if (fos != null)
+ fos.close();
  }
  return f;
  }
