@@ -16,51 +16,50 @@
 # limitations under the License.
 
 set -e # exit on error
-set -x
 
-cd `dirname "$0"` # connect to root
+function usage {
+ echo "Usage: $0 {test|dist|clean}"
+ exit 1
+}
 
-ROOT=../..
-VERSION=`cat $ROOT/share/VERSION.txt`
+if [ $# -eq 0 ]
+then
+ usage
+fi
 
-export CONFIGURATION=Release
-export TARGETFRAMEWORKVERSION=v3.5
+if [ -f VERSION.txt ]
+then
+ VERSION=`cat VERSION.txt`
+else
+ VERSION=`cat ../../share/VERSION.txt`
+fi
 
-case "$1" in
+for target in "$@"
+do
 
+function do_clean(){
+ python3 setup.py clean
+ rm -rvf dist avro_python3.egg-info avro/*.avsc avro/VERSION.txt avro/__pycache__/ avro/tests/interop.avsc avro/tests/__pycache__/
+}
+
+case "$target" in
  test)
- xbuild
- nunit-console Avro.nunit
- ;;
-
- perf)
- xbuild
- mono build/perf/Release/Avro.perf.exe
+ python3 setup.py test
  ;;
 
  dist)
- # build binary tarball
- xbuild
- # add the binary LICENSE and NOTICE to the tarball
- cp LICENSE NOTICE build/
- mkdir -p $ROOT/dist/csharp
- (cd build; tar czf $ROOT/../dist/csharp/avro-csharp-$VERSION.tar.gz main codegen ipc LICENSE NOTICE)
-
- # build documentation
- doxygen Avro.dox
- mkdir -p $ROOT/build/avro-doc-$VERSION/api/csharp
- cp -pr build/doc/* $ROOT/build/avro-doc-$VERSION/api/csharp
+ python3 setup.py sdist
+ cp -r dist ../../dist/py3
  ;;
 
  clean)
- rm -rf src/apache/{main,test,codegen,ipc,msbuild,perf}/obj
- rm -rf build
- rm -f TestResult.xml
+ do_clean
  ;;
 
  *)
- echo "Usage: $0 {test|clean|dist|perf}"
- exit 1
+ usage
 esac
+
+done
 
 exit 0
