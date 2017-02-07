@@ -138,12 +138,11 @@
  <artifactId>guava</artifactId>
  <version>${guava.version}</version>
  <scope>test</scope>
- <exclusions>
- <exclusion> <!-- GPL -->
+ </dependency>
+ <dependency> <!-- apache licensed -->
  <groupId>com.google.code.findbugs</groupId>
  <artifactId>jsr305</artifactId>
- </exclusion>
- </exclusions>
+ <version>3.0.1</version>
  </dependency>
  </dependencies>
 
