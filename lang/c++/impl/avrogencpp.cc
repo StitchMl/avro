@@ -215,6 +215,7 @@ static string cppNameOf(const NodePtr& n)
 string CodeGen::generateRecordType(const NodePtr& n)
 {
  size_t c = n->leaves();
+ string decoratedName = decorate(n->name());
  vector<string> types;
  for (size_t i = 0; i < c; ++i) {
  types.push_back(generateType(n->leafAt(i)));
@@ -225,7 +226,6 @@ string CodeGen::generateRecordType(const NodePtr& n)
  return it->second;
  }
 
- string decoratedName = decorate(n->name());
  os_ << "struct " << decoratedName << " {\n";
  if (! noUnion_) {
  for (size_t i = 0; i < c; ++i) {
@@ -264,7 +264,7 @@ string CodeGen::generateRecordType(const NodePtr& n)
  }
  os_ << " { }\n";
  os_ << "};\n\n";
- return decorate(n->name());
+ return decoratedName;
 }
 
 void makeCanonical(string& s, bool foldCase)
@@ -425,9 +425,31 @@ string CodeGen::doGenerateType(const NodePtr& n)
  case avro::AVRO_FIXED:
  return cppTypeOf(n);
  case avro::AVRO_ARRAY:
- return "std::vector<" + generateType(n->leafAt(0)) + " >";
+ {
+ const NodePtr& ln = n->leafAt(0);
+ string dn;
+ if (doing.find(n) == doing.end()) {
+ doing.insert(n);
+ dn = generateType(ln);
+ doing.erase(n);
+ } else {
+ dn = generateDeclaration(ln);
+ }
+ return "std::vector<" + dn + " >";
+ }
  case avro::AVRO_MAP:
- return "std::map<std::string, " + generateType(n->leafAt(1)) + " >";
+ {
+ const NodePtr& ln = n->leafAt(1);
+ string dn;
+ if (doing.find(n) == doing.end()) {
+ doing.insert(n);
+ dn = generateType(ln);
+ doing.erase(n);
+ } else {
+ dn = generateDeclaration(ln);
+ }
+ return "std::map<std::string, " + dn + " >";
+ }
  case avro::AVRO_RECORD:
  return generateRecordType(n);
  case avro::AVRO_ENUM:
