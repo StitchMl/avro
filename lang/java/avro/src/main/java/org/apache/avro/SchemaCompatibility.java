@@ -350,10 +350,15 @@ public class SchemaCompatibility {
  } else {
  // Reader and writer have different schema types:
 
- // Handle the corner case where writer is a union of a singleton branch: { X } === X
- if ((writer.getType() == Schema.Type.UNION)
- && writer.getTypes().size() == 1) {
- return getCompatibility(reader, writer.getTypes().get(0));
+ // Reader compatible with all branches of a writer union is compatible
+ if (writer.getType() == Schema.Type.UNION) {
+ for (Schema s : writer.getTypes()) {
+ SchemaCompatibilityType compatibility = getCompatibility(reader, s);
+ if (compatibility == SchemaCompatibilityType.INCOMPATIBLE) {
+ return SchemaCompatibilityType.INCOMPATIBLE;
+ }
+ }
+ return SchemaCompatibilityType.COMPATIBLE;
  }
 
  switch (reader.getType()) {
