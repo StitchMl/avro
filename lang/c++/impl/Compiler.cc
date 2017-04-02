@@ -283,32 +283,9 @@ static GenericDatum makeGenericDatum(NodePtr n, const Entity& e,
  case AVRO_UNION:
  {
  GenericUnion result(n);
- string name;
- Entity e2;
- if (e.type() == json::etNull) {
- name = "null";
- e2 = e;
- } else {
- assertType(e, json::etObject);
- const map<string, Entity>& v = e.objectValue();
- if (v.size() != 1) {
- throw Exception(boost::format("Default value for "
- "union has more than one field: %1%") % e.toString());
- }
- map<string, Entity>::const_iterator it = v.begin();
- name = it->first;
- e2 = it->second;
- }
- for (size_t i = 0; i < n->leaves(); ++i) {
- const NodePtr& b = n->leafAt(i);
- if (nameof(b) == name) {
- result.selectBranch(i);
- result.datum() = makeGenericDatum(b, e2, st);
+ result.selectBranch(0);
+ result.datum() = makeGenericDatum(n->leafAt(0), e, st);
  return GenericDatum(n, result);
- }
- }
- throw Exception(boost::format("Invalid default value %1%") %
- e.toString());
  }
  case AVRO_FIXED:
  assertType(e, json::etString);
