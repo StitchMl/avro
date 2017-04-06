@@ -139,7 +139,7 @@ EOS
 
 }
 EOS
- ExampleProtocol.new(<<-EOS, true)
+ ExampleProtocol.new(<<-EOS, true),
 {"namespace": "org.apache.avro.test",
  "protocol": "BulkData",
 
@@ -159,6 +159,29 @@ EOS
 
  }
 
+}
+EOS
+ ExampleProtocol.new(<<-EOS, true),
+{
+ "namespace": "com.acme",
+ "protocol": "HelloWorld",
+ "doc": "protocol_documentation",
+
+ "types": [
+ {"name": "Greeting", "type": "record", "fields": [
+ {"name": "message", "type": "string"}]},
+ {"name": "Curse", "type": "error", "fields": [
+ {"name": "message", "type": "string"}]}
+ ],
+
+ "messages": {
+ "hello": {
+ "doc": "message_documentation",
+ "request": [{"name": "greeting", "type": "Greeting" }],
+ "response": "Greeting",
+ "errors": ["Curse"]
+ }
+ }
 }
 EOS
 ]
@@ -195,5 +218,15 @@ EOS
  protocol.types.each do |type|
  assert_equal type.namespace, 'com.acme'
  end
+ end
+
+ def test_protocol_doc_attribute
+ original = Protocol.parse(EXAMPLES.last.protocol_string)
+ assert_equal 'protocol_documentation', original.doc
+ end
+
+ def test_protocol_message_doc_attribute
+ original = Protocol.parse(EXAMPLES.last.protocol_string)
+ assert_equal 'message_documentation', original.messages['hello'].doc
  end
 end
