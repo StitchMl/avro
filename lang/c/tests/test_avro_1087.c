@@ -80,6 +80,8 @@ int main()
 	avro_file_writer_flush (writer);
 	avro_file_writer_close (writer);
 
+ avro_schema_decref(schema);
+
 	remove (dbname);
 
 	return EXIT_SUCCESS;

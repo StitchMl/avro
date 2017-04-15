@@ -286,6 +286,7 @@ int add_array( avro_writer_t writer,
 
  avro_value_decref( &resolved_record );
  avro_value_iface_decref( writer_class );
+ avro_value_iface_decref( resolved_reader_class );
  }
  else
  {
