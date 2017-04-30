@@ -3,6 +3,7 @@ package org.apache.avro.compiler.schema;
 import avro.shaded.com.google.common.base.Function;
 import avro.shaded.com.google.common.base.Supplier;
 import avro.shaded.com.google.common.collect.Lists;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -10,6 +11,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.avro.JsonProperties;
 import org.apache.avro.LogicalType;
 import org.apache.avro.Schema;
@@ -18,8 +20,6 @@ import org.apache.avro.compiler.specific.SpecificCompiler;
 
 /**
  * Avro Schema utilities, to traverse...
- *
- * @author zoly
  */
 public final class Schemas {
 
@@ -73,7 +73,7 @@ public final class Schemas {
 
  public static String getJavaClassName(final Schema schema) {
  String namespace = schema.getNamespace();
- if (namespace == null || namespace.isEmpty()) {
+ if (namespace == null) {
  return SpecificCompiler.mangle(schema.getName());
  } else {
  return namespace + '.' + SpecificCompiler.mangle(schema.getName());
@@ -105,12 +105,9 @@ public final class Schemas {
  case SKIP_SUBTREE:
  throw new UnsupportedOperationException();
  case SKIP_SIBLINGS:
- //CHECKSTYLE:OFF InnerAssignment
- while ((current = dq.getLast()) instanceof Schema) {
- // just skip
+ while (dq.getLast() instanceof Schema) {
+ dq.removeLast();
  }
- //CHECKSTYLE:ON
- dq.addLast(current);
  break;
  case TERMINATE:
  return visitor.get();
@@ -199,13 +196,9 @@ public final class Schemas {
  });
  break;
  case SKIP_SIBLINGS:
- Object current;
- //CHECKSTYLE:OFF InnerAssignment
- while ((current = dq.getLast()) instanceof Schema) {
- // just skip
+ while (!dq.isEmpty() && dq.getLast() instanceof Schema) {
+ dq.removeLast();
  }
- //CHECKSTYLE:ON
- dq.addLast(current);
  break;
  case TERMINATE:
  return true;
@@ -224,13 +217,9 @@ public final class Schemas {
  case SKIP_SUBTREE:
  throw new UnsupportedOperationException("Invalid action " + action + " for " + schema);
  case SKIP_SIBLINGS:
- Object current;
- //CHECKSTYLE:OFF InnerAssignment
- while ((current = dq.getLast()) instanceof Schema) {
- // just skip
+ while (!dq.isEmpty() && dq.getLast() instanceof Schema) {
+ dq.removeLast();
  }
- //CHECKSTYLE:ON
- dq.addLast(current);
  break;
  case TERMINATE:
  return true;
