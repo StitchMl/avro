@@ -4,13 +4,14 @@ package org.apache.avro.compiler.schema;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+
 import org.apache.avro.Schema;
+
 import static org.apache.avro.Schema.Type.RECORD;
 
 /**
  * this visitor will create a clone of the original Schema with docs and other nonesential fields stripped
  * by default. what attributes are copied is customizable.
- * @author zoly
  */
 public final class CloningVisitor implements SchemaVisitor<Schema> {
 
@@ -24,11 +25,13 @@ public final class CloningVisitor implements SchemaVisitor<Schema> {
 
  public interface PropertyCopier {
  void copy(Schema first, Schema second);
+
  void copy(Schema.Field first, Schema.Field second);
  }
 
  /**
  * copy only serialization necessary fields.
+ *
  * @param root
  */
  public CloningVisitor(final Schema root) {

@@ -39,10 +39,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- * @author zoly
- */
 public class TestCycle {
 
  private static final Logger LOG = LoggerFactory.getLogger(TestCycle.class);

@@ -16,12 +16,14 @@
 package org.apache.avro.compiler.idl;
 
 import avro.shaded.com.google.common.base.Function;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.schema.Schemas;
@@ -44,6 +46,7 @@ final class SchemaResolver {
  * Create a schema to represent a "unresolved" schema.
  * (used to represent a schema where the definition is not known at the time)
  * This concept might be generalizable...
+ *
  * @param name
  * @return
  */
@@ -56,6 +59,7 @@ final class SchemaResolver {
 
  /**
  * Is this a unresolved schema.
+ *
  * @param schema
  * @return
  */
@@ -67,6 +71,7 @@ final class SchemaResolver {
 
  /**
  * get the unresolved schema name.
+ *
  * @param schema
  * @return
  */
@@ -74,16 +79,12 @@ final class SchemaResolver {
  if (!isUnresolvedSchema(schema)) {
  throw new IllegalArgumentException("Not a unresolved schema: " + schema);
  }
- String name = schema.getProp(UR_SCHEMA_ATTR);
- if (name == null) {
- throw new IllegalArgumentException("Schema " + schema + " must have attribute: " + UR_SCHEMA_ATTR);
- } else {
- return name;
- }
+ return schema.getProp(UR_SCHEMA_ATTR);
  }
 
  /**
  * Will clone the provided protocol while resolving all unreferenced schemas
+ *
  * @param protocol
  * @return
  */
