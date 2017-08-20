@@ -25,6 +25,9 @@
 #include <limits>
 #include <set>
 #include <boost/weak_ptr.hpp>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 #include "Node.hh"
 #include "NodeConcepts.hh"
@@ -213,6 +216,8 @@ class AVRO_DECL NodePrimitive : public NodeImplPrimitive
  bool isValid() const {
  return true;
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeSymbolic : public NodeImplSymbolic
@@ -239,6 +244,8 @@ class AVRO_DECL NodeSymbolic : public NodeImplSymbolic
  bool isValid() const {
  return (nameAttribute_.size() == 1);
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 
  bool isSet() const {
  return (actualNode_.lock() != 0);
@@ -297,6 +304,8 @@ public:
  const GenericDatum& defaultValueAt(int index) {
  return defaultValues[index];
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeEnum : public NodeImplEnum
@@ -327,6 +336,8 @@ class AVRO_DECL NodeEnum : public NodeImplEnum
  (leafNameAttributes_.size() > 0)
  );
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeArray : public NodeImplArray
@@ -348,6 +359,8 @@ class AVRO_DECL NodeArray : public NodeImplArray
  bool isValid() const {
  return (leafAttributes_.size() == 1);
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeMap : public NodeImplMap
@@ -379,6 +392,8 @@ class AVRO_DECL NodeMap : public NodeImplMap
  bool isValid() const {
  return (leafAttributes_.size() == 2);
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeUnion : public NodeImplUnion
@@ -453,6 +468,8 @@ class AVRO_DECL NodeUnion : public NodeImplUnion
  }
  return false;
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 class AVRO_DECL NodeFixed : public NodeImplFixed
@@ -477,6 +494,8 @@ class AVRO_DECL NodeFixed : public NodeImplFixed
  (sizeAttribute_.size() == 1)
  );
  }
+
+ void printDefaultToJson(const GenericDatum& g, std::ostream &os, int depth) const;
 };
 
 template < class A, class B, class C, class D >
@@ -536,6 +555,16 @@ inline NodePtr resolveSymbol(const NodePtr &node)
  }
  boost::shared_ptr<NodeSymbolic> symNode = boost::static_pointer_cast<NodeSymbolic>(node);
  return symNode->getNode();
+}
+
+template< typename T >
+inline std::string int_to_hex( T i )
+{
+ std::stringstream stream;
+ stream << "\\u"
+ << std::setfill('0') << std::setw(sizeof(T))
+ << std::hex << i;
+ return stream.str();
 }
 
 } // namespace avro
