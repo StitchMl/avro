@@ -57,7 +57,7 @@ public class AvroTrevniKeyValueInputFormat<K, V> extends FileInputFormat<AvroKey
  InputSplit split, TaskAttemptContext context) throws IOException,
  InterruptedException {
 
- return new AvroTrevniKeyValueRecordReader<K, V>();
+ return new AvroTrevniKeyValueRecordReader<>();
  }
 
 
