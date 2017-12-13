@@ -20,8 +20,6 @@ package org.apache.trevni.avro;
 import java.io.File;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
@@ -32,10 +30,11 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.trevni.ColumnFileMetaData;
 import org.apache.trevni.avro.AvroColumnReader.Params;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestEvolvedSchema extends TestCase {
+public class TestEvolvedSchema {
  private static String writerSchema = "{"
  + " \"namespace\": \"org.apache.avro\","
  + " \"name\": \"test_evolution\"," + " \"type\": \"record\","
@@ -97,8 +96,8 @@ public class TestEvolvedSchema extends TestCase {
  AvroColumnReader<GenericRecord> acr =
  new AvroColumnReader<>(params);
  GenericRecord readRecord = acr.next();
- assertEquals(evolvedRecord, readRecord);
- assertFalse(acr.hasNext());
+ Assert.assertEquals(evolvedRecord, readRecord);
+ Assert.assertFalse(acr.hasNext());
  }
 
  @Test
@@ -119,8 +118,8 @@ public class TestEvolvedSchema extends TestCase {
  DataFileReader<GenericRecord> dfr =
  new DataFileReader<>(serializedAvro, reader);
  GenericRecord readRecord = dfr.next();
- assertEquals(evolvedRecord, readRecord);
- assertFalse(dfr.hasNext());
+ Assert.assertEquals(evolvedRecord, readRecord);
+ Assert.assertFalse(dfr.hasNext());
  }
 
 }
