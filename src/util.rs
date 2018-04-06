@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use failure::{Error, err_msg};
+use failure::{err_msg, Error};
 use serde_json::{Map, Value};
 
 pub trait MapHelper {
