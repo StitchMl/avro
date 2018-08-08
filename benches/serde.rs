@@ -125,9 +125,11 @@ static RAW_ADDRESS_SCHEMA: &'static str = r#"
 
 fn make_small_record() -> (Schema, Value) {
  let small_schema = Schema::parse_str(RAW_SMALL_SCHEMA).unwrap();
+ let small_record = {
  let mut small_record = Record::new(&small_schema).unwrap();
  small_record.put("field", "foo");
- let small_record = small_record.avro();
+ small_record.avro()
+ };
  (small_schema, small_record)
 }
 
@@ -141,13 +143,15 @@ fn make_big_record() -> (Schema, Value) {
  address.put("country", "country");
  address.put("zip", "zip");
 
+ let big_record = {
  let mut big_record = Record::new(&big_schema).unwrap();
  big_record.put("username", "username");
  big_record.put("age", 10i32);
  big_record.put("phone", "000000000");
  big_record.put("housenum", "0000");
  big_record.put("address", address);
- let big_record = big_record.avro();
+ big_record.avro()
+ };
 
  (big_schema, big_record)
 }
