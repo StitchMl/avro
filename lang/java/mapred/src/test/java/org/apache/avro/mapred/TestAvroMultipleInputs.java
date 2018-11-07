@@ -37,18 +37,32 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.avro.reflect.ReflectDatumReader;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.*;
 
 public class TestAvroMultipleInputs {
 
- /** The input-1 record. */
+ @Rule
+ public TemporaryFolder OUTPUT_DIR = new TemporaryFolder();
+
+ @Rule
+ public TemporaryFolder INPUT_DIR_1 = new TemporaryFolder();
+
+ @Rule
+ public TemporaryFolder INPUT_DIR_2 = new TemporaryFolder();
+
+ /**
+ * The input-1 record.
+ */
  public static class NamesRecord {
  private int id = -1;
  private CharSequence name = "";
 
- public NamesRecord() {}
+ public NamesRecord() {
+ }
 
  public NamesRecord(int id, CharSequence name) {
  this.id = id;
@@ -61,12 +75,15 @@ public class TestAvroMultipleInputs {
  }
  }
 
- /** The input-2 record. */
+ /**
+ * The input-2 record.
+ */
  public static class BalancesRecord {
  private int id = -1;
  private long balance = 0L;
 
- public BalancesRecord() {}
+ public BalancesRecord() {
+ }
 
  public BalancesRecord(int id, long balance) {
  this.id = id;
@@ -79,11 +96,14 @@ public class TestAvroMultipleInputs {
  }
  }
 
- /** The map output key record. */
+ /**
+ * The map output key record.
+ */
  public static class KeyRecord {
  private int id = -1;
 
- public KeyRecord() {}
+ public KeyRecord() {
+ }
 
  public KeyRecord(int id) {
  this.id = id;
@@ -95,7 +115,8 @@ public class TestAvroMultipleInputs {
  }
  }
 
- /** The common map output value record.
+ /**
+ * The common map output value record.
  * Carries a tag specifying what source
  * record type was.
  */
@@ -105,7 +126,8 @@ public class TestAvroMultipleInputs {
  private long balance = 0L;
  private CharSequence recType = "";
 
- public JoinableRecord() {}
+ public JoinableRecord() {
+ }
 
  public JoinableRecord(
  CharSequence recType,
@@ -124,13 +146,16 @@ public class TestAvroMultipleInputs {
  }
  }
 
- /** The output, combined record. */
+ /**
+ * The output, combined record.
+ */
  public static class CompleteRecord {
  private int id = -1;
  private CharSequence name = "";
  private long balance = 0L;
 
- public CompleteRecord() {}
+ public CompleteRecord() {
+ }
 
  public CompleteRecord(int id, CharSequence name, long balance) {
  this.name = name;
@@ -138,11 +163,17 @@ public class TestAvroMultipleInputs {
  this.balance = balance;
  }
 
- void setId(int id) { this.id = id; };
+ void setId(int id) {
+ this.id = id;
+ }
 
- void setName(CharSequence name) { this.name = name; };
+ void setName(CharSequence name) {
+ this.name = name;
+ }
 
- void setBalance(long balance) { this.balance = balance; };
+ void setBalance(long balance) {
+ this.balance = balance;
+ }
 
  @Override
  public String toString() {
@@ -208,15 +239,11 @@ public class TestAvroMultipleInputs {
  @Test
  public void testJob() throws Exception {
  JobConf job = new JobConf();
- String dir = System.getProperty("test.dir", ".") +
- "target/testAvroMultipleInputs";
- Path inputPath1 = new Path(dir + "/in1");
- Path inputPath2 = new Path(dir + "/in2");
- Path outputPath = new Path(dir + "/out");
+ Path inputPath1 = new Path(INPUT_DIR_1.getRoot().getPath());
+ Path inputPath2 = new Path(INPUT_DIR_2.getRoot().getPath());
+ Path outputPath = new Path(OUTPUT_DIR.getRoot().getPath());
 
- outputPath.getFileSystem(job).delete(outputPath, true);
- inputPath1.getFileSystem(job).delete(inputPath1, true);
- inputPath2.getFileSystem(job).delete(inputPath2, true);
+ outputPath.getFileSystem(job).delete(outputPath);
 
  writeNamesFiles(new File(inputPath1.toUri().getPath()));
  writeBalancesFiles(new File(inputPath2.toUri().getPath()));
@@ -243,7 +270,7 @@ public class TestAvroMultipleInputs {
 
  JobClient.runJob(job);
 
- validateCompleteFile(new File(new File(dir, "out"), "part-00000.avro"));
+ validateCompleteFile(new File(OUTPUT_DIR.getRoot(), "part-00000.avro"));
  }
 
  /**
@@ -251,45 +278,42 @@ public class TestAvroMultipleInputs {
  */
  private void writeNamesFiles(File dir) throws IOException {
  DatumWriter<NamesRecord> writer = new ReflectDatumWriter<>();
- DataFileWriter<NamesRecord> out = new DataFileWriter<>(writer);
- File namesFile = new File(dir+"/names.avro");
- dir.mkdirs();
+ File namesFile = new File(dir + "/names.avro");
+ try (DataFileWriter<NamesRecord> out = new DataFileWriter<>(writer)) {
  out.create(ReflectData.get().getSchema(NamesRecord.class), namesFile);
- for (int i=0; i < 5; i++)
- out.append(new NamesRecord(i, "record"+i));
- out.close();
+ for (int i = 0; i < 5; i++) {
+ out.append(new NamesRecord(i, "record" + i));
+ }
+ }
  }
 
  /**
  * Writes a "balances.avro" file with five sequential <id, balance> pairs.
  */
  private void writeBalancesFiles(File dir) throws IOException {
- DatumWriter<BalancesRecord> writer =
- new ReflectDatumWriter<>();
- DataFileWriter<BalancesRecord> out =
- new DataFileWriter<>(writer);
- File namesFile = new File(dir+"/balances.avro");
- dir.mkdirs();
+ DatumWriter<BalancesRecord> writer = new ReflectDatumWriter<>();
+ File namesFile = new File(dir + "/balances.avro");
+ try (DataFileWriter<BalancesRecord> out = new DataFileWriter<>(writer)) {
  out.create(ReflectData.get().getSchema(BalancesRecord.class), namesFile);
- for (int i=0; i < 5; i++)
- out.append(new BalancesRecord(i, (long) i+100));
- out.close();
+ for (int i = 0; i < 5; i++) {
+ out.append(new BalancesRecord(i, (long) i + 100));
+ }
+ }
  }
 
  private void validateCompleteFile(File file) throws Exception {
- DatumReader<CompleteRecord> reader =
- new ReflectDatumReader<>();
- InputStream in = new BufferedInputStream(new FileInputStream(file));
- DataFileStream<CompleteRecord> records =
- new DataFileStream<>(in, reader);
+ DatumReader<CompleteRecord> reader = new ReflectDatumReader<>();
  int numRecs = 0;
+ try(InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+ try (DataFileStream<CompleteRecord> records = new DataFileStream<>(in, reader)) {
  for (CompleteRecord rec : records) {
  assertEquals(rec.id, numRecs);
- assertEquals(rec.balance-100, rec.id);
- assertEquals(rec.name, "record"+rec.id);
+ assertEquals(rec.balance - 100, rec.id);
+ assertEquals(rec.name, "record" + rec.id);
  numRecs++;
  }
- records.close();
+ }
+ }
  assertEquals(5, numRecs);
  }
 
