@@ -504,7 +504,7 @@ module Avro
  def write_data(writers_schema, logical_datum, encoder)
  datum = writers_schema.type_adapter.encode(logical_datum)
 
- unless Schema.validate(writers_schema, datum, encoded = true)
+ unless Schema.validate(writers_schema, datum, { recursive: false, encoded: true })
  raise AvroTypeError.new(writers_schema, datum)
  end
 
@@ -539,6 +539,7 @@ module Avro
  end
 
  def write_array(writers_schema, datum, encoder)
+ raise AvroTypeError.new(writers_schema, datum) unless datum.is_a?(Array)
  if datum.size > 0
  encoder.write_long(datum.size)
  datum.each do |item|
@@ -549,6 +550,7 @@ module Avro
  end
 
  def write_map(writers_schema, datum, encoder)
+ raise AvroTypeError.new(writers_schema, datum) unless datum.is_a?(Hash)
  if datum.size > 0
  encoder.write_long(datum.size)
  datum.each do |k,v|
@@ -571,6 +573,7 @@ module Avro
  end
 
  def write_record(writers_schema, datum, encoder)
+ raise AvroTypeError.new(writers_schema, datum) unless datum.is_a?(Hash)
  writers_schema.fields.each do |field|
  write_data(field.type, datum[field.name], encoder)
  end
