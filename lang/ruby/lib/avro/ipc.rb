@@ -74,10 +74,10 @@ module Avro::IPC
 
  class ConnectionClosedException < Avro::AvroError; end
 
+ # Base class for the client side of a protocol interaction.
  class Requestor
- """Base class for the client side of a protocol interaction."""
- attr_reader :local_protocol, :transport
- attr_accessor :remote_protocol, :remote_hash, :send_protocol
+ attr_reader :local_protocol, :transport, :remote_protocol, :remote_hash
+ attr_accessor :send_protocol
 
  def initialize(local_protocol, transport)
  @local_protocol = local_protocol
@@ -195,7 +195,7 @@ module Avro::IPC
  # the message response, serialized per the message's response schema.
  # * if the error flag is true,
  # the error, serialized per the message's error union schema.
- response_metadata = META_READER.read(decoder)
+ _response_metadata = META_READER.read(decoder)
 
  # remote response schema
  remote_message_schema = remote_protocol.messages[message_name]
@@ -257,7 +257,7 @@ module Avro::IPC
  end
 
  # read request using remote protocol
- request_metadata = META_READER.read(buffer_decoder)
+ _request_metadata = META_READER.read(buffer_decoder)
  remote_message_name = buffer_decoder.read_string
 
  # get remote and local request schemas so we can do
