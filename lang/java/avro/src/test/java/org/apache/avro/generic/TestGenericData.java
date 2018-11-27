@@ -323,9 +323,9 @@ public class TestGenericData {
  Schema decMapSchema = new Schema.Parser().parse("{\"type\": \"map\", \"values\": \"string\", \"java-key-class\" : \"java.math.BigDecimal\"}");
  Field decMapField = new Field("decMap", Schema.createMap(decMapSchema), null, null);
  Schema boolMapSchema = new Schema.Parser().parse("{\"type\": \"map\", \"values\": \"string\", \"java-key-class\" : \"java.lang.Boolean\"}");
- Field boolMapField = new Field("boolMap", Schema.createMap(decMapSchema), null, null);
+ Field boolMapField = new Field("boolMap", Schema.createMap(boolMapSchema), null, null);
  Schema fileMapSchema = new Schema.Parser().parse("{\"type\": \"map\", \"values\": \"string\", \"java-key-class\" : \"java.io.File\"}");
- Field fileMapField = new Field("fileMap", Schema.createMap(decMapSchema), null, null);
+ Field fileMapField = new Field("fileMap", Schema.createMap(fileMapSchema), null, null);
  Schema schema = Schema.createRecord("my_record", "doc", "mytest", false);
  schema.setFields(Arrays.asList(intMapField,decMapField,boolMapField,fileMapField));
 
@@ -366,6 +366,13 @@ public class TestGenericData {
  ByteBuffer bytes = ByteBuffer.wrap(new byte[] {'a', '\n', 'b'});
  assertEquals("{\"bytes\": \"a\\nb\"}", data.toString(bytes));
  assertEquals("{\"bytes\": \"a\\nb\"}", data.toString(bytes));
+ }
+
+ @Test public void testToStringEscapesControlCharsInMap() {
+ GenericData data = GenericData.get();
+ Map<String, String> m = new HashMap<>();
+ m.put("a\n\\b", "a\n\\b");
+ assertEquals("{\"a\\n\\\\b\": \"a\\n\\\\b\"}", data.toString(m));
  }
 
  @Test public void testToStringFixed() throws Exception {
