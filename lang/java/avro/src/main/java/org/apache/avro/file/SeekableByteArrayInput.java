@@ -27,15 +27,18 @@ public class SeekableByteArrayInput extends ByteArrayInputStream implements Seek
  super(data);
  }
 
+ @Override
  public long length() throws IOException {
  return this.count;
  }
 
+ @Override
  public void seek(long p) throws IOException {
  this.reset();
  this.skip(p);
  }
 
+ @Override
  public long tell() throws IOException {
  return this.pos;
  }
