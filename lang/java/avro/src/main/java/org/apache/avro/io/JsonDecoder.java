@@ -500,8 +500,6 @@ public class JsonDecoder extends ParsingDecoder
  in.nextToken();
  }
 
- if (in.getCurrentToken() == JsonToken.END_OBJECT) {
-
  if (top == Symbol.RECORD_END) {
  if (currentReorderBuffer != null && !currentReorderBuffer.savedFields.isEmpty()) {
  throw error("Unknown fields: " + currentReorderBuffer.savedFields.keySet());
@@ -512,9 +510,6 @@ public class JsonDecoder extends ParsingDecoder
  //AVRO-2034 advance beyond the end object for the next record.
  in.nextToken();
 
- } else {
- throw error(top == Symbol.RECORD_END ? "record-end" : "union-end");
- }
  } else {
  throw new AvroTypeException("Unknown action symbol " + top);
  }
