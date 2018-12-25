@@ -317,6 +317,7 @@ std::ostream& operator << (std::ostream& os, const DataFileSync& s)
 
 bool DataFileReaderBase::hasMore()
 {
+ for (; ;) {
  if (eof_) {
  return false;
  } else if (objectCount_ != 0) {
@@ -331,7 +332,8 @@ bool DataFileReaderBase::hasMore()
  if (s != sync_) {
  throw Exception("Sync mismatch");
  }
- return readDataBlock();
+ readDataBlock();
+ }
 }
 
 class BoundedInputStream : public InputStream {
@@ -377,7 +379,7 @@ unique_ptr<InputStream> boundedInputStream(InputStream& in, size_t limit)
  return unique_ptr<InputStream>(new BoundedInputStream(in, limit));
 }
 
-bool DataFileReaderBase::readDataBlock()
+void DataFileReaderBase::readDataBlock()
 {
  decoder_->init(*stream_);
  blockStart_ = stream_->byteCount();
@@ -385,7 +387,7 @@ bool DataFileReaderBase::readDataBlock()
  size_t n = 0;
  if (! stream_->next(&p, &n)) {
  eof_ = true;
- return false;
+ return;
  }
  stream_->backup(n);
  avro::decode(*decoder_, objectCount_);
@@ -452,7 +454,6 @@ bool DataFileReaderBase::readDataBlock()
  dataDecoder_->init(*in);
  dataStream_ = std::move(in);
  }
- return true;
 }
 
 void DataFileReaderBase::close()
@@ -515,7 +516,8 @@ void DataFileReaderBase::readHeader()
  blockStart_ = stream_->byteCount();
 }
 
-void DataFileReaderBase::doSeek(int64_t position) {
+void DataFileReaderBase::doSeek(int64_t position)
+{
  if (SeekableInputStream *ss = dynamic_cast<SeekableInputStream *>(stream_.get())) {
  if (!eof_) {
  dataDecoder_->init(*dataStream_);
@@ -529,12 +531,14 @@ void DataFileReaderBase::doSeek(int64_t position) {
  }
 }
 
-void DataFileReaderBase::seek(int64_t position) {
+void DataFileReaderBase::seek(int64_t position)
+{
  doSeek(position);
  readDataBlock();
 }
 
-void DataFileReaderBase::sync(int64_t position) {
+void DataFileReaderBase::sync(int64_t position)
+{
  doSeek(position);
  DataFileSync sync_buffer;
  const uint8_t *p = 0;
