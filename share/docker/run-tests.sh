@@ -26,6 +26,8 @@ set -e
 for lang in /avro/lang/*/
 do
  headline "Run tests: $lang"
+ if [ $lang -ne "ruby" ]
  cd "$lang"
  ./build.sh test
+ fi
 done
