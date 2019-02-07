@@ -15,21 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.avro.ipc.stats;
 
-import org.apache.avro.ipc.stats.Stopwatch.Ticks;
+package org.apache.avro.ipc.jetty;
 
-/** Implements Ticks with manual time-winding. */
-public class FakeTicks implements Ticks {
- long time = 0;
+import java.net.URL;
 
- @Override
- public long ticks() {
- return time;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.util.resource.Resource;
+
+/**
+ * Very simple servlet class capable of serving static files.
+ */
+public class StaticServlet extends DefaultServlet {
+ private static final long serialVersionUID = 1L;
+
+ public Resource getResource(String pathInContext) {
+ // Take only last slice of the URL as a filename, so we can adjust path.
+ // This also prevents mischief like '../../foo.css'
+ String[] parts = pathInContext.split("/");
+ String filename = parts[parts.length - 1];
+
+ URL resource = getClass().getClassLoader().getResource(
+ "org/apache/avro/ipc/stats/static/" + filename);
+ if (resource == null) { return null; }
+ return Resource.newResource(resource);
  }
-
- public void passTime(long nanos) {
- time += nanos;
- }
-
 }
