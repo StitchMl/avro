@@ -62,12 +62,13 @@ class Protocol(object):
  if message_objects.has_key(name):
  fail_msg = 'Message name "%s" repeated.' % name
  raise ProtocolParseException(fail_msg)
- elif not(hasattr(body, 'get') and callable(body.get)):
- fail_msg = 'Message name "%s" has non-object body %s.' % (name, body)
- raise ProtocolParseException(fail_msg)
+ try:
  request = body.get('request')
  response = body.get('response')
  errors = body.get('errors')
+ except AttributeError:
+ fail_msg = 'Message name "%s" has non-object body %s.' % (name, body)
+ raise ProtocolParseException(fail_msg)
  message_objects[name] = Message(name, request, response, errors, names)
  return message_objects
 
@@ -79,14 +80,13 @@ class Protocol(object):
  elif not isinstance(name, basestring):
  fail_msg = 'The name property must be a string.'
  raise ProtocolParseException(fail_msg)
- elif namespace is not None and not isinstance(namespace, basestring):
+ elif not (namespace is None or isinstance(namespace, basestring)):
  fail_msg = 'The namespace property must be a string.'
  raise ProtocolParseException(fail_msg)
- elif types is not None and not isinstance(types, list):
+ elif not (types is None or isinstance(types, list)):
  fail_msg = 'The types property must be a list.'
  raise ProtocolParseException(fail_msg)
- elif (messages is not None and
- not(hasattr(messages, 'get') and callable(messages.get))):
+ elif not (messages is None or callable(getattr(messages, 'get', None))):
  fail_msg = 'The messages property must be a JSON object.'
  raise ProtocolParseException(fail_msg)
 
@@ -203,14 +203,14 @@ class Message(object):
 
 def make_avpr_object(json_data):
  """Build Avro Protocol from data parsed out of JSON string."""
- if hasattr(json_data, 'get') and callable(json_data.get):
+ try:
  name = json_data.get('protocol')
  namespace = json_data.get('namespace')
  types = json_data.get('types')
  messages = json_data.get('messages')
- return Protocol(name, namespace, types, messages)
- else:
+ except AttributeError:
  raise ProtocolParseException('Not a JSON object: %s' % json_data)
+ return Protocol(name, namespace, types, messages)
 
 def parse(json_string):
  """Constructs the Protocol from the JSON text."""
@@ -221,4 +221,3 @@ def parse(json_string):
 
  # construct the Avro Protocol object
  return make_avpr_object(json_data)
-

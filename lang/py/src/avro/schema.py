@@ -113,6 +113,7 @@ class SchemaParseException(AvroException):
 
 class Schema(object):
  """Base class for all Schema classes."""
+ _props = None
  def __init__(self, type, other_props=None):
  # Ensure valid ctor args
  if not isinstance(type, basestring):
@@ -123,7 +124,8 @@ class Schema(object):
  raise SchemaParseException(fail_msg)
 
  # add members
- if not hasattr(self, '_props'): self._props = {}
+ if self._props is None:
+ self._props = {}
  self.set_prop('type', type)
  self.type = type
  self._props.update(other_props or {})
@@ -699,7 +701,7 @@ class RecordSchema(NamedSchema):
  field_objects = []
  field_names = []
  for i, field in enumerate(field_data):
- if hasattr(field, 'get') and callable(field.get):
+ if callable(getattr(field, 'get', None)):
  type = field.get('type')
  name = field.get('name')
 
@@ -794,7 +796,7 @@ def get_other_props(all_props,reserved_props):
  Retrieve the non-reserved properties from a dictionary of properties
  @args reserved_props: The set of reserved properties to exclude
  """
- if hasattr(all_props, 'items') and callable(all_props.items):
+ if callable(getattr(all_props, 'items', None)):
  return dict([(k,v) for (k,v) in all_props.items() if k not in
  reserved_props ])
 
@@ -809,7 +811,7 @@ def make_avsc_object(json_data, names=None):
  names = Names()
 
  # JSON object (non-union)
- if hasattr(json_data, 'get') and callable(json_data.get):
+ if callable(getattr(json_data, 'get', None)):
  type = json_data.get('type')
  other_props = get_other_props(json_data, SCHEMA_RESERVED_PROPS)
  logical_type = None
