@@ -65,9 +65,7 @@ public class RpcProtocolTool implements Tool {
 
  URI uri = URI.create(args.get(0));
 
- Transceiver transceiver = null;
- try {
- transceiver = Ipc.createTransceiver(uri);
+ try (Transceiver transceiver = Ipc.createTransceiver(uri)) {
 
  // write an empty HandshakeRequest
  HandshakeRequest rq = HandshakeRequest.newBuilder()
@@ -102,9 +100,6 @@ public class RpcProtocolTool implements Tool {
  // finally output the protocol
  out.println(p.toString(true));
 
- } finally {
- if( transceiver != null )
- transceiver.close();
  }
  return 0;
  }

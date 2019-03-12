@@ -64,7 +64,6 @@ public class NettyServer implements Server {
  "avro-netty-server");
  private final ChannelFactory channelFactory;
  private final CountDownLatch closed = new CountDownLatch(1);
- private final ExecutionHandler executionHandler;
 
  public NettyServer(Responder responder, InetSocketAddress addr) {
  this(responder, addr, new NioServerSocketChannelFactory
@@ -90,11 +89,9 @@ public class NettyServer implements Server {
  final ExecutionHandler executionHandler) {
  this.responder = responder;
  this.channelFactory = channelFactory;
- this.executionHandler = executionHandler;
+ ExecutionHandler executionHandler1 = executionHandler;
  ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
- bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
- @Override
- public ChannelPipeline getPipeline() throws Exception {
+ bootstrap.setPipelineFactory(() -> {
  ChannelPipeline p = pipelineFactory.getPipeline();
  p.addLast("frameDecoder", new NettyFrameDecoder());
  p.addLast("frameEncoder", new NettyFrameEncoder());
@@ -103,7 +100,6 @@ public class NettyServer implements Server {
  }
  p.addLast("handler", new NettyServerAvroHandler());
  return p;
- }
  });
  serverChannel = bootstrap.bind(addr);
  allChannels.add(serverChannel);
@@ -118,12 +114,7 @@ public class NettyServer implements Server {
  public NettyServer(Responder responder, InetSocketAddress addr,
  ChannelFactory channelFactory,
  final ExecutionHandler executionHandler) {
- this(responder, addr, channelFactory, new ChannelPipelineFactory() {
- @Override
- public ChannelPipeline getPipeline() throws Exception {
- return Channels.pipeline();
- }
- }, executionHandler);
+ this(responder, addr, channelFactory, Channels::pipeline, executionHandler);
  }
 
  @Override

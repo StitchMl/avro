@@ -90,15 +90,12 @@ public class RpcReceiveTool implements Tool {
  throw new RuntimeException(e);
  }
  out.println();
- new Thread() {
- @Override
- public void run() {
+ new Thread(() -> {
  try {
  Thread.sleep(1000);
  } catch (InterruptedException e) {}
  latch.countDown();
- }
- }.start();
+ }).start();
  return response;
  }
  }

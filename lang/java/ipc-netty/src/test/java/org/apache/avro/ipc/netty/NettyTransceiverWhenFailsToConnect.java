@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * This is a very specific test that verifies that if the NettyTransceiver fails
@@ -37,11 +37,9 @@ public class NettyTransceiverWhenFailsToConnect {
 
  @Test(expected = IOException.class)
  public void testNettyTransceiverReleasesNettyChannelOnFailingToConnect() throws Exception {
- ServerSocket serverSocket = null;
- LastChannelRememberingChannelFactory socketChannelFactory = null;
 
- try {
- serverSocket = new ServerSocket(0);
+ LastChannelRememberingChannelFactory socketChannelFactory = null;
+ try (ServerSocket serverSocket = new ServerSocket(0)) {
  socketChannelFactory = new LastChannelRememberingChannelFactory();
 
  try {
@@ -51,16 +49,12 @@ public class NettyTransceiverWhenFailsToConnect {
  1L
  );
  } finally {
- assertEquals("expected that the channel opened by the transceiver is closed",
- false, socketChannelFactory.lastChannel.isOpen());
+ assertFalse("expected that the channel opened by the transceiver is closed", socketChannelFactory.lastChannel.isOpen());
  }
  } finally {
 
- if (serverSocket != null) {
  // closing the server socket will actually free up the open channel in the
  // transceiver, which would have hung otherwise (pre AVRO-1407)
- serverSocket.close();
- }
 
  if (socketChannelFactory != null) {
  socketChannelFactory.releaseExternalResources();

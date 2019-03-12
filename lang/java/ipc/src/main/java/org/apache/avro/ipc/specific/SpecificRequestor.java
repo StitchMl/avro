@@ -73,15 +73,14 @@ public class SpecificRequestor extends Requestor implements InvocationHandler {
  public Object invoke(Object proxy, Method method, Object[] args)
  throws Throwable {
  String name = method.getName();
- if (name.equals("hashCode")) {
+ switch (name) {
+ case "hashCode":
  return hashCode();
- }
- else if (name.equals("equals")) {
+ case "equals":
  Object obj = args[0];
  return (proxy == obj) || (obj != null && Proxy.isProxyClass(obj.getClass())
  && this.equals(Proxy.getInvocationHandler(obj)));
- }
- else if (name.equals("toString")) {
+ case "toString":
  String protocol = "unknown";
  String remote = "unknown";
  Class<?>[] interfaces = proxy.getClass().getInterfaces();
@@ -100,21 +99,19 @@ public class SpecificRequestor extends Requestor implements InvocationHandler {
  }
  }
  return "Proxy[" + protocol + "," + remote + "]";
- }
- else {
+ default:
  try {
  // Check if this is a callback-based RPC:
  Type[] parameterTypes = method.getParameterTypes();
  if ((parameterTypes.length > 0) &&
  (parameterTypes[parameterTypes.length - 1] instanceof Class) &&
- Callback.class.isAssignableFrom(((Class<?>)parameterTypes[parameterTypes.length - 1]))) {
+ Callback.class.isAssignableFrom(((Class<?>) parameterTypes[parameterTypes.length - 1]))) {
  // Extract the Callback from the end of of the argument list
  Object[] finalArgs = Arrays.copyOf(args, args.length - 1);
- Callback<?> callback = (Callback<?>)args[args.length - 1];
+ Callback<?> callback = (Callback<?>) args[args.length - 1];
  request(method.getName(), finalArgs, callback);
  return null;
- }
- else {
+ } else {
  return request(method.getName(), args);
  }
  } catch (Exception e) {

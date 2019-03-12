@@ -126,9 +126,8 @@ public class DataFileRepairTool implements Tool {
  }
  out.println("Recovering file: " + input);
  GenericDatumReader<Object> reader = new GenericDatumReader<>();
- DataFileReader<Object> fileReader = new DataFileReader<>(infile,
- reader);
- try {
+ try (DataFileReader<Object> fileReader = new DataFileReader<>(infile,
+ reader)) {
  Schema schema = fileReader.getSchema();
  String codecStr = fileReader.getMetaString(DataFileConstants.CODEC);
  CodecFactory codecFactory = CodecFactory.fromString("" + codecStr);
@@ -157,8 +156,6 @@ public class DataFileRepairTool implements Tool {
  recoverAfter, null, null);
  }
 
- } finally {
- fileReader.close();
  }
  }
 
