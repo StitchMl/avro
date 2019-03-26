@@ -34,12 +34,15 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
  * transition
  *
  * <p>
- * A MapReduce InputFormat that reads from Trevni container files of key/value generic records.
+ * A MapReduce InputFormat that reads from Trevni container files of key/value
+ * generic records.
  *
  * <p>
- * Trevni container files that container generic records with the two fields 'key' and
- * 'value' are expected. The contents of the 'key' field will be used as the job input
- * key, and the contents of the 'value' field will be used as the job output value.</p>
+ * Trevni container files that container generic records with the two fields
+ * 'key' and 'value' are expected. The contents of the 'key' field will be used
+ * as the job input key, and the contents of the 'value' field will be used as
+ * the job output value.
+ * </p>
  *
  * @param <K> The type of the Trevni key to read.
  * @param <V> The type of the Trevni value to read.
@@ -53,12 +56,10 @@ public class AvroTrevniKeyValueInputFormat<K, V> extends FileInputFormat<AvroKey
 
  /** {@inheritDoc} */
  @Override
- public RecordReader<AvroKey<K>, AvroValue<V>> createRecordReader(
- InputSplit split, TaskAttemptContext context) throws IOException,
- InterruptedException {
+ public RecordReader<AvroKey<K>, AvroValue<V>> createRecordReader(InputSplit split, TaskAttemptContext context)
+ throws IOException, InterruptedException {
 
  return new AvroTrevniKeyValueRecordReader<>();
  }
-
 
 }

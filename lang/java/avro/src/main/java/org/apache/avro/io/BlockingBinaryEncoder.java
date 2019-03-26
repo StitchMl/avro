@@ -25,7 +25,8 @@ import java.util.Arrays;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
 
-/** A {@link BinaryEncoder} implementation that writes large arrays and maps as a
+/**
+ * A {@link BinaryEncoder} implementation that writes large arrays and maps as a
  * sequence of blocks. So long as individual primitive values fit in memory,
  * arbitrarily long arrays and maps may be written and subsequently read without
  * exhausting memory. Values are buffered until the specified block size would
@@ -45,54 +46,52 @@ import org.apache.avro.Schema;
  */
 public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
 
- /* Implementation note:
+ /*
+ * Implementation note:
  *
- * Blocking is complicated because of nesting. If a large, nested
- * value overflows your buffer, you've got to do a lot of dancing
- * around to output the blocks correctly.
+ * Blocking is complicated because of nesting. If a large, nested value
+ * overflows your buffer, you've got to do a lot of dancing around to output the
+ * blocks correctly.
  *
- * To handle this complexity, this class keeps a stack of blocked
- * values: each time a new block is started (e.g., by a call to
- * {@link #writeArrayStart}), an entry is pushed onto this stack.
+ * To handle this complexity, this class keeps a stack of blocked values: each
+ * time a new block is started (e.g., by a call to {@link #writeArrayStart}), an
+ * entry is pushed onto this stack.
  *
- * In this stack, we keep track of the state of a block. Blocks can
- * be in two states. "Regular" blocks have a non-zero byte count.
- * "Overflow" blocks help us deal with the case where a block
- * contains a value that's too big to buffer. In this case, the
- * block contains only one item, and we give it an unknown
- * byte-count. Because these values (1,unknown) are fixed, we're
- * able to write the header for these overflow blocks to the
- * underlying stream without seeing the entire block. After writing
- * this header, we've freed our buffer space to be fully devoted to
- * blocking the large, inner value.
+ * In this stack, we keep track of the state of a block. Blocks can be in two
+ * states. "Regular" blocks have a non-zero byte count. "Overflow" blocks help
+ * us deal with the case where a block contains a value that's too big to
+ * buffer. In this case, the block contains only one item, and we give it an
+ * unknown byte-count. Because these values (1,unknown) are fixed, we're able to
+ * write the header for these overflow blocks to the underlying stream without
+ * seeing the entire block. After writing this header, we've freed our buffer
+ * space to be fully devoted to blocking the large, inner value.
  */
 
  private static class BlockedValue {
  public enum State {
  /**
- * The bottom element of our stack represents being _outside_
- * of a blocked value.
+ * The bottom element of our stack represents being _outside_ of a blocked
+ * value.
  */
  ROOT,
 
  /**
- * Represents the "regular" case, i.e., a blocked-value whose
- * current block is fully contained in the buffer. In this
- * case, {@link BlockedValue#start} points to the start of the
- * blocks _data_ -- but no room has been left for a header!
- * When this block is terminated, it's data will have to be
- * moved over a bit to make room for the header. */
+ * Represents the "regular" case, i.e., a blocked-value whose current block is
+ * fully contained in the buffer. In this case, {@link BlockedValue#start}
+ * points to the start of the blocks _data_ -- but no room has been left for a
+ * header! When this block is terminated, it's data will have to be moved over a
+ * bit to make room for the header.
+ */
  REGULAR,
 
  /**
- * Represents a blocked-value whose current block is in the
- * overflow state. In this case, {@link BlockedValue#start} is zero. The
- * header for such a block has _already been written_ (we've
- * written out a header indicating that the block has a single
- * item, and we put a "zero" down for the byte-count to indicate
- * that we don't know the physical length of the buffer. Any blocks
- * _containing_ this block must be in the {@link #OVERFLOW}
- * state. */
+ * Represents a blocked-value whose current block is in the overflow state. In
+ * this case, {@link BlockedValue#start} is zero. The header for such a block
+ * has _already been written_ (we've written out a header indicating that the
+ * block has a single item, and we put a "zero" down for the byte-count to
+ * indicate that we don't know the physical length of the buffer. Any blocks
+ * _containing_ this block must be in the {@link #OVERFLOW} state.
+ */
  OVERFLOW
  }
 
@@ -106,18 +105,17 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  public int start;
 
  /**
- * The index one past the last byte for the previous item. If this
- * is the first item, this is same as {@link #start}.
+ * The index one past the last byte for the previous item. If this is the first
+ * item, this is same as {@link #start}.
  */
  public int lastFullItem;
 
  /**
- * Number of items in this blocked value that are stored
- * in the buffer.
+ * Number of items in this blocked value that are stored in the buffer.
  */
  public int items;
 
- /** Number of items left to write*/
+ /** Number of items left to write */
  public long itemsLeftToWrite;
 
  /** Create a ROOT instance. */
@@ -129,13 +127,12 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  }
 
  /**
- * Check invariants of <code>this</code> and also the
- * <code>BlockedValue</code> containing <code>this</code>.
+ * Check invariants of <code>this</code> and also the <code>BlockedValue</code>
+ * containing <code>this</code>.
  */
  public boolean check(BlockedValue prev, int pos) {
  assert state != State.ROOT || type == null;
- assert (state == State.ROOT ||
- type == Schema.Type.ARRAY || type == Schema.Type.MAP);
+ assert (state == State.ROOT || type == Schema.Type.ARRAY || type == Schema.Type.MAP);
 
  assert 0 <= items;
  assert 0 != items || start == pos; // 0==items ==> start==pos
@@ -164,8 +161,7 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  }
 
  /**
- * The buffer to hold the bytes before being written into the underlying
- * stream.
+ * The buffer to hold the bytes before being written into the underlying stream.
  */
  private byte[] buf;
 
@@ -181,8 +177,8 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  private int stackTop = -1;
  private static final int STACK_STEP = 10;
 
- //buffer large enough for up to two ints for a block header
- //rounded up to a multiple of 4 bytes.
+ // buffer large enough for up to two ints for a block header
+ // rounded up to a multiple of 4 bytes.
  private byte[] headerBuffer = new byte[12];
 
  private boolean check() {
@@ -200,8 +196,7 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  return true;
  }
 
- BlockingBinaryEncoder(OutputStream out,
- int blockBufferSize, int binaryEncoderBufferSize) {
+ BlockingBinaryEncoder(OutputStream out, int blockBufferSize, int binaryEncoderBufferSize) {
  super(out, binaryEncoderBufferSize);
  this.buf = new byte[blockBufferSize];
  this.pos = 0;
@@ -218,15 +213,13 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
 
  private void expandStack() {
  int oldLength = blockStack.length;
- blockStack = Arrays.copyOf(blockStack,
- blockStack.length + STACK_STEP);
+ blockStack = Arrays.copyOf(blockStack, blockStack.length + STACK_STEP);
  for (int i = oldLength; i < blockStack.length; i++) {
  blockStack[i] = new BlockedValue();
  }
  }
 
- BlockingBinaryEncoder configure(OutputStream out, int blockBufferSize,
- int binaryEncoderBufferSize) {
+ BlockingBinaryEncoder configure(OutputStream out, int blockBufferSize, int binaryEncoderBufferSize) {
  super.configure(out, binaryEncoderBufferSize);
  pos = 0;
  stackTop = 0;
@@ -401,7 +394,7 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  }
 
  private void endBlockedValue() throws IOException {
- for (; ;) {
+ for (;;) {
  assert check();
  BlockedValue t = blockStack[stackTop];
  assert t.state != BlockedValue.State.ROOT;
@@ -411,9 +404,8 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  assert t.state == BlockedValue.State.REGULAR;
  if (0 < t.items) {
  int byteCount = pos - t.start;
- if (t.start == 0 &&
- blockStack[stackTop - 1].state
- != BlockedValue.State.REGULAR) { // Lucky us -- don't have to move
+ if (t.start == 0 && blockStack[stackTop - 1].state != BlockedValue.State.REGULAR) { // Lucky us -- don't have to
+ // move
  super.writeInt(-t.items);
  super.writeInt(byteCount);
  } else {
@@ -443,9 +435,10 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  }
 
  /**
- * Called when we've finished writing the last item in an overflow
- * buffer. When this is finished, the top of the stack will be
- * an empty block in the "regular" state.
+ * Called when we've finished writing the last item in an overflow buffer. When
+ * this is finished, the top of the stack will be an empty block in the
+ * "regular" state.
+ *
  * @throws IOException
  */
  private void finishOverflow() throws IOException {
@@ -477,16 +470,15 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  }
  }
 
- private void doWriteBytes(byte[] bytes, int start, int len)
- throws IOException {
+ private void doWriteBytes(byte[] bytes, int start, int len) throws IOException {
  if (len < buf.length) {
  ensureBounds(len);
  System.arraycopy(bytes, start, buf, pos, len);
  pos += len;
  } else {
  ensureBounds(buf.length);
- assert blockStack[stackTop].state == BlockedValue.State.ROOT ||
- blockStack[stackTop].state == BlockedValue.State.OVERFLOW;
+ assert blockStack[stackTop].state == BlockedValue.State.ROOT
+ || blockStack[stackTop].state == BlockedValue.State.OVERFLOW;
  write(bytes, start, len);
  }
  }
@@ -523,7 +515,8 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
  int i;
  for (i = 1; i <= stackTop; i++) {
  s = blockStack[i];
- if (s.state == BlockedValue.State.REGULAR) break;
+ if (s.state == BlockedValue.State.REGULAR)
+ break;
  }
  assert s != null;
 
@@ -552,8 +545,7 @@ public class BlockingBinaryEncoder extends BufferedBinaryEncoder {
 
  // Write any remaining bytes for "s", up to the next-most
  // deeply-nested value
- BlockedValue n = ((i + 1) <= stackTop ?
- blockStack[i + 1] : null);
+ BlockedValue n = ((i + 1) <= stackTop ? blockStack[i + 1] : null);
  int end = (n == null ? pos : n.start);
  super.writeFixed(buf, s.lastFullItem, end - s.lastFullItem);
 

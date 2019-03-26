@@ -32,16 +32,14 @@ public class TestLogicalTypesWithDefaults extends AbstractSpecificRecordTest {
  @Test
  public void testDefaultValueOfNullableField() throws IOException {
  LogicalTypesWithDefaults instanceOfGeneratedClass = LogicalTypesWithDefaults.newBuilder()
- .setNonNullDate(LocalDate.now())
- .build();
+ .setNonNullDate(LocalDate.now()).build();
  verifySerDeAndStandardMethods(instanceOfGeneratedClass);
  }
 
  @Test
  public void testDefaultValueOfNonNullField() throws IOException {
  LogicalTypesWithDefaults instanceOfGeneratedClass = LogicalTypesWithDefaults.newBuilder()
- .setNullableDate(LocalDate.now())
- .build();
+ .setNullableDate(LocalDate.now()).build();
  Assert.assertEquals(DEFAULT_VALUE, instanceOfGeneratedClass.getNonNullDate());
  verifySerDeAndStandardMethods(instanceOfGeneratedClass);
  }
@@ -49,9 +47,7 @@ public class TestLogicalTypesWithDefaults extends AbstractSpecificRecordTest {
  @Test
  public void testWithValues() throws IOException {
  LogicalTypesWithDefaults instanceOfGeneratedClass = LogicalTypesWithDefaults.newBuilder()
- .setNullableDate(LocalDate.now())
- .setNonNullDate(LocalDate.now())
- .build();
+ .setNullableDate(LocalDate.now()).setNonNullDate(LocalDate.now()).build();
  verifySerDeAndStandardMethods(instanceOfGeneratedClass);
  }
 

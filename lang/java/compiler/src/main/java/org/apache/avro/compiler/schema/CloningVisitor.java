@@ -26,8 +26,9 @@ import org.apache.avro.Schema;
 import static org.apache.avro.Schema.Type.RECORD;
 
 /**
- * this visitor will create a clone of the original Schema with docs and other nonessential fields stripped
- * by default. what attributes are copied is customizable.
+ * this visitor will create a clone of the original Schema with docs and other
+ * nonessential fields stripped by default. what attributes are copied is
+ * customizable.
  */
 public final class CloningVisitor implements SchemaVisitor<Schema> {
 
@@ -95,12 +96,12 @@ public final class CloningVisitor implements SchemaVisitor<Schema> {
  newSchema = Schema.create(type);
  break;
  case ENUM:
- newSchema = Schema.createEnum(terminal.getName(), copyDocs ? terminal.getDoc() : null,
- terminal.getNamespace(), terminal.getEnumSymbols());
+ newSchema = Schema.createEnum(terminal.getName(), copyDocs ? terminal.getDoc() : null, terminal.getNamespace(),
+ terminal.getEnumSymbols());
  break;
  case FIXED:
- newSchema = Schema.createFixed(terminal.getName(), copyDocs ? terminal.getDoc() : null,
- terminal.getNamespace(), terminal.getFixedSize());
+ newSchema = Schema.createFixed(terminal.getName(), copyDocs ? terminal.getDoc() : null, terminal.getNamespace(),
+ terminal.getFixedSize());
  break;
  default:
  throw new IllegalStateException("Unsupported schema " + terminal);
@@ -114,8 +115,8 @@ public final class CloningVisitor implements SchemaVisitor<Schema> {
  public SchemaVisitorAction visitNonTerminal(final Schema nt) {
  Schema.Type type = nt.getType();
  if (type == RECORD) {
- Schema newSchema = Schema.createRecord(nt.getName(), copyDocs ? nt.getDoc() : null,
- nt.getNamespace(), nt.isError());
+ Schema newSchema = Schema.createRecord(nt.getName(), copyDocs ? nt.getDoc() : null, nt.getNamespace(),
+ nt.isError());
  copyProperties.copy(nt, newSchema);
  replace.put(nt, newSchema);
  }

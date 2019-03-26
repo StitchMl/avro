@@ -41,7 +41,9 @@ class InputBuffer {
  private int runLength; // length of run
  private int runValue; // value of run
 
- public InputBuffer(Input in) throws IOException { this(in, 0); }
+ public InputBuffer(Input in) throws IOException {
+ this(in, 0);
+ }
 
  public InputBuffer(Input in, long position) throws IOException {
  this.in = in;
@@ -49,10 +51,10 @@ class InputBuffer {
  this.offset = position;
 
  if (in instanceof InputBytes) { // use buffer directly
- this.buf = ((InputBytes)in).getBuffer();
- this.limit = (int)in.length();
+ this.buf = ((InputBytes) in).getBuffer();
+ this.limit = (int) in.length();
  this.offset = limit;
- this.pos = (int)position;
+ this.pos = (int) position;
  } else { // create new buffer
  this.buf = new byte[8192]; // big enough for primitives
  }
@@ -60,8 +62,8 @@ class InputBuffer {
 
  public void seek(long position) throws IOException {
  runLength = 0;
- if (position >= (offset-limit) && position <= offset) {
- pos = (int)(limit - (offset - position)); // seek in buffer;
+ if (position >= (offset - limit) && position <= offset) {
+ pos = (int) (limit - (offset - position)); // seek in buffer;
  return;
  }
  pos = 0;
@@ -69,34 +71,38 @@ class InputBuffer {
  offset = position;
  }
 
- public long tell() { return (offset-limit)+pos; }
+ public long tell() {
+ return (offset - limit) + pos;
+ }
 
- public long length() { return inLength; }
+ public long length() {
+ return inLength;
+ }
 
  public <T extends Comparable> T readValue(ValueType type) throws IOException {
  switch (type) {
  case NULL:
  return null;
  case BOOLEAN:
- return (T)Boolean.valueOf(readBoolean());
+ return (T) Boolean.valueOf(readBoolean());
  case INT:
- return (T)Integer.valueOf(readInt());
+ return (T) Integer.valueOf(readInt());
  case LONG:
- return (T)Long.valueOf(readLong());
+ return (T) Long.valueOf(readLong());
  case FIXED32:
- return (T)Integer.valueOf(readFixed32());
+ return (T) Integer.valueOf(readFixed32());
  case FIXED64:
- return (T)Long.valueOf(readFixed64());
+ return (T) Long.valueOf(readFixed64());
  case FLOAT:
- return (T)Float.valueOf(readFloat());
+ return (T) Float.valueOf(readFloat());
  case DOUBLE:
- return (T)Double.valueOf(readDouble());
+ return (T) Double.valueOf(readDouble());
  case STRING:
- return (T)readString();
+ return (T) readString();
  case BYTES:
- return (T)readBytes(null);
+ return (T) readBytes(null);
  default:
- throw new TrevniRuntimeException("Unknown value type: "+type);
+ throw new TrevniRuntimeException("Unknown value type: " + type);
  }
  }
 
@@ -105,29 +111,35 @@ class InputBuffer {
  case NULL:
  break;
  case BOOLEAN:
- readBoolean(); break;
+ readBoolean();
+ break;
  case INT:
- readInt(); break;
+ readInt();
+ break;
  case LONG:
- readLong(); break;
+ readLong();
+ break;
  case FIXED32:
  case FLOAT:
- skip(4); break;
+ skip(4);
+ break;
  case FIXED64:
  case DOUBLE:
- skip(8); break;
+ skip(8);
+ break;
  case STRING:
  case BYTES:
- skipBytes(); break;
+ skipBytes();
+ break;
  default:
- throw new TrevniRuntimeException("Unknown value type: "+type);
+ throw new TrevniRuntimeException("Unknown value type: " + type);
  }
  }
 
  public boolean readBoolean() throws IOException {
  if (bitCount == 0)
  read();
- int bits = buf[pos-1] & 0xff;
+ int bits = buf[pos - 1] & 0xff;
  int bit = (bits >> bitCount) & 1;
  bitCount++;
  if (bitCount == 8)
@@ -146,8 +158,8 @@ class InputBuffer {
  if (length >= 0) // not a run
  return length;
 
- runLength = (1-length)>>>1; // start of run
- runValue = (length+1) & 1;
+ runLength = (1 - length) >>> 1; // start of run
+ runValue = (length + 1) & 1;
  return runValue;
  }
 
@@ -215,7 +227,7 @@ class InputBuffer {
  if (b > 0x7f) {
  // only the low 28 bits can be set, so this won't carry
  // the sign bit to the long
- l = innerLongDecode((long)n);
+ l = innerLongDecode((long) n);
  } else {
  l = n;
  }
@@ -276,8 +288,8 @@ class InputBuffer {
  return read() | (read() << 8) | (read() << 16) | (read() << 24);
 
  int len = 1;
- int n = (buf[pos] & 0xff) | ((buf[pos + len++] & 0xff) << 8)
- | ((buf[pos + len++] & 0xff) << 16) | ((buf[pos + len++] & 0xff) << 24);
+ int n = (buf[pos] & 0xff) | ((buf[pos + len++] & 0xff) << 8) | ((buf[pos + len++] & 0xff) << 16)
+ | ((buf[pos + len++] & 0xff) << 24);
  if ((pos + 4) > limit)
  throw new EOFException();
  pos += 4;
@@ -289,7 +301,7 @@ class InputBuffer {
  }
 
  public long readFixed64() throws IOException {
- return (readFixed32() & 0xFFFFFFFFL) | (((long)readFixed32()) << 32);
+ return (readFixed32() & 0xFFFFFFFFL) | (((long) readFixed32()) << 32);
  }
 
  public String readString() throws IOException {
@@ -329,7 +341,7 @@ class InputBuffer {
  }
 
  private void skip(long length) throws IOException {
- seek(tell()+length);
+ seek(tell() + length);
  }
 
  public int read() throws IOException {
@@ -371,7 +383,8 @@ class InputBuffer {
 
  private int readInput(byte[] b, int start, int len) throws IOException {
  int read = in.read(offset, b, start, len);
- if (read < 0) throw new EOFException();
+ if (read < 0)
+ throw new EOFException();
  offset += read;
  return read;
  }

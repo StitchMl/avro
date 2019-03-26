@@ -33,6 +33,10 @@
  <url>http://avro.apache.org/</url>
  <packaging>pom</packaging>
 
+ <properties>
+ <main.basedir>${project.parent.parent.basedir}</main.basedir>
+ </properties>
+
  <modules>
  <module>codegen-test</module>
  <module>test-custom-conversions</module>
@@ -91,9 +95,6 @@
  </plugins>
  </pluginManagement>
  </build>
-
- <profiles>
- </profiles>
 
 </project>
 

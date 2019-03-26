@@ -32,7 +32,6 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
-
 /** Reads an Avro data file and writes a Trevni file. */
 public class ToTrevniTool implements Tool {
 
@@ -47,14 +46,10 @@ public class ToTrevniTool implements Tool {
  }
 
  @Override
- public int run(InputStream stdin, PrintStream out, PrintStream err,
- List<String> args) throws Exception {
+ public int run(InputStream stdin, PrintStream out, PrintStream err, List<String> args) throws Exception {
 
  OptionParser p = new OptionParser();
- OptionSpec<String> codec =
- p.accepts("codec", "Compression codec")
- .withRequiredArg()
- .defaultsTo("null")
+ OptionSpec<String> codec = p.accepts("codec", "Compression codec").withRequiredArg().defaultsTo("null")
  .ofType(String.class);
  OptionSet opts = p.parse(args.toArray(new String[0]));
  if (opts.nonOptionArguments().size() != 2) {
@@ -62,16 +57,13 @@ public class ToTrevniTool implements Tool {
  p.printHelpOn(err);
  return 1;
  }
- args = (List<String>)opts.nonOptionArguments();
+ args = (List<String>) opts.nonOptionArguments();
 
- DataFileStream<Object> reader =
- new DataFileStream(Util.fileOrStdin(args.get(0), stdin),
+ DataFileStream<Object> reader = new DataFileStream(Util.fileOrStdin(args.get(0), stdin),
  new GenericDatumReader<>());
  OutputStream outs = Util.fileOrStdout(args.get(1), out);
- AvroColumnWriter<Object> writer =
- new AvroColumnWriter<>(reader.getSchema(),
- new ColumnFileMetaData()
- .setCodec(codec.value(opts)));
+ AvroColumnWriter<Object> writer = new AvroColumnWriter<>(reader.getSchema(),
+ new ColumnFileMetaData().setCodec(codec.value(opts)));
  for (Object datum : reader)
  writer.write(datum);
  writer.writeTo(outs);

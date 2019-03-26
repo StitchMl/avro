@@ -23,7 +23,8 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 
 /**
- * Wraps a BigDecimal just to demonstrate that it is possible to use custom implementation classes with custom conversions.
+ * Wraps a BigDecimal just to demonstrate that it is possible to use custom
+ * implementation classes with custom conversions.
  */
 public class CustomDecimal implements Comparable<CustomDecimal> {
 
@@ -46,8 +47,10 @@ public class CustomDecimal implements Comparable<CustomDecimal> {
 
  @Override
  public boolean equals(Object o) {
- if (this == o) return true;
- if (o == null || getClass() != o.getClass()) return false;
+ if (this == o)
+ return true;
+ if (o == null || getClass() != o.getClass())
+ return false;
 
  CustomDecimal that = (CustomDecimal) o;
 

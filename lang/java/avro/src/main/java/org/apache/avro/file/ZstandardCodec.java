@@ -57,9 +57,7 @@ public class ZstandardCodec extends Codec {
  @Override
  public ByteBuffer decompress(ByteBuffer compressedData) throws IOException {
  ByteArrayOutputStream baos = getOutputBuffer(compressedData.remaining());
- InputStream bytesIn = new ByteArrayInputStream(
- compressedData.array(),
- computeOffset(compressedData),
+ InputStream bytesIn = new ByteArrayInputStream(compressedData.array(), computeOffset(compressedData),
  compressedData.remaining());
  try (InputStream ios = new ZstdCompressorInputStream(bytesIn)) {
  IOUtils.copy(ios, baos);

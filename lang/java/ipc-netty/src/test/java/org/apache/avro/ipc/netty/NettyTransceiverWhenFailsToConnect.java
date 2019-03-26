@@ -43,13 +43,10 @@ public class NettyTransceiverWhenFailsToConnect {
  socketChannelFactory = new LastChannelRememberingChannelFactory();
 
  try {
- new NettyTransceiver(
- new InetSocketAddress(serverSocket.getLocalPort()),
- socketChannelFactory,
- 1L
- );
+ new NettyTransceiver(new InetSocketAddress(serverSocket.getLocalPort()), socketChannelFactory, 1L);
  } finally {
- assertFalse("expected that the channel opened by the transceiver is closed", socketChannelFactory.lastChannel.isOpen());
+ assertFalse("expected that the channel opened by the transceiver is closed",
+ socketChannelFactory.lastChannel.isOpen());
  }
  } finally {
 
@@ -68,7 +65,7 @@ public class NettyTransceiverWhenFailsToConnect {
 
  @Override
  public SocketChannel newChannel(ChannelPipeline pipeline) {
- return lastChannel= super.newChannel(pipeline);
+ return lastChannel = super.newChannel(pipeline);
  }
  }
 }

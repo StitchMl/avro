@@ -6,11 +6,8 @@
  */
 package org.apache.avro.thrift.test;
 
-
 public enum E implements org.apache.thrift.TEnum {
- X(1),
- Y(2),
- Z(3);
+ X(1), Y(2), Z(3);
 
  private final int value;
 
@@ -28,6 +25,7 @@ public enum E implements org.apache.thrift.TEnum {
 
  /**
  * Find a the enum type by its integer value, as defined in the Thrift IDL.
+ *
  * @return null if the value is not found.
  */
  public static E findByValue(int value) {

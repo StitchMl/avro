@@ -61,8 +61,7 @@ class FieldAccessReflect extends FieldAccess {
  }
 
  @Override
- public void set(Object object, Object value) throws IllegalAccessException,
- IOException {
+ public void set(Object object, Object value) throws IllegalAccessException, IOException {
  field.set(object, value);
  }
 
@@ -97,7 +96,7 @@ class FieldAccessReflect extends FieldAccess {
  field.set(object, encoding.read(in));
  } catch (IllegalAccessException e) {
  throw new AvroRuntimeException(e);
-}
+ }
  }
 
  @Override
@@ -109,7 +108,8 @@ class FieldAccessReflect extends FieldAccess {
  }
  }
 
- @Override protected boolean isCustomEncoded() {
+ @Override
+ protected boolean isCustomEncoded() {
  return true;
  }
 

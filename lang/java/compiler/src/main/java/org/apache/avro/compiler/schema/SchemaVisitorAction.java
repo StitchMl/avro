@@ -29,8 +29,9 @@ public enum SchemaVisitorAction {
  */
  TERMINATE,
  /**
- * when returned from pre non terminal visit method the children of the non terminal are skipped.
- * afterVisitNonTerminal for the current schema will not be invoked.
+ * when returned from pre non terminal visit method the children of the non
+ * terminal are skipped. afterVisitNonTerminal for the current schema will not
+ * be invoked.
  */
  SKIP_SUBTREE,
  /**

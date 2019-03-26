@@ -47,11 +47,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
 
- private static final ThreadLocal<byte[]> HEADER_BUFFER =
- ThreadLocal.withInitial(() -> new byte[10]);
+ private static final ThreadLocal<byte[]> HEADER_BUFFER = ThreadLocal.withInitial(() -> new byte[10]);
 
- private static final ThreadLocal<ByteBuffer> FP_BUFFER =
- ThreadLocal.withInitial(() -> {
+ private static final ThreadLocal<ByteBuffer> FP_BUFFER = ThreadLocal.withInitial(() -> {
  byte[] header = HEADER_BUFFER.get();
  return ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
  });
@@ -60,13 +58,12 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
  private final Schema readSchema;
  private final SchemaStore resolver;
 
- private final Map<Long, RawMessageDecoder<D>> codecByFingerprint =
- new ConcurrentHashMap<>();
+ private final Map<Long, RawMessageDecoder<D>> codecByFingerprint = new ConcurrentHashMap<>();
 
  /**
  * Creates a new {@link BinaryMessageEncoder} that uses the given
- * {@link GenericData data model} to construct datum instances described by
- * the {@link Schema schema}.
+ * {@link GenericData data model} to construct datum instances described by the
+ * {@link Schema schema}.
  * <p>
  * The {@code readSchema} is as used the expected schema (read schema). Datum
  * instances created by this class will are described by the expected schema.
@@ -85,24 +82,23 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
 
  /**
  * Creates a new {@link BinaryMessageEncoder} that uses the given
- * {@link GenericData data model} to construct datum instances described by
- * the {@link Schema schema}.
+ * {@link GenericData data model} to construct datum instances described by the
+ * {@link Schema schema}.
  * <p>
  * The {@code readSchema} is used as the expected schema (read schema). Datum
  * instances created by this class will are described by the expected schema.
  * <p>
  * The schema used to decode incoming buffers is determined by the schema
  * fingerprint encoded in the message header. This class can decode messages
- * that were encoded using the {@code readSchema}, other schemas that are
- * added using {@link #addSchema(Schema)}, or schemas returned by the
+ * that were encoded using the {@code readSchema}, other schemas that are added
+ * using {@link #addSchema(Schema)}, or schemas returned by the
  * {@code resolver}.
  *
  * @param model the {@link GenericData data model} for datum instances
  * @param readSchema the {@link Schema} used to construct datum instances
  * @param resolver a {@link SchemaStore} used to find schemas by fingerprint
  */
- public BinaryMessageDecoder(GenericData model, Schema readSchema,
- SchemaStore resolver) {
+ public BinaryMessageDecoder(GenericData model, Schema readSchema, SchemaStore resolver) {
  this.model = model;
  this.readSchema = readSchema;
  this.resolver = resolver;
@@ -116,8 +112,7 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
  */
  public void addSchema(Schema writeSchema) {
  long fp = SchemaNormalization.parsingFingerprint64(writeSchema);
- codecByFingerprint.put(fp,
- new RawMessageDecoder<>(model, writeSchema, readSchema));
+ codecByFingerprint.put(fp, new RawMessageDecoder<>(model, writeSchema, readSchema));
  }
 
  private RawMessageDecoder<D> getDecoder(long fp) {
@@ -134,8 +129,7 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
  }
  }
 
- throw new MissingSchemaException(
- "Cannot resolve schema for fingerprint: " + fp);
+ throw new MissingSchemaException("Cannot resolve schema for fingerprint: " + fp);
  }
 
  @Override
@@ -149,11 +143,8 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
  throw new IOException("Failed to read header and fingerprint bytes", e);
  }
 
- if (BinaryMessageEncoder.V1_HEADER[0] != header[0] ||
- BinaryMessageEncoder.V1_HEADER[1] != header[1]) {
- throw new BadHeaderException(String.format(
- "Unrecognized header bytes: 0x%02X 0x%02X",
- header[0], header[1]));
+ if (BinaryMessageEncoder.V1_HEADER[0] != header[0] || BinaryMessageEncoder.V1_HEADER[1] != header[1]) {
+ throw new BadHeaderException(String.format("Unrecognized header bytes: 0x%02X 0x%02X", header[0], header[1]));
  }
 
  RawMessageDecoder<D> decoder = getDecoder(FP_BUFFER.get().getLong(2));
@@ -169,12 +160,10 @@ public class BinaryMessageDecoder<D> extends MessageDecoder.BaseDecoder<D> {
  * @return true if the buffer is complete, false otherwise (stream ended)
  * @throws IOException
  */
- private boolean readFully(InputStream stream, byte[] bytes)
- throws IOException {
+ private boolean readFully(InputStream stream, byte[] bytes) throws IOException {
  int pos = 0;
  int bytesRead;
- while ((bytes.length - pos) > 0 &&
- (bytesRead = stream.read(bytes, pos, bytes.length - pos)) > 0) {
+ while ((bytes.length - pos) > 0 && (bytesRead = stream.read(bytes, pos, bytes.length - pos)) > 0) {
  pos += bytesRead;
  }
  return (pos == bytes.length);

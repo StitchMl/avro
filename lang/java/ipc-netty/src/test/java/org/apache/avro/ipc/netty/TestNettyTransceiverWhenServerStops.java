@@ -76,7 +76,8 @@ public class TestNettyTransceiverWhenServerStops {
  // Now stop the server
  server.close();
 
- // Server is stopped: successes should not increase anymore: wait until we're in that situation
+ // Server is stopped: successes should not increase anymore: wait until we're in
+ // that situation
  while (true) {
  int previousSuccesses = successes.get();
  Thread.sleep(500);
@@ -88,23 +89,17 @@ public class TestNettyTransceiverWhenServerStops {
  // Start the server again
  server.start();
 
- // This part of the test is not solved by the current patch: it shows that when you stop/start
- // a server, the client requests don't continue immediately but will stay blocked until the timeout
+ // This part of the test is not solved by the current patch: it shows that when
+ // you stop/start
+ // a server, the client requests don't continue immediately but will stay
+ // blocked until the timeout
  // passed to the NettyTransceiver has passed (IIUC)
  long now = System.currentTimeMillis();
  /*
- System.out.println("Waiting on requests to continue");
- int previousSuccesses = successes.get();
- while (true) {
- Thread.sleep(500);
- if (successes.get() > previousSuccesses) {
- break;
- }
- if (System.currentTimeMillis() - now > 5000) {
- System.out.println("FYI: requests don't continue immediately...");
- break;
- }
- }
+ * System.out.println("Waiting on requests to continue"); int previousSuccesses
+ * = successes.get(); while (true) { Thread.sleep(500); if (successes.get() >
+ * previousSuccesses) { break; } if (System.currentTimeMillis() - now > 5000) {
+ * System.out.println("FYI: requests don't continue immediately..."); break; } }
  */
 
  // Stop our client, we would expect this to go on immediately
@@ -126,11 +121,7 @@ public class TestNettyTransceiverWhenServerStops {
  }
 
  private Message createMessage() {
- Message msg = Message.newBuilder().
- setTo("wife").
- setFrom("husband").
- setBody("I love you!").
- build();
+ Message msg = Message.newBuilder().setTo("wife").setFrom("husband").setBody("I love you!").build();
  return msg;
  }
 }

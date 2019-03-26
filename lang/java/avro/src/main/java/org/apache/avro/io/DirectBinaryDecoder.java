@@ -25,12 +25,11 @@ import java.nio.ByteBuffer;
 import org.apache.avro.InvalidNumberEncodingException;
 import org.apache.avro.util.ByteBufferInputStream;
 
-
 /**
  * A non-buffering version of {@link BinaryDecoder}.
  * <p/>
- * This implementation will not read-ahead from the provided InputStream
- * beyond the minimum required to service the API requests.
+ * This implementation will not read-ahead from the provided InputStream beyond
+ * the minimum required to service the API requests.
  *
  * @see Encoder
  */
@@ -80,8 +79,8 @@ class DirectBinaryDecoder extends BinaryDecoder {
 
  DirectBinaryDecoder configure(InputStream in) {
  this.in = in;
- byteReader = (in instanceof ByteBufferInputStream) ?
- new ReuseByteReader((ByteBufferInputStream) in) : new ByteReader();
+ byteReader = (in instanceof ByteBufferInputStream) ? new ReuseByteReader((ByteBufferInputStream) in)
+ : new ByteReader();
  return this;
  }
 
@@ -140,9 +139,7 @@ class DirectBinaryDecoder extends BinaryDecoder {
  @Override
  public float readFloat() throws IOException {
  doReadBytes(buf, 0, 4);
- int n = (((int) buf[0]) & 0xff)
- | ((((int) buf[1]) & 0xff) << 8)
- | ((((int) buf[2]) & 0xff) << 16)
+ int n = (((int) buf[0]) & 0xff) | ((((int) buf[1]) & 0xff) << 8) | ((((int) buf[2]) & 0xff) << 16)
  | ((((int) buf[3]) & 0xff) << 24);
  return Float.intBitsToFloat(n);
  }
@@ -150,14 +147,9 @@ class DirectBinaryDecoder extends BinaryDecoder {
  @Override
  public double readDouble() throws IOException {
  doReadBytes(buf, 0, 8);
- long n = (((long) buf[0]) & 0xff)
- | ((((long) buf[1]) & 0xff) << 8)
- | ((((long) buf[2]) & 0xff) << 16)
- | ((((long) buf[3]) & 0xff) << 24)
- | ((((long) buf[4]) & 0xff) << 32)
- | ((((long) buf[5]) & 0xff) << 40)
- | ((((long) buf[6]) & 0xff) << 48)
- | ((((long) buf[7]) & 0xff) << 56);
+ long n = (((long) buf[0]) & 0xff) | ((((long) buf[1]) & 0xff) << 8) | ((((long) buf[2]) & 0xff) << 16)
+ | ((((long) buf[3]) & 0xff) << 24) | ((((long) buf[4]) & 0xff) << 32) | ((((long) buf[5]) & 0xff) << 40)
+ | ((((long) buf[6]) & 0xff) << 48) | ((((long) buf[7]) & 0xff) << 56);
  return Double.longBitsToDouble(n);
  }
 
@@ -179,9 +171,8 @@ class DirectBinaryDecoder extends BinaryDecoder {
  }
 
  @Override
- protected void doReadBytes(byte[] bytes, int start, int length)
- throws IOException {
- for (; ;) {
+ protected void doReadBytes(byte[] bytes, int start, int length) throws IOException {
+ for (;;) {
  int n = in.read(bytes, start, length);
  if (n == length || length == 0) {
  return;

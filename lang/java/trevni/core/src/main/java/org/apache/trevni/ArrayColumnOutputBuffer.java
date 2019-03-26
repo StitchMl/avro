@@ -28,14 +28,14 @@ class ArrayColumnOutputBuffer extends ColumnOutputBuffer {
  private int runLength; // length of current run
  private int runValue = NONE; // what kind of run
 
- public ArrayColumnOutputBuffer(ColumnFileWriter writer, ColumnMetaData meta)
- throws IOException {
+ public ArrayColumnOutputBuffer(ColumnFileWriter writer, ColumnMetaData meta) throws IOException {
  super(writer, meta);
  assert getMeta().isArray() || getMeta().getParent() != null;
  assert !getMeta().hasIndexValues();
  }
 
- @Override public void writeLength(int l) throws IOException {
+ @Override
+ public void writeLength(int l) throws IOException {
  assert this.length == 0;
  assert l >= 0;
  this.length = l;
@@ -52,7 +52,8 @@ class ArrayColumnOutputBuffer extends ColumnOutputBuffer {
  }
  }
 
- @Override public void writeValue(Object value) throws IOException {
+ @Override
+ public void writeValue(Object value) throws IOException {
  assert length > 0;
  if (getMeta().getType() != ValueType.NULL) {
  flushRun();
@@ -61,7 +62,8 @@ class ArrayColumnOutputBuffer extends ColumnOutputBuffer {
  length -= 1;
  }
 
- @Override void flushBuffer() throws IOException {
+ @Override
+ void flushBuffer() throws IOException {
  flushRun();
  super.flushBuffer();
  }
@@ -72,7 +74,7 @@ class ArrayColumnOutputBuffer extends ColumnOutputBuffer {
  else if (runLength == 1) // single value
  getBuffer().writeLength(runValue);
  else // a run
- getBuffer().writeLength((3-runValue)-(runLength<<1));
+ getBuffer().writeLength((3 - runValue) - (runLength << 1));
 
  runLength = 0; // reset
  runValue = NONE;

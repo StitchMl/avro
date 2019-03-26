@@ -104,7 +104,8 @@ public final class Schemas {
  public static <T> T visit(final Schema start, final SchemaVisitor<T> visitor) {
  // Set of Visited Schemas
  IdentityHashMap<Schema, Schema> visited = new IdentityHashMap<>();
- // Stack that contains the Schams to process and afterVisitNonTerminal functions.
+ // Stack that contains the Schams to process and afterVisitNonTerminal
+ // functions.
  // Deque<Either<Schema, Supplier<SchemaVisitorAction>>>
  // Using either has a cost which we want to avoid...
  Deque<Object> dq = new ArrayDeque<>();
@@ -141,8 +142,7 @@ public final class Schemas {
  break;
  case RECORD:
  Iterator<Schema> reverseSchemas = schema.getFields().stream().map(Field::schema)
- .collect(Collectors.toCollection(ArrayDeque::new))
- .descendingIterator();
+ .collect(Collectors.toCollection(ArrayDeque::new)).descendingIterator();
  terminate = visitNonTerminal(visitor, schema, dq, () -> reverseSchemas);
  visited.put(schema, schema);
  break;
@@ -181,8 +181,7 @@ public final class Schemas {
  return visitor.get();
  }
 
- private static boolean visitNonTerminal(final SchemaVisitor visitor,
- final Schema schema, final Deque<Object> dq,
+ private static boolean visitNonTerminal(final SchemaVisitor visitor, final Schema schema, final Deque<Object> dq,
  final Iterable<Schema> itSupp) {
  SchemaVisitorAction action = visitor.visitNonTerminal(schema);
  switch (action) {
@@ -208,8 +207,7 @@ public final class Schemas {
  return false;
  }
 
- private static boolean visitTerminal(final SchemaVisitor visitor, final Schema schema,
- final Deque<Object> dq) {
+ private static boolean visitTerminal(final SchemaVisitor visitor, final Schema schema, final Deque<Object> dq) {
  SchemaVisitorAction action = visitor.visitTerminal(schema);
  switch (action) {
  case CONTINUE:

@@ -60,8 +60,8 @@ public class TestAvroKeyRecordWriter {
  replay(context);
 
  // Write an avro container file with two records: 1 and 2.
- AvroKeyRecordWriter<Integer> recordWriter = new AvroKeyRecordWriter<>(
- writerSchema, dataModel, compressionCodec, outputStream);
+ AvroKeyRecordWriter<Integer> recordWriter = new AvroKeyRecordWriter<>(writerSchema, dataModel, compressionCodec,
+ outputStream);
  recordWriter.write(new AvroKey<>(1), NullWritable.get());
  recordWriter.write(new AvroKey<>(2), NullWritable.get());
  recordWriter.close(context);
@@ -94,8 +94,8 @@ public class TestAvroKeyRecordWriter {
  replay(context);
 
  // Write an avro container file with two records: 1 and 2.
- AvroKeyRecordWriter<Integer> recordWriter = new AvroKeyRecordWriter<>(
- writerSchema, dataModel, compressionCodec, outputStream);
+ AvroKeyRecordWriter<Integer> recordWriter = new AvroKeyRecordWriter<>(writerSchema, dataModel, compressionCodec,
+ outputStream);
  long positionOne = recordWriter.sync();
  recordWriter.write(new AvroKey<>(1), NullWritable.get());
  long positionTwo = recordWriter.sync();
@@ -108,8 +108,8 @@ public class TestAvroKeyRecordWriter {
  Configuration conf = new Configuration();
  conf.set("fs.default.name", "file:///");
  Path avroFile = new Path("target/temp.avro");
- DataFileReader<GenericData.Record> dataFileReader = new DataFileReader<>(new FsInput(avroFile,
- conf), new SpecificDatumReader<>());
+ DataFileReader<GenericData.Record> dataFileReader = new DataFileReader<>(new FsInput(avroFile, conf),
+ new SpecificDatumReader<>());
 
  dataFileReader.seek(positionTwo);
  assertTrue(dataFileReader.hasNext()); // Record 2.

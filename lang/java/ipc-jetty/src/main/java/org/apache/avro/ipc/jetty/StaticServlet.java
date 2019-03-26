@@ -36,9 +36,10 @@ public class StaticServlet extends DefaultServlet {
  String[] parts = pathInContext.split("/");
  String filename = parts[parts.length - 1];
 
- URL resource = getClass().getClassLoader().getResource(
- "org/apache/avro/ipc/stats/static/" + filename);
- if (resource == null) { return null; }
+ URL resource = getClass().getClassLoader().getResource("org/apache/avro/ipc/stats/static/" + filename);
+ if (resource == null) {
+ return null;
+ }
  return Resource.newResource(resource);
  }
 }

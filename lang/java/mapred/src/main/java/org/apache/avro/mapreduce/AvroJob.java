@@ -30,21 +30,27 @@ import org.apache.hadoop.mapreduce.Job;
 /**
  * Utility methods for configuring jobs that work with Avro.
  *
- * <p>When using Avro data as MapReduce keys and values, data must be wrapped in a
- * suitable AvroWrapper implementation. MapReduce keys must be wrapped in an AvroKey
- * object, and MapReduce values must be wrapped in an AvroValue object.</p>
+ * <p>
+ * When using Avro data as MapReduce keys and values, data must be wrapped in a
+ * suitable AvroWrapper implementation. MapReduce keys must be wrapped in an
+ * AvroKey object, and MapReduce values must be wrapped in an AvroValue object.
+ * </p>
  *
- * <p>Suppose you would like to write a line count mapper that reads from a text file. If
- * instead of using a Text and IntWritable output value, you would like to use Avro data
- * with a schema of <i>"string"</i> and <i>"int"</i>, respectively, you may parametrize
- * your mapper with {@code AvroKey<CharSequence>} and {@code AvroValue<Integer>}
- * types. Then, use the <code>setMapOutputKeySchema()</code> and
- * <code>setMapOutputValueSchema()</code> methods to set writer schemas for the records
- * you will generate.</p>
+ * <p>
+ * Suppose you would like to write a line count mapper that reads from a text
+ * file. If instead of using a Text and IntWritable output value, you would like
+ * to use Avro data with a schema of <i>"string"</i> and <i>"int"</i>,
+ * respectively, you may parametrize your mapper with
+ * {@code AvroKey<CharSequence>} and {@code AvroValue<Integer>} types. Then, use
+ * the <code>setMapOutputKeySchema()</code> and
+ * <code>setMapOutputValueSchema()</code> methods to set writer schemas for the
+ * records you will generate.
+ * </p>
  */
 public final class AvroJob {
  /** Disable the constructor for this utility class. */
- private AvroJob() {}
+ private AvroJob() {
+ }
 
  /** Configuration key for the input key schema. */
  private static final String CONF_INPUT_KEY_SCHEMA = "avro.schema.input.key";
@@ -58,8 +64,10 @@ public final class AvroJob {
  /** Configuration key for the output value schema. */
  private static final String CONF_OUTPUT_VALUE_SCHEMA = "avro.schema.output.value";
 
- /** The configuration key for a job's output compression codec.
- * This takes one of the strings registered in {@link org.apache.avro.file.CodecFactory} */
+ /**
+ * The configuration key for a job's output compression codec. This takes one of
+ * the strings registered in {@link org.apache.avro.file.CodecFactory}
+ */
  public static final String CONF_OUTPUT_CODEC = "avro.output.codec";
 
  /**

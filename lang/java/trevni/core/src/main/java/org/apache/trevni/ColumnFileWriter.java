@@ -24,14 +24,15 @@ import java.io.OutputStream;
 import java.util.Set;
 import java.util.HashSet;
 
-/** Writes data to a column file.
- * All data is buffered until {@link #writeTo(File)} is called.
+/**
+ * Writes data to a column file. All data is buffered until
+ * {@link #writeTo(File)} is called.
  */
 public class ColumnFileWriter {
 
- static final byte[] MAGIC_0 = new byte[] {'T', 'r', 'v', 0};
- static final byte[] MAGIC_1 = new byte[] {'T', 'r', 'v', 1};
- static final byte[] MAGIC = new byte[] {'T', 'r', 'v', 2};
+ static final byte[] MAGIC_0 = new byte[] { 'T', 'r', 'v', 0 };
+ static final byte[] MAGIC_1 = new byte[] { 'T', 'r', 'v', 1 };
+ static final byte[] MAGIC = new byte[] { 'T', 'r', 'v', 2 };
 
  private ColumnFileMetaData metaData;
  private ColumnOutputBuffer[] columns;
@@ -41,8 +42,7 @@ public class ColumnFileWriter {
  private long size;
 
  /** Construct given metadata for each column in the file. */
- public ColumnFileWriter(ColumnFileMetaData fileMeta,
- ColumnMetaData... columnMeta) throws IOException {
+ public ColumnFileWriter(ColumnFileMetaData fileMeta, ColumnMetaData... columnMeta) throws IOException {
  checkColumns(columnMeta);
  this.metaData = fileMeta;
  this.columnCount = columnMeta.length;
@@ -50,9 +50,7 @@ public class ColumnFileWriter {
  for (int i = 0; i < columnCount; i++) {
  ColumnMetaData c = columnMeta[i];
  c.setDefaults(metaData);
- columns[i] = c.isArray()
- ? new ArrayColumnOutputBuffer(this, c)
- : new ColumnOutputBuffer(this, c);
+ columns[i] = c.isArray() ? new ArrayColumnOutputBuffer(this, c) : new ColumnOutputBuffer(this, c);
  size += OutputBuffer.BLOCK_SIZE; // over-estimate
  }
  }
@@ -70,19 +68,29 @@ public class ColumnFileWriter {
  }
  }
 
- void incrementSize(int n) { size += n; }
+ void incrementSize(int n) {
+ size += n;
+ }
 
- /** Return the approximate size of the file that will be written. Tries to
+ /**
+ * Return the approximate size of the file that will be written. Tries to
  * slightly over-estimate. Indicates both the size in memory of the buffered
- * data as well as the size of the file that will be written by {@link
- * #writeTo(OutputStream)}. */
- public long sizeEstimate() { return size; }
+ * data as well as the size of the file that will be written by
+ * {@link #writeTo(OutputStream)}.
+ */
+ public long sizeEstimate() {
+ return size;
+ }
 
  /** Return this file's metadata. */
- public ColumnFileMetaData getMetaData() { return metaData; }
+ public ColumnFileMetaData getMetaData() {
+ return metaData;
+ }
 
  /** Return the number of columns in the file. */
- public int getColumnCount() { return columnCount; }
+ public int getColumnCount() {
+ return columnCount;
+ }
 
  /** Add a row to the file. */
  public void writeRow(Object... row) throws IOException {
@@ -98,16 +106,20 @@ public class ColumnFileWriter {
  columns[column].startRow();
  }
 
- /** Expert: Declare a count of items to be written to an array column or a
- * column whose parent is an array. */
+ /**
+ * Expert: Declare a count of items to be written to an array column or a column
+ * whose parent is an array.
+ */
  public void writeLength(int length, int column) throws IOException {
  columns[column].writeLength(length);
  }
 
- /** Expert: Add a value to a row. For values in array columns or whose
- * parents are array columns, this must be preceded by a call to {@link
- * #writeLength(int, int)} and must be called that many times. For normal
- * columns this is called once for each row in the column. */
+ /**
+ * Expert: Add a value to a row. For values in array columns or whose parents
+ * are array columns, this must be preceded by a call to
+ * {@link #writeLength(int, int)} and must be called that many times. For normal
+ * columns this is called once for each row in the column.
+ */
  public void writeValue(Object value, int column) throws IOException {
  columns[column].writeValue(value);
  }
@@ -166,4 +178,3 @@ public class ColumnFileWriter {
  }
 
 }
-

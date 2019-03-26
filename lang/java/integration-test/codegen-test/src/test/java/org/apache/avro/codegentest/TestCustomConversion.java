@@ -29,8 +29,7 @@ public class TestCustomConversion extends AbstractSpecificRecordTest {
  @Test
  public void testNullValues() throws IOException {
  LogicalTypesWithCustomConversion instanceOfGeneratedClass = LogicalTypesWithCustomConversion.newBuilder()
- .setNonNullCustomField(new CustomDecimal(BigInteger.valueOf(100), 2))
- .build();
+ .setNonNullCustomField(new CustomDecimal(BigInteger.valueOf(100), 2)).build();
  verifySerDeAndStandardMethods(instanceOfGeneratedClass);
  }
 
@@ -38,8 +37,7 @@ public class TestCustomConversion extends AbstractSpecificRecordTest {
  public void testNonNullValues() throws IOException {
  LogicalTypesWithCustomConversion instanceOfGeneratedClass = LogicalTypesWithCustomConversion.newBuilder()
  .setNonNullCustomField(new CustomDecimal(BigInteger.valueOf(100), 2))
- .setNullableCustomField(new CustomDecimal(BigInteger.valueOf(3000), 2))
- .build();
+ .setNullableCustomField(new CustomDecimal(BigInteger.valueOf(3000), 2)).build();
  verifySerDeAndStandardMethods(instanceOfGeneratedClass);
  }
 }

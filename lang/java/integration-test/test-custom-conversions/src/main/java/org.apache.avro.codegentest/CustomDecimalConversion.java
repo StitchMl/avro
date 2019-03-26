@@ -39,14 +39,14 @@ public class CustomDecimalConversion extends Conversion<CustomDecimal> {
 
  @Override
  public CustomDecimal fromBytes(ByteBuffer value, Schema schema, LogicalType type) {
- int scale = ((LogicalTypes.Decimal)type).getScale();
+ int scale = ((LogicalTypes.Decimal) type).getScale();
  byte[] bytes = value.get(new byte[value.remaining()]).array();
  return new CustomDecimal(new BigInteger(bytes), scale);
  }
 
  @Override
  public ByteBuffer toBytes(CustomDecimal value, Schema schema, LogicalType type) {
- int scale = ((LogicalTypes.Decimal)type).getScale();
+ int scale = ((LogicalTypes.Decimal) type).getScale();
  return ByteBuffer.wrap(value.toByteArray(scale));
  }
 }

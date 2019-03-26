@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Serializes an individual datum as a ByteBuffer or to an OutputStream.
+ *
  * @param <D> a datum class
  */
 public interface MessageEncoder<D> {

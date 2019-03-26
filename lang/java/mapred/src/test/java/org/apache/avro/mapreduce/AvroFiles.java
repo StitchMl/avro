@@ -30,7 +30,8 @@ import org.apache.avro.io.DatumWriter;
  * A utility class for working with Avro container files within tests.
  */
 public final class AvroFiles {
- private AvroFiles() {}
+ private AvroFiles() {
+ }
 
  /**
  * Creates an avro container file.
@@ -41,8 +42,7 @@ public final class AvroFiles {
  * @param <T> The (java) type of the avro records.
  * @return The created file.
  */
- public static <T> File createFile(File file, Schema schema, T... records)
- throws IOException {
+ public static <T> File createFile(File file, Schema schema, T... records) throws IOException {
  DatumWriter<T> datumWriter = new GenericDatumWriter<>(schema);
  DataFileWriter<T> fileWriter = new DataFileWriter<>(datumWriter);
  fileWriter.create(schema, file);

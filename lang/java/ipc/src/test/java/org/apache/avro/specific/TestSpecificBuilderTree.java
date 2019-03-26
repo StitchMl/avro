@@ -36,36 +36,17 @@ public class TestSpecificBuilderTree {
  Request.Builder requestBuilder = Request.newBuilder();
  requestBuilder.setTimestamp(1234567890);
 
- requestBuilder
- .getConnectionBuilder()
- .setNetworkType(NetworkType.IPv4);
+ requestBuilder.getConnectionBuilder().setNetworkType(NetworkType.IPv4);
 
- requestBuilder
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setUseragent("Chrome 123")
- .setId("Foo");
+ requestBuilder.getHttpRequestBuilder().getUserAgentBuilder().setUseragent("Chrome 123").setId("Foo");
 
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setMethod(HttpMethod.GET)
- .setPath("/index.html");
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().setMethod(HttpMethod.GET).setPath("/index.html");
 
- if (!requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .hasParameters()) {
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setParameters(new ArrayList<>());
+ if (!requestBuilder.getHttpRequestBuilder().getURIBuilder().hasParameters()) {
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().setParameters(new ArrayList<>());
  }
 
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .getParameters()
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().getParameters()
  .add(QueryParameter.newBuilder().setName("Foo").setValue("Bar").build());
 
  return requestBuilder;
@@ -89,18 +70,11 @@ public class TestSpecificBuilderTree {
 
  Request.Builder requestBuilder2 = Request.newBuilder(requestBuilder1);
 
- requestBuilder1
- .getConnectionBuilder()
- .setNetworkAddress("1.1.1.1");
+ requestBuilder1.getConnectionBuilder().setNetworkAddress("1.1.1.1");
 
- requestBuilder2
- .getConnectionBuilder()
- .setNetworkAddress("2.2.2.2");
+ requestBuilder2.getConnectionBuilder().setNetworkAddress("2.2.2.2");
 
- requestBuilder2
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setId("Bar");
+ requestBuilder2.getHttpRequestBuilder().getUserAgentBuilder().setId("Bar");
 
  Request request1 = requestBuilder1.build();
  Request request2 = requestBuilder2.build();
@@ -127,34 +101,21 @@ public class TestSpecificBuilderTree {
  }
 
  @Test
- public void createBuilderFromInstance(){
+ public void createBuilderFromInstance() {
  Request.Builder requestBuilder1 = createPartialBuilder();
- requestBuilder1
- .getConnectionBuilder()
- .setNetworkAddress("1.1.1.1");
+ requestBuilder1.getConnectionBuilder().setNetworkAddress("1.1.1.1");
 
  Request request1 = requestBuilder1.build();
 
  Request.Builder requestBuilder2 = Request.newBuilder(request1);
 
- requestBuilder2
- .getConnectionBuilder()
- .setNetworkAddress("2.2.2.2");
+ requestBuilder2.getConnectionBuilder().setNetworkAddress("2.2.2.2");
 
- requestBuilder2
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setId("Bar");
+ requestBuilder2.getHttpRequestBuilder().getUserAgentBuilder().setId("Bar");
 
- requestBuilder2
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setMethod(HttpMethod.POST);
+ requestBuilder2.getHttpRequestBuilder().getURIBuilder().setMethod(HttpMethod.POST);
 
- requestBuilder2
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setUseragent("Firefox 456");
+ requestBuilder2.getHttpRequestBuilder().getUserAgentBuilder().setUseragent("Firefox 456");
 
  Request request2 = requestBuilder2.build();
 
@@ -183,10 +144,7 @@ public class TestSpecificBuilderTree {
  Request.Builder requestBuilder = Request.newBuilder();
  requestBuilder.setTimestamp(1234567890);
 
- requestBuilder
- .getConnectionBuilder()
- .setNetworkType(NetworkType.IPv4)
- .setNetworkAddress("1.1.1.1");
+ requestBuilder.getConnectionBuilder().setNetworkType(NetworkType.IPv4).setNetworkAddress("1.1.1.1");
 
  return requestBuilder;
  }
@@ -195,25 +153,12 @@ public class TestSpecificBuilderTree {
  public void lastOneWins_Setter() {
  Request.Builder requestBuilder = createLastOneTestsBuilder();
 
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setMethod(HttpMethod.GET)
- .setPath("/index.html");
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().setMethod(HttpMethod.GET).setPath("/index.html");
 
- requestBuilder
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setUseragent("Chrome 123")
- .setId("Foo");
+ requestBuilder.getHttpRequestBuilder().getUserAgentBuilder().setUseragent("Chrome 123").setId("Foo");
 
- HttpRequest httpRequest = HttpRequest.newBuilder()
- .setUserAgent(new UserAgent("Bar","Firefox 321"))
- .setURI(HttpURI.newBuilder()
- .setMethod(HttpMethod.POST)
- .setPath("/login.php")
- .build())
- .build();
+ HttpRequest httpRequest = HttpRequest.newBuilder().setUserAgent(new UserAgent("Bar", "Firefox 321"))
+ .setURI(HttpURI.newBuilder().setMethod(HttpMethod.POST).setPath("/login.php").build()).build();
 
  Request request = requestBuilder.setHttpRequest(httpRequest).build();
 
@@ -231,26 +176,13 @@ public class TestSpecificBuilderTree {
  public void lastOneWins_Builder() {
  Request.Builder requestBuilder = createLastOneTestsBuilder();
 
- HttpRequest httpRequest = HttpRequest.newBuilder()
- .setUserAgent(new UserAgent("Bar", "Firefox 321"))
- .setURI(HttpURI.newBuilder()
- .setMethod(HttpMethod.POST)
- .setPath("/login.php")
- .build())
- .build();
+ HttpRequest httpRequest = HttpRequest.newBuilder().setUserAgent(new UserAgent("Bar", "Firefox 321"))
+ .setURI(HttpURI.newBuilder().setMethod(HttpMethod.POST).setPath("/login.php").build()).build();
  requestBuilder.setHttpRequest(httpRequest);
 
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setMethod(HttpMethod.GET)
- .setPath("/index.html");
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().setMethod(HttpMethod.GET).setPath("/index.html");
 
- requestBuilder
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setUseragent("Chrome 123")
- .setId("Foo");
+ requestBuilder.getHttpRequestBuilder().getUserAgentBuilder().setUseragent("Chrome 123").setId("Foo");
 
  Request request = requestBuilder.build();
 
@@ -271,20 +203,20 @@ public class TestSpecificBuilderTree {
  assertFalse(builder.hasNullableRecordBuilder());
  assertFalse(builder.hasNullableRecord());
  assertFalse(builder.hasNullableString());
- assertFalse(builder.hasNullableLong ());
- assertFalse(builder.hasNullableInt ());
- assertFalse(builder.hasNullableMap ());
- assertFalse(builder.hasNullableArray ());
+ assertFalse(builder.hasNullableLong());
+ assertFalse(builder.hasNullableInt());
+ assertFalse(builder.hasNullableMap());
+ assertFalse(builder.hasNullableArray());
 
  RecordWithNullables.Builder builderCopy = RecordWithNullables.newBuilder(builder);
 
  assertFalse(builderCopy.hasNullableRecordBuilder());
  assertFalse(builderCopy.hasNullableRecord());
  assertFalse(builderCopy.hasNullableString());
- assertFalse(builderCopy.hasNullableLong ());
- assertFalse(builderCopy.hasNullableInt ());
- assertFalse(builderCopy.hasNullableMap ());
- assertFalse(builderCopy.hasNullableArray ());
+ assertFalse(builderCopy.hasNullableLong());
+ assertFalse(builderCopy.hasNullableInt());
+ assertFalse(builderCopy.hasNullableMap());
+ assertFalse(builderCopy.hasNullableArray());
 
  builderCopy.getNullableRecordBuilder();
  }
@@ -298,19 +230,19 @@ public class TestSpecificBuilderTree {
  assertFalse(builder.hasNullableRecordBuilder());
  assertFalse(builder.hasNullableRecord());
  assertFalse(builder.hasNullableString());
- assertFalse(builder.hasNullableLong ());
- assertFalse(builder.hasNullableInt ());
- assertFalse(builder.hasNullableMap ());
- assertFalse(builder.hasNullableArray ());
+ assertFalse(builder.hasNullableLong());
+ assertFalse(builder.hasNullableInt());
+ assertFalse(builder.hasNullableMap());
+ assertFalse(builder.hasNullableArray());
 
  // Set all values to null
  builder.setNullableRecordBuilder(null);
  builder.setNullableRecord(null);
  builder.setNullableString(null);
- builder.setNullableLong (null);
- builder.setNullableInt (null);
- builder.setNullableMap (null);
- builder.setNullableArray (null);
+ builder.setNullableLong(null);
+ builder.setNullableInt(null);
+ builder.setNullableMap(null);
+ builder.setNullableArray(null);
 
  // A Builder remains False because it is null
  assertFalse(builder.hasNullableRecordBuilder());
@@ -318,10 +250,10 @@ public class TestSpecificBuilderTree {
  // Ensure all values have been set
  assertTrue(builder.hasNullableRecord());
  assertTrue(builder.hasNullableString());
- assertTrue(builder.hasNullableLong ());
- assertTrue(builder.hasNullableInt ());
- assertTrue(builder.hasNullableMap ());
- assertTrue(builder.hasNullableArray ());
+ assertTrue(builder.hasNullableLong());
+ assertTrue(builder.hasNullableInt());
+ assertTrue(builder.hasNullableMap());
+ assertTrue(builder.hasNullableArray());
 
  // Implicitly create a builder instance and clear the actual value.
  builder.getNullableRecordBuilder();
@@ -335,10 +267,10 @@ public class TestSpecificBuilderTree {
  assertTrue(builder.hasNullableRecordBuilder());
  assertFalse(builder.hasNullableRecord());
  assertTrue(builder.hasNullableString());
- assertTrue(builder.hasNullableLong ());
- assertTrue(builder.hasNullableInt ());
- assertTrue(builder.hasNullableMap ());
- assertTrue(builder.hasNullableArray ());
+ assertTrue(builder.hasNullableLong());
+ assertTrue(builder.hasNullableInt());
+ assertTrue(builder.hasNullableMap());
+ assertTrue(builder.hasNullableArray());
  }
 
  @Test
@@ -356,59 +288,37 @@ public class TestSpecificBuilderTree {
  @Test
  public void getBuilderForNullRecord() {
  // In the past this caused an NPE
- RecordWithNullables.newBuilder((RecordWithNullables)null);
+ RecordWithNullables.newBuilder((RecordWithNullables) null);
  }
 
  @Test
  public void getBuilderForNullBuilder() {
  // In the past this caused an NPE
- RecordWithNullables.newBuilder((RecordWithNullables.Builder)null);
+ RecordWithNullables.newBuilder((RecordWithNullables.Builder) null);
  }
+
  @Test
  public void validateBrowsingOptionals() {
  Request.Builder requestBuilder = Request.newBuilder();
  requestBuilder.setTimestamp(1234567890);
 
- requestBuilder
- .getHttpRequestBuilder()
- .getUserAgentBuilder()
- .setUseragent("Chrome 123");
+ requestBuilder.getHttpRequestBuilder().getUserAgentBuilder().setUseragent("Chrome 123");
 
- requestBuilder
- .getHttpRequestBuilder()
- .getURIBuilder()
- .setMethod(HttpMethod.GET)
- .setPath("/index.html");
+ requestBuilder.getHttpRequestBuilder().getURIBuilder().setMethod(HttpMethod.GET).setPath("/index.html");
 
  Request request = requestBuilder.build();
 
- assertEquals("Chrome 123", Optional
- .of(request)
- .flatMap(Request::getOptionalHttpRequest)
- .flatMap(HttpRequest::getOptionalUserAgent)
- .flatMap(UserAgent::getOptionalUseragent)
- .orElse("UNKNOWN"));
+ assertEquals("Chrome 123", Optional.of(request).flatMap(Request::getOptionalHttpRequest)
+ .flatMap(HttpRequest::getOptionalUserAgent).flatMap(UserAgent::getOptionalUseragent).orElse("UNKNOWN"));
 
- assertFalse(Optional
- .of(request)
- .flatMap(Request::getOptionalHttpRequest)
- .flatMap(HttpRequest::getOptionalUserAgent)
- .flatMap(UserAgent::getOptionalId)
- .isPresent());
+ assertFalse(Optional.of(request).flatMap(Request::getOptionalHttpRequest).flatMap(HttpRequest::getOptionalUserAgent)
+ .flatMap(UserAgent::getOptionalId).isPresent());
 
- assertEquals(HttpMethod.GET, Optional
- .of(request)
- .flatMap(Request::getOptionalHttpRequest)
- .flatMap(HttpRequest::getOptionalURI)
- .flatMap(HttpURI::getOptionalMethod)
- .orElse(null));
+ assertEquals(HttpMethod.GET, Optional.of(request).flatMap(Request::getOptionalHttpRequest)
+ .flatMap(HttpRequest::getOptionalURI).flatMap(HttpURI::getOptionalMethod).orElse(null));
 
- assertEquals("/index.html", Optional
- .of(request)
- .flatMap(Request::getOptionalHttpRequest)
- .flatMap(HttpRequest::getOptionalURI)
- .flatMap(HttpURI::getOptionalPath)
- .orElse(null));
+ assertEquals("/index.html", Optional.of(request).flatMap(Request::getOptionalHttpRequest)
+ .flatMap(HttpRequest::getOptionalURI).flatMap(HttpURI::getOptionalPath).orElse(null));
 
  }
 

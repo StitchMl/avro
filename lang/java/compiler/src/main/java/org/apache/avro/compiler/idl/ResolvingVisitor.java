@@ -30,7 +30,8 @@ import org.apache.avro.compiler.schema.SchemaVisitorAction;
 import org.apache.avro.compiler.schema.Schemas;
 
 /**
- * this visitor will create a clone of the original Schema and will also resolve all unresolved schemas
+ * this visitor will create a clone of the original Schema and will also resolve
+ * all unresolved schemas
  *
  * by default. what attributes are copied is customizable.
  */
@@ -41,9 +42,7 @@ public final class ResolvingVisitor implements SchemaVisitor<Schema> {
 
  private final Schema root;
 
-
- public ResolvingVisitor(final Schema root,
- final IdentityHashMap<Schema, Schema> replace,
+ public ResolvingVisitor(final Schema root, final IdentityHashMap<Schema, Schema> replace,
  final Function<String, Schema> symbolTable) {
  this.replace = replace;
  this.symbolTable = symbolTable;
@@ -74,12 +73,12 @@ public final class ResolvingVisitor implements SchemaVisitor<Schema> {
  newSchema = Schema.create(type);
  break;
  case ENUM:
- newSchema = Schema.createEnum(terminal.getName(), terminal.getDoc(),
- terminal.getNamespace(), terminal.getEnumSymbols(), terminal.getEnumDefault());
+ newSchema = Schema.createEnum(terminal.getName(), terminal.getDoc(), terminal.getNamespace(),
+ terminal.getEnumSymbols(), terminal.getEnumDefault());
  break;
  case FIXED:
- newSchema = Schema.createFixed(terminal.getName(), terminal.getDoc(),
- terminal.getNamespace(), terminal.getFixedSize());
+ newSchema = Schema.createFixed(terminal.getName(), terminal.getDoc(), terminal.getNamespace(),
+ terminal.getFixedSize());
  break;
  default:
  throw new IllegalStateException("Unsupported schema " + terminal);
@@ -114,8 +113,8 @@ public final class ResolvingVisitor implements SchemaVisitor<Schema> {
  }
  Schema replacement = replace.get(resSchema);
  if (replacement == null) {
- replace.put(nt, Schemas.visit(resSchema, new ResolvingVisitor(resSchema,
- new IdentityHashMap<>(), symbolTable)));
+ replace.put(nt,
+ Schemas.visit(resSchema, new ResolvingVisitor(resSchema, new IdentityHashMap<>(), symbolTable)));
  } else {
  replace.put(nt, replacement);
  }
@@ -140,8 +139,8 @@ public final class ResolvingVisitor implements SchemaVisitor<Schema> {
  List<Schema.Field> fields = nt.getFields();
  List<Schema.Field> newFields = new ArrayList<>(fields.size());
  for (Schema.Field field : fields) {
- Schema.Field newField = new Schema.Field(field.name(), replace.get(field.schema()),
- field.doc(), field.defaultVal(), field.order());
+ Schema.Field newField = new Schema.Field(field.name(), replace.get(field.schema()), field.doc(),
+ field.defaultVal(), field.order());
  copyAllProperties(field, newField);
  newFields.add(newField);
  }

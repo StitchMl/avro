@@ -34,7 +34,7 @@ abstract class Codec {
  else if ("bzip2".equals(name))
  return new BZip2Codec();
  else
- throw new TrevniRuntimeException("Unknown codec: "+name);
+ throw new TrevniRuntimeException("Unknown codec: " + name);
  }
 
  /** Compress data */

@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Deserializes a single datum from a ByteBuffer, byte array, or InputStream.
+ *
  * @param <D> a datum class
  */
 public interface MessageDecoder<D> {
@@ -110,11 +111,11 @@ public interface MessageDecoder<D> {
  */
  abstract class BaseDecoder<D> implements MessageDecoder<D> {
 
- private static final ThreadLocal<ReusableByteArrayInputStream>
- BYTE_ARRAY_IN = ThreadLocal.withInitial(ReusableByteArrayInputStream::new);
+ private static final ThreadLocal<ReusableByteArrayInputStream> BYTE_ARRAY_IN = ThreadLocal
+ .withInitial(ReusableByteArrayInputStream::new);
 
- private static final ThreadLocal<ReusableByteBufferInputStream>
- BYTE_BUFFER_IN = ThreadLocal.withInitial(ReusableByteBufferInputStream::new);
+ private static final ThreadLocal<ReusableByteBufferInputStream> BYTE_BUFFER_IN = ThreadLocal
+ .withInitial(ReusableByteBufferInputStream::new);
 
  @Override
  public D decode(InputStream stream) throws IOException {

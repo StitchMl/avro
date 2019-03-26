@@ -69,18 +69,14 @@ public class TestSequenceFileReader {
  return new File(INPUT_DIR.getRoot().getPath(), "test.seq");
  }
 
- private static final Schema SCHEMA = Pair.getPairSchema(
- Schema.create(Schema.Type.LONG),
- Schema.create(Schema.Type.STRING)
- );
+ private static final Schema SCHEMA = Pair.getPairSchema(Schema.create(Schema.Type.LONG),
+ Schema.create(Schema.Type.STRING));
 
  @BeforeClass
  public static void testWriteSequenceFile() throws IOException {
  Configuration c = new Configuration();
  URI uri = file().toURI();
- try(SequenceFile.Writer writer
- = new SequenceFile.Writer(FileSystem.get(uri, c), c,
- new Path(uri.toString()),
+ try (SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(uri, c), c, new Path(uri.toString()),
  LongWritable.class, Text.class)) {
  final LongWritable key = new LongWritable();
  final Text val = new Text();
@@ -97,10 +93,10 @@ public class TestSequenceFileReader {
  checkFile(new SequenceFileReader<>(file()));
  }
 
- public void checkFile(FileReader<Pair<Long,CharSequence>> reader) throws Exception {
+ public void checkFile(FileReader<Pair<Long, CharSequence>> reader) throws Exception {
  long i = 0;
- for (Pair<Long,CharSequence> p : reader) {
- assertEquals((Long)i, p.key());
+ for (Pair<Long, CharSequence> p : reader) {
+ assertEquals((Long) i, p.key());
  assertEquals(Long.toString(i), p.value().toString());
  i++;
  }
@@ -128,20 +124,15 @@ public class TestSequenceFileReader {
 
  JobClient.runJob(job);
 
- checkFile(new DataFileReader<>
- (new File(outputPath.toString() + "/part-00000.avro"),
- new SpecificDatumReader<>()));
+ checkFile(new DataFileReader<>(new File(outputPath.toString() + "/part-00000.avro"), new SpecificDatumReader<>()));
  }
 
- private static class NonAvroMapper
- extends MapReduceBase
- implements Mapper<LongWritable,Text,AvroKey<Long>,AvroValue<Utf8>> {
+ private static class NonAvroMapper extends MapReduceBase
+ implements Mapper<LongWritable, Text, AvroKey<Long>, AvroValue<Utf8>> {
 
- public void map(LongWritable key, Text value,
- OutputCollector<AvroKey<Long>,AvroValue<Utf8>> out,
+ public void map(LongWritable key, Text value, OutputCollector<AvroKey<Long>, AvroValue<Utf8>> out,
  Reporter reporter) throws IOException {
- out.collect(new AvroKey<>(key.get()),
- new AvroValue<>(new Utf8(value.toString())));
+ out.collect(new AvroKey<>(key.get()), new AvroValue<>(new Utf8(value.toString())));
  }
  }
 
@@ -166,20 +157,15 @@ public class TestSequenceFileReader {
 
  JobClient.runJob(job);
 
- checkFile(new DataFileReader<>
- (new File(outputPath.toString() + "/part-00000.avro"),
- new SpecificDatumReader<>()));
+ checkFile(new DataFileReader<>(new File(outputPath.toString() + "/part-00000.avro"), new SpecificDatumReader<>()));
  }
 
- private static class NonAvroOnlyMapper
- extends MapReduceBase
- implements Mapper<LongWritable,Text,AvroWrapper<Pair<Long,Utf8>>,NullWritable> {
+ private static class NonAvroOnlyMapper extends MapReduceBase
+ implements Mapper<LongWritable, Text, AvroWrapper<Pair<Long, Utf8>>, NullWritable> {
 
- public void map(LongWritable key, Text value,
- OutputCollector<AvroWrapper<Pair<Long,Utf8>>,NullWritable> out,
+ public void map(LongWritable key, Text value, OutputCollector<AvroWrapper<Pair<Long, Utf8>>, NullWritable> out,
  Reporter reporter) throws IOException {
- out.collect(new AvroWrapper<>(new Pair<>(key.get(), new Utf8(value.toString()))),
- NullWritable.get());
+ out.collect(new AvroWrapper<>(new Pair<>(key.get(), new Utf8(value.toString()))), NullWritable.get());
  }
  }
 
@@ -203,22 +189,17 @@ public class TestSequenceFileReader {
 
  JobClient.runJob(job);
 
- checkFile(new DataFileReader<>
- (new File(outputPath.toString() + "/part-00000.avro"),
- new SpecificDatumReader<>()));
+ checkFile(new DataFileReader<>(new File(outputPath.toString() + "/part-00000.avro"), new SpecificDatumReader<>()));
  }
 
- private static class NonAvroReducer
- extends MapReduceBase
- implements Reducer<AvroKey<Long>,AvroValue<Utf8>,LongWritable,Text> {
+ private static class NonAvroReducer extends MapReduceBase
+ implements Reducer<AvroKey<Long>, AvroValue<Utf8>, LongWritable, Text> {
 
- public void reduce(AvroKey<Long> key, Iterator<AvroValue<Utf8>> values,
- OutputCollector<LongWritable, Text> out,
+ public void reduce(AvroKey<Long> key, Iterator<AvroValue<Utf8>> values, OutputCollector<LongWritable, Text> out,
  Reporter reporter) throws IOException {
  while (values.hasNext()) {
  AvroValue<Utf8> value = values.next();
- out.collect(new LongWritable(key.datum()),
- new Text(value.datum().toString()));
+ out.collect(new LongWritable(key.datum()), new Text(value.datum().toString()));
  }
  }
  }
@@ -248,8 +229,7 @@ public class TestSequenceFileReader {
 
  JobClient.runJob(job);
 
- checkFile(new SequenceFileReader<>
- (new File(outputPath.toString() + "/part-00000")));
+ checkFile(new SequenceFileReader<>(new File(outputPath.toString() + "/part-00000")));
  }
 
 }
