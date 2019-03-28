@@ -114,7 +114,7 @@ public class TestSpecificCompiler {
  String protocol = i.next().contents;
 
  assertTrue(errType.contains("public class finally$ extends org.apache.avro.specific.SpecificExceptionBase"));
- assertTrue(errType.contains("public boolean catch$;"));
+ assertTrue(errType.contains("private boolean catch$;"));
 
  assertTrue(protocol.contains("java.lang.CharSequence goto$(java.lang.CharSequence break$)"));
  assertTrue(protocol.contains("public interface default$"));
@@ -138,7 +138,7 @@ public class TestSpecificCompiler {
  assertEquals(1, outputs.size());
  String contents = outputs.iterator().next().contents;
 
- assertTrue(contents.contains("public java.lang.CharSequence package$;"));
+ assertTrue(contents.contains("private java.lang.CharSequence package$;"));
  assertTrue(contents.contains("class volatile$ extends"));
  assertTrue(contents.contains("volatile$ short$;"));
 

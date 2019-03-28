@@ -266,7 +266,7 @@ public abstract class AbstractAvroMojo extends AbstractMojo {
  String upper = String.valueOf(this.fieldVisibility).trim().toUpperCase();
  return SpecificCompiler.FieldVisibility.valueOf(upper);
  } catch (IllegalArgumentException e) {
- return SpecificCompiler.FieldVisibility.PUBLIC_DEPRECATED;
+ return SpecificCompiler.FieldVisibility.PRIVATE;
  }
  }
 
