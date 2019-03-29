@@ -5,6 +5,7 @@
  */
 package org.apache.avro.specific;
 
+import org.apache.avro.data.TimeConversions;
 import org.apache.avro.message.BinaryMessageDecoder;
 import org.apache.avro.message.BinaryMessageEncoder;
 import org.apache.avro.message.SchemaStore;
@@ -149,9 +150,9 @@ public class TestRecordWithJsr310LogicalTypes extends org.apache.avro.specific.S
  }
 
  protected static final org.apache.avro.Conversions.DecimalConversion DECIMAL_CONVERSION = new org.apache.avro.Conversions.DecimalConversion();
- protected static final org.apache.avro.data.Jsr310TimeConversions.DateConversion DATE_CONVERSION = new org.apache.avro.data.Jsr310TimeConversions.DateConversion();
- protected static final org.apache.avro.data.Jsr310TimeConversions.TimeMillisConversion TIME_CONVERSION = new org.apache.avro.data.Jsr310TimeConversions.TimeMillisConversion();
- protected static final org.apache.avro.data.Jsr310TimeConversions.TimestampMillisConversion TIMESTAMP_CONVERSION = new org.apache.avro.data.Jsr310TimeConversions.TimestampMillisConversion();
+ protected static final TimeConversions.DateConversion DATE_CONVERSION = new TimeConversions.DateConversion();
+ protected static final TimeConversions.TimeMillisConversion TIME_CONVERSION = new TimeConversions.TimeMillisConversion();
+ protected static final TimeConversions.TimestampMillisConversion TIMESTAMP_CONVERSION = new TimeConversions.TimestampMillisConversion();
 
  private static final org.apache.avro.Conversion<?>[] conversions = new org.apache.avro.Conversion<?>[] { null, null,
  null, null, null, null, DATE_CONVERSION, TIME_CONVERSION, TIMESTAMP_CONVERSION, DECIMAL_CONVERSION, null };

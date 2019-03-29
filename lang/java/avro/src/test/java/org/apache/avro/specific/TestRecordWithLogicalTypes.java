@@ -7,7 +7,7 @@ package org.apache.avro.specific;
 
 import java.math.BigDecimal;
 
-import org.apache.avro.data.TimeConversions;
+import org.apache.avro.data.JodaTimeConversions;
 import org.apache.avro.message.BinaryMessageDecoder;
 import org.apache.avro.message.BinaryMessageEncoder;
 
@@ -322,9 +322,9 @@ public class TestRecordWithLogicalTypes extends org.apache.avro.specific.Specifi
  this.ts = value;
  }
 
- protected static final TimeConversions.DateConversion DATE_CONVERSION = new TimeConversions.DateConversion();
- protected static final TimeConversions.TimeConversion TIME_CONVERSION = new TimeConversions.TimeConversion();
- protected static final TimeConversions.TimestampConversion TIMESTAMP_CONVERSION = new TimeConversions.TimestampConversion();
+ protected static final JodaTimeConversions.DateConversion DATE_CONVERSION = new JodaTimeConversions.DateConversion();
+ protected static final JodaTimeConversions.TimeConversion TIME_CONVERSION = new JodaTimeConversions.TimeConversion();
+ protected static final JodaTimeConversions.TimestampConversion TIMESTAMP_CONVERSION = new JodaTimeConversions.TimestampConversion();
  protected static final org.apache.avro.Conversions.DecimalConversion DECIMAL_CONVERSION = new org.apache.avro.Conversions.DecimalConversion();
  private final org.apache.avro.Conversion<?>[] conversions = new org.apache.avro.Conversion<?>[] { null, null, null,
  null, null, null, DATE_CONVERSION, TIME_CONVERSION, TIMESTAMP_CONVERSION, DECIMAL_CONVERSION, null };
