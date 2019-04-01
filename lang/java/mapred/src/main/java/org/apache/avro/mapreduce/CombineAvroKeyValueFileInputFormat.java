@@ -30,7 +30,8 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReaderWrapper;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 
 /**
- * A combine avro keyvalue file input format that can combine small avro files into mappers.
+ * A combine avro keyvalue file input format that can combine small avro files
+ * into mappers.
  *
  * @param <K> The type of the Avro key to read.
  * @param <V> The type of the Avro value to read.
@@ -38,25 +39,25 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 public class CombineAvroKeyValueFileInputFormat<K, V> extends CombineFileInputFormat<AvroKey<K>, AvroValue<V>> {
 
  @Override
- public RecordReader<AvroKey<K>, AvroValue<V>> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
- return new CombineFileRecordReader((CombineFileSplit)inputSplit, taskAttemptContext,
+ public RecordReader<AvroKey<K>, AvroValue<V>> createRecordReader(InputSplit inputSplit,
+ TaskAttemptContext taskAttemptContext) throws IOException {
+ return new CombineFileRecordReader((CombineFileSplit) inputSplit, taskAttemptContext,
  CombineAvroKeyValueFileInputFormat.AvroKeyValueFileRecordReaderWrapper.class);
  }
 
  /**
- * A record reader that may be passed to <code>CombineFileRecordReader</code>
- * so that it can be used in a <code>CombineFileInputFormat</code>-equivalent
- * for <code>AvroKeyValueInputFormat</code>.
+ * A record reader that may be passed to <code>CombineFileRecordReader</code> so
+ * that it can be used in a <code>CombineFileInputFormat</code>-equivalent for
+ * <code>AvroKeyValueInputFormat</code>.
  *
  * @see CombineFileRecordReader
  * @see CombineFileInputFormat
  * @see AvroKeyValueInputFormat
  */
- private static class AvroKeyValueFileRecordReaderWrapper<K,V>
+ private static class AvroKeyValueFileRecordReaderWrapper<K, V>
  extends CombineFileRecordReaderWrapper<AvroKey<K>, AvroValue<V>> {
  // this constructor signature is required by CombineFileRecordReader
- public AvroKeyValueFileRecordReaderWrapper(CombineFileSplit split,
- TaskAttemptContext context, Integer idx)
+ public AvroKeyValueFileRecordReaderWrapper(CombineFileSplit split, TaskAttemptContext context, Integer idx)
  throws IOException, InterruptedException {
  super(new AvroKeyValueInputFormat<>(), split, context, idx);
  }
