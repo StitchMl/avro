@@ -665,10 +665,10 @@ public class GenericData {
  writeEscapedString(datum.toString(), buffer);
  buffer.append("\"");
  } else if (isBytes(datum)) {
- buffer.append("{\"bytes\": \"");
+ buffer.append("\"");
  ByteBuffer bytes = ((ByteBuffer) datum).duplicate();
  writeEscapedString(StandardCharsets.ISO_8859_1.decode(bytes), buffer);
- buffer.append("\"}");
+ buffer.append("\"");
  } else if (((datum instanceof Float) && // quote Nan & Infinity
  (((Float) datum).isInfinite() || ((Float) datum).isNaN()))
  || ((datum instanceof Double) && (((Double) datum).isInfinite() || ((Double) datum).isNaN()))) {
