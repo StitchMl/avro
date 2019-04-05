@@ -402,7 +402,7 @@ public class SchemaCompatibility {
  // Reader field does not correspond to any field in the writer record schema, so
  // the
  // reader field must have a default value.
- if (readerField.defaultValue() == null) {
+ if (!readerField.hasDefaultValue()) {
  // reader field has no default value. Check for the enum default value
  if (readerField.schema().getType() == Type.ENUM && readerField.schema().getEnumDefault() != null) {
  result = result

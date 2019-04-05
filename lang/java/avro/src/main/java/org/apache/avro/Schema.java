@@ -542,6 +542,15 @@ public abstract class Schema extends JsonProperties {
  return doc;
  }
 
+ /**
+ * @return true if this Field has a default value set. Can be used to determine
+ * if a "null" return from defaultVal() is due to that being the default
+ * value or just not set.
+ */
+ public boolean hasDefaultValue() {
+ return defaultValue != null;
+ }
+
  JsonNode defaultValue() {
  return defaultValue;
  }
@@ -913,7 +922,7 @@ public abstract class Schema extends JsonProperties {
  f.schema().toJson(names, gen);
  if (f.doc() != null)
  gen.writeStringField("doc", f.doc());
- if (f.defaultValue() != null) {
+ if (f.hasDefaultValue()) {
  gen.writeFieldName("default");
  gen.writeTree(f.defaultValue());
  }
