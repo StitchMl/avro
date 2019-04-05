@@ -36,6 +36,7 @@ import org.apache.avro.util.internal.JacksonUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
@@ -2225,16 +2226,16 @@ public class SchemaBuilder {
  }
 
  private FieldAssembler<R> completeField(Schema schema, Object defaultVal) {
- JsonNode defaultNode = toJsonNode(defaultVal);
+ JsonNode defaultNode = defaultVal == null ? NullNode.getInstance() : toJsonNode(defaultVal);
  return completeField(schema, defaultNode);
  }
 
  private FieldAssembler<R> completeField(Schema schema) {
- return completeField(schema, null);
+ return completeField(schema, (JsonNode) null);
  }
 
  private FieldAssembler<R> completeField(Schema schema, JsonNode defaultVal) {
- Field field = new Field(name(), schema, doc(), defaultVal, order);
+ Field field = new Field(name(), schema, doc(), defaultVal, true, order);
  addPropsTo(field);
  addAliasesTo(field);
  return fields.addField(field);
