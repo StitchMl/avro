@@ -36,6 +36,7 @@ EOH
 our %ValidCodec = (
  null => 1,
  deflate => 1,
+ zstandard => 1,
 );
 
 sub is_codec_valid {
