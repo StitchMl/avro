@@ -89,7 +89,7 @@ public class TetherJob extends Configured {
  * enumeration to represent the protocol to use for the communication
  *
  * @param job
- * @return
+ * @return TetheredProcess.Protocol
  */
  public static TetheredProcess.Protocol getProtocol(JobConf job) {
 

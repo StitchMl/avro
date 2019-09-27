@@ -27,7 +27,7 @@ public interface SchemaVisitor<T> {
  * as a terminal. (to avoid circular recursion)
  *
  * @param terminal
- * @return
+ * @return SchemaVisitorAction
  */
  SchemaVisitorAction visitTerminal(Schema terminal);
 
@@ -35,7 +35,7 @@ public interface SchemaVisitor<T> {
  * Invoked for schema with children before proceeding to visit the children.
  *
  * @param nonTerminal
- * @return
+ * @return SchemaVisitorAction
  */
  SchemaVisitorAction visitNonTerminal(Schema nonTerminal);
 
@@ -43,7 +43,7 @@ public interface SchemaVisitor<T> {
  * Invoked for schemas with children after its children have been visited.
  *
  * @param nonTerminal
- * @return
+ * @return SchemaVisitorAction
  */
  SchemaVisitorAction afterVisitNonTerminal(Schema nonTerminal);
 
