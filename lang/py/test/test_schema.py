@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+##
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -13,9 +16,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Test the schema parsing logic.
-"""
+
+"""Test the schema parsing logic."""
+
+from __future__ import absolute_import, division, print_function
+
 import unittest
 
 import set_avro_test_path
@@ -24,10 +29,10 @@ from avro.schema import AvroException, SchemaParseException
 
 
 def print_test_name(test_name):
- print ''
- print test_name
- print '=' * len(test_name)
- print ''
+ print()
+ print(test_name)
+ print('=' * len(test_name))
+ print()
 
 class ExampleSchema(object):
  def __init__(self, schema_string, valid, name='', comment=''):
@@ -567,7 +572,7 @@ class TestSchema(unittest.TestCase):
  try:
  schema.parse('/not/a/real/file')
  caught_exception = False
- except schema.SchemaParseException, e:
+ except schema.SchemaParseException as e:
  expected_message = 'Error parsing JSON: /not/a/real/file, error = ' \
  'No JSON object could be decoded'
  self.assertEqual(expected_message, e.args[0])

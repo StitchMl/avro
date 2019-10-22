@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+##
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -13,9 +16,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Support for inter-process calls.
-"""
+
+"""Support for inter-process calls."""
+
+from __future__ import absolute_import, division, print_function
+
 import httplib
 
 from avro import io, protocol, schema
@@ -296,9 +301,9 @@ class Responder(object):
  # perform server logic
  try:
  response = self.invoke(local_message, request)
- except AvroRemoteException, e:
+ except AvroRemoteException as e:
  error = e
- except Exception, e:
+ except Exception as e:
  error = AvroRemoteException(str(e))
 
  # write response using local protocol
@@ -310,7 +315,7 @@ class Responder(object):
  else:
  writers_schema = local_message.errors
  self.write_error(writers_schema, error, buffer_encoder)
- except schema.AvroException, e:
+ except schema.AvroException as e:
  error = AvroRemoteException(str(e))
  buffer_encoder = io.BinaryEncoder(StringIO())
  META_WRITER.write(response_metadata, buffer_encoder)

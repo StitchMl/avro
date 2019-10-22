@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+##
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -37,6 +40,8 @@ uses the following mapping:
  * Schema doubles are implemented as float.
  * Schema booleans are implemented as bool.
 """
+
+from __future__ import absolute_import, division, print_function
 
 import datetime
 import json
@@ -491,7 +496,7 @@ class BinaryEncoder(object):
  bits_to_write = unscaled_datum >> (8 * index)
  self.write(chr(bits_to_write & 0xff))
  else:
- for i in range(offset_bits/8):
+ for i in range(offset_bits // 8):
  self.write(chr(0))
  for index in range(bytes_req-1, -1, -1):
  bits_to_write = unscaled_datum >> (8 * index)
@@ -933,7 +938,7 @@ class DatumReader(object):
  if len(readers_fields_dict) > len(read_record):
  writers_fields_dict = writers_schema.fields_dict
  for field_name, field in readers_fields_dict.items():
- if not writers_fields_dict.has_key(field_name):
+ if field_name not in writers_fields_dict:
  if field.has_default:
  field_val = self._read_default_value(field.type, field.default)
  read_record[field.name] = field_val

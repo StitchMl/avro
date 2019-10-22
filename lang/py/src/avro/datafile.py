@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+##
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -13,9 +16,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Read/Write Avro File Object Containers.
-"""
+
+"""Read/Write Avro File Object Containers."""
+
+from __future__ import absolute_import, division, print_function
+
 import zlib
 
 from avro import io, schema
