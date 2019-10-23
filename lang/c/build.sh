@@ -42,7 +42,10 @@ function clean {
  rm -f examples/quickstop.db
 }
 
-case "$1" in
+for target in "$@"
+do
+
+ case "$target" in
 
  interop-data-generate)
  prepare_build
@@ -93,6 +96,8 @@ case "$1" in
  *)
  echo "Usage: $0 {interop-data-generate|interop-data-test|lint|test|dist|clean}"
  exit 1
-esac
+ esac
+
+done
 
 exit 0

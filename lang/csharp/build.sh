@@ -23,7 +23,10 @@ cd `dirname "$0"` # connect to root
 ROOT=../..
 VERSION=`cat $ROOT/share/VERSION.txt`
 
-case "$1" in
+for target in "$@"
+do
+
+ case "$target" in
 
  lint)
  echo 'This is a stub where someone can provide linting.'
@@ -83,4 +86,7 @@ case "$1" in
  *)
  echo "Usage: $0 {lint|test|clean|dist|perf|interop-data-generate|interop-data-test}"
  exit 1
-esac
+
+ esac
+
+done

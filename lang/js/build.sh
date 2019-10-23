@@ -19,7 +19,9 @@ set -e
 
 cd `dirname "$0"`
 
-case "$1" in
+for target in "$@"
+do
+ case "$target" in
  lint)
  npm run lint
  ;;
@@ -38,4 +40,5 @@ case "$1" in
  *)
  echo "Usage: $0 {lint|test|dist|clean}" >&2
  exit 1
-esac
+ esac
+done

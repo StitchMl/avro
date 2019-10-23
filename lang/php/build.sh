@@ -44,7 +44,9 @@ function dist {
  cp "$tarball" "../$dist_dir"
 }
 
-case "$1" in
+for target in "$@"
+do
+ case "$target" in
  interop-data-generate)
  php test/generate_interop_data.php
  ;;
@@ -78,7 +80,7 @@ case "$1" in
 
  *)
  echo "Usage: $0 {interop-data-generate|test-interop|lint|test|dist|clean}"
-esac
-
+ esac
+done
 
 exit 0
