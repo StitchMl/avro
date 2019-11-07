@@ -98,6 +98,16 @@ public class TestLogicalType {
  return null;
  });
  Assert.assertNull("Invalid logical type should not be set on schema", LogicalTypes.fromSchemaIgnoreInvalid(schema));
+
+ // 129 bytes can hold up to 310 digits of precision
+ final Schema schema129 = Schema.createFixed("aDecimal", null, null, 129);
+ assertThrows("Should reject precision", IllegalArgumentException.class,
+ "fixed(129) cannot store 311 digits (max 310)", () -> {
+ LogicalTypes.decimal(311).addToSchema(schema129);
+ return null;
+ });
+ Assert.assertNull("Invalid logical type should not be set on schema",
+ LogicalTypes.fromSchemaIgnoreInvalid(schema129));
  }
 
  @Test
