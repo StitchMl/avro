@@ -28,6 +28,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class supports Avro-MapReduce jobs that have multiple input paths with a
@@ -104,6 +106,9 @@ import org.apache.hadoop.mapred.JobConf;
  * </p>
  */
 public class AvroMultipleInputs {
+
+ private static final Logger LOG = LoggerFactory.getLogger(AvroMultipleInputs.class);
+
  private static final String SCHEMA_KEY = "avro.mapreduce.input.multipleinputs.dir.schemas";
  private static final String MAPPERS_KEY = "avro.mapreduce.input.multipleinputs.dir.mappers";
 
@@ -140,7 +145,7 @@ public class AvroMultipleInputs {
  addInputPath(conf, path, inputSchema);
 
  String mapperMapping = path.toString() + ";" + mapperClass.getName();
- System.out.println(mapperMapping);
+ LOG.info(mapperMapping);
  String mappers = conf.get(MAPPERS_KEY);
  conf.set(MAPPERS_KEY, mappers == null ? mapperMapping : mappers + "," + mapperMapping);
 
