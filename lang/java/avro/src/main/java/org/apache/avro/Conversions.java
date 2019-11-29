@@ -80,7 +80,7 @@ public class Conversions {
  int scale = ((LogicalTypes.Decimal) type).getScale();
  // always copy the bytes out because BigInteger has no offset/length ctor
  byte[] bytes = new byte[value.remaining()];
- value.get(bytes);
+ value.duplicate().get(bytes);
  return new BigDecimal(new BigInteger(bytes), scale);
  }
 
