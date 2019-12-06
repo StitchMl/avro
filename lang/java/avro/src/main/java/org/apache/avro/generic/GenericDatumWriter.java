@@ -156,13 +156,13 @@ public class GenericDatumWriter<D> implements DatumWriter<D> {
  out.writeInt(((Number) datum).intValue());
  break;
  case LONG:
- out.writeLong((Long) datum);
+ out.writeLong(((Number) datum).longValue());
  break;
  case FLOAT:
- out.writeFloat((Float) datum);
+ out.writeFloat(((Number) datum).floatValue());
  break;
  case DOUBLE:
- out.writeDouble((Double) datum);
+ out.writeDouble(((Number) datum).doubleValue());
  break;
  case BOOLEAN:
  out.writeBoolean((Boolean) datum);
