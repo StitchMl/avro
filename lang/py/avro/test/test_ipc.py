@@ -26,7 +26,6 @@ from __future__ import absolute_import, division, print_function
 
 import unittest
 
-import set_avro_test_path
 # This test does import this code, to make sure it at least passes
 # compilation.
 from avro import ipc
