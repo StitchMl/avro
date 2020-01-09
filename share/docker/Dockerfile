@@ -69,13 +69,13 @@ RUN apt-get -qqy update \
  && rm -rf /var/lib/apt/lists
 
 # Install nodejs 6
-RUN curl -sSL https://deb.nodesource.com/setup_6.x \
+RUN curl -sSL https://deb.nodesource.com/setup_10.x \
  | bash - \
  && apt-get -qqy install nodejs \
  && apt-get -qqy clean \
  && rm -rf /var/lib/apt/lists \
  && npm install -g grunt-cli \
- && npm cache clean
+ && npm cache clean --force
 
 # Install PHP
 # TODO: Remove php5-related packages when we drop PHP 5.6 support in the future
