@@ -259,8 +259,9 @@ public class ResolvingDecoder extends ValidatingDecoder {
  parser.advance(Symbol.ENUM);
  Symbol.EnumAdjustAction top = (Symbol.EnumAdjustAction) parser.popSymbol();
  int n = in.readEnum();
- if (top.noAdjustments)
+ if (top.noAdjustments) {
  return n;
+ }
  Object o = top.adjustments[n];
  if (o instanceof Integer) {
  return (Integer) o;
@@ -273,7 +274,7 @@ public class ResolvingDecoder extends ValidatingDecoder {
  public int readIndex() throws IOException {
  parser.advance(Symbol.UNION);
  Symbol top = parser.popSymbol();
- int result;
+ final int result;
  if (top instanceof Symbol.UnionAdjustAction) {
  result = ((Symbol.UnionAdjustAction) top).rindex;
  top = ((Symbol.UnionAdjustAction) top).symToParse;

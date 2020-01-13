@@ -50,7 +50,7 @@ public class Parser {
  protected Symbol[] stack;
  protected int pos;
 
- public Parser(Symbol root, ActionHandler symbolHandler) throws IOException {
+ public Parser(Symbol root, ActionHandler symbolHandler) {
  this.symbolHandler = symbolHandler;
  this.stack = new Symbol[5]; // Start small to make sure expansion code works
  this.stack[0] = root;
