@@ -88,17 +88,17 @@ public class DataFileReader<D> extends DataFileStream<D> implements FileReader<D
  return dreader;
  }
 
- /** Construct a reader for a file. */
+ /** Construct a reader for a file. Please close resource files yourself. */
  public DataFileReader(File file, DatumReader<D> reader) throws IOException {
  this(new SeekableFileInput(file), reader, true);
  }
 
- /** Construct a reader for a file. */
+ /** Construct a reader for a file. Please close resource files yourself. */
  public DataFileReader(SeekableInput sin, DatumReader<D> reader) throws IOException {
  this(sin, reader, false);
  }
 
- /** Construct a reader for a file. */
+ /** Construct a reader for a file. Please close resource files yourself. */
  protected DataFileReader(SeekableInput sin, DatumReader<D> reader, boolean closeOnError) throws IOException {
  super(reader);
  try {
