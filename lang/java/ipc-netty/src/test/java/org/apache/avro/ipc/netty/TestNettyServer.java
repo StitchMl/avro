@@ -168,7 +168,8 @@ public class TestNettyServer {
  int port = server.getPort();
  String msg = "GET /status HTTP/1.1\n\n";
  InetSocketAddress sockAddr = new InetSocketAddress("127.0.0.1", port);
- Socket sock = new Socket();
+
+ try (Socket sock = new Socket()) {
  sock.connect(sockAddr);
  OutputStream out = sock.getOutputStream();
  out.write(msg.getBytes(StandardCharsets.UTF_8));
@@ -176,6 +177,7 @@ public class TestNettyServer {
  byte[] buf = new byte[2048];
  int bytesRead = sock.getInputStream().read(buf);
  Assert.assertTrue("Connection should have been closed", bytesRead == -1);
+ }
  }
 
 }

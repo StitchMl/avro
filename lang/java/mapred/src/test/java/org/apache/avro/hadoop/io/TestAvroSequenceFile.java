@@ -59,8 +59,7 @@ public class TestAvroSequenceFile {
  AvroSequenceFile.Reader.Options options = new AvroSequenceFile.Reader.Options().withFileSystem(fs)
  .withInputPath(sequenceFilePath).withKeySchema(Schema.create(Schema.Type.STRING))
  .withValueSchema(Schema.create(Schema.Type.INT)).withConfiguration(conf);
- SequenceFile.Reader reader = new AvroSequenceFile.Reader(options);
-
+ try (SequenceFile.Reader reader = new AvroSequenceFile.Reader(options)) {
  AvroKey<CharSequence> key = new AvroKey<>();
  AvroValue<Integer> value = new AvroValue<>();
 
@@ -81,6 +80,7 @@ public class TestAvroSequenceFile {
  assertEquals(2, value.datum().intValue());
 
  assertNull("Should be no more records.", reader.next(key));
+ }
  }
 
  /**
@@ -99,8 +99,8 @@ public class TestAvroSequenceFile {
  FileSystem fs = FileSystem.get(conf);
  AvroSequenceFile.Reader.Options options = new AvroSequenceFile.Reader.Options().withFileSystem(fs)
  .withInputPath(sequenceFilePath).withConfiguration(conf);
- SequenceFile.Reader reader = new AvroSequenceFile.Reader(options);
 
+ try (SequenceFile.Reader reader = new AvroSequenceFile.Reader(options)) {
  AvroKey<CharSequence> key = new AvroKey<>();
  AvroValue<Integer> value = new AvroValue<>();
 
@@ -122,6 +122,7 @@ public class TestAvroSequenceFile {
 
  assertNull("Should be no more records.", reader.next(key));
  }
+ }
 
  /** Tests that reading and writing ordinary Writables still works. */
  @Test
@@ -135,8 +136,8 @@ public class TestAvroSequenceFile {
  FileSystem fs = FileSystem.get(conf);
  AvroSequenceFile.Reader.Options options = new AvroSequenceFile.Reader.Options().withFileSystem(fs)
  .withInputPath(sequenceFilePath).withConfiguration(conf);
- SequenceFile.Reader reader = new AvroSequenceFile.Reader(options);
 
+ try (SequenceFile.Reader reader = new AvroSequenceFile.Reader(options)) {
  Text key = new Text();
  IntWritable value = new IntWritable();
 
@@ -155,6 +156,8 @@ public class TestAvroSequenceFile {
  assertEquals(2, value.get());
 
  assertFalse("Should be no more records.", reader.next(key));
+
+ }
  }
 
  /**
@@ -188,14 +191,11 @@ public class TestAvroSequenceFile {
  } else {
  options.withValueClass(valueClass);
  }
- SequenceFile.Writer writer = new AvroSequenceFile.Writer(options);
-
+ try (SequenceFile.Writer writer = new AvroSequenceFile.Writer(options)) {
  // Write some records.
  for (int i = 0; i < records.length; i += 2) {
  writer.append(records[i], records[i + 1]);
  }
-
- // Close the file.
- writer.close();
+ }
  }
 }

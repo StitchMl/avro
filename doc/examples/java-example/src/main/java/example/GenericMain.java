@@ -57,8 +57,8 @@ public class GenericMain {
 
  // Deserialize users from disk
  DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);
- DataFileReader<GenericRecord> dataFileReader = new DataFileReader<GenericRecord>(file, datumReader);
  GenericRecord user = null;
+ try(DataFileReader<GenericRecord> dataFileReader = new DataFileReader<GenericRecord>(file, datumReader)){
  while (dataFileReader.hasNext()) {
  // Reuse user object by passing it to next(). This saves us from
  // allocating and garbage collecting many objects for files with
@@ -66,6 +66,8 @@ public class GenericMain {
  user = dataFileReader.next(user);
  System.out.println(user);
  }
+ }
+
 
  }
 }

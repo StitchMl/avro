@@ -776,8 +776,8 @@ public class TestSchemaBuilder {
  .intDefault(3).name("newOptionalInt").type().optional().intType().name("newNullableIntWithDefault").type()
  .nullable().intType().intDefault(5).endRecord();
 
- DataFileReader<GenericData.Record> reader = new DataFileReader<>(file,
- new GenericDatumReader<>(writeSchema, readSchema));
+ try (DataFileReader<GenericData.Record> reader = new DataFileReader<>(file,
+ new GenericDatumReader<>(writeSchema, readSchema))) {
 
  GenericData.Record rec1read = reader.iterator().next();
  Assert.assertEquals(1, rec1read.get("requiredInt"));
@@ -792,6 +792,8 @@ public class TestSchemaBuilder {
  Assert.assertEquals(13, rec2read.get("nullableIntWithDefault"));
  Assert.assertNull(rec2read.get("newOptionalInt"));
  Assert.assertEquals(5, rec2read.get("newNullableIntWithDefault"));
+ }
+
  }
 
  @Test

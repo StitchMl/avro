@@ -331,7 +331,7 @@ public class TestProtocolSpecific {
  @Test
  public void testClient() throws Exception {
  for (File f : Objects.requireNonNull(SERVER_PORTS_DIR.listFiles())) {
- LineNumberReader reader = new LineNumberReader(new FileReader(f));
+ try (LineNumberReader reader = new LineNumberReader(new FileReader(f))) {
  int port = Integer.parseInt(reader.readLine());
  System.out.println("Validating java client to " + f.getName() + " - " + port);
  Transceiver client = new SocketTransceiver(new InetSocketAddress("localhost", port));
@@ -344,6 +344,7 @@ public class TestProtocolSpecific {
  System.out.println("Done! Validation java client to " + f.getName() + " - " + port);
  }
  }
+ }
 
  /**
  * Starts the RPC server.
@@ -353,9 +354,10 @@ public class TestProtocolSpecific {
  new InetSocketAddress(0));
  server.start();
  File portFile = new File(SERVER_PORTS_DIR, "java-port");
- FileWriter w = new FileWriter(portFile);
+ try (FileWriter w = new FileWriter(portFile)) {
  w.write(Integer.toString(server.getPort()));
- w.close();
+ }
+
  }
  }
 }

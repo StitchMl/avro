@@ -40,31 +40,35 @@ public class TestDataFileMeta {
  public TemporaryFolder DIR = new TemporaryFolder();
 
  @Test(expected = AvroRuntimeException.class)
- public void testUseReservedMeta() {
- DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>());
+ public void testUseReservedMeta() throws IOException {
+ try (DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>())) {
  w.setMeta("avro.foo", "bar");
+ }
  }
 
  @Test()
  public void testUseMeta() throws IOException {
- DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>());
  File f = new File(DIR.getRoot().getPath(), "testDataFileMeta.avro");
+ try (DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>())) {
  w.setMeta("hello", "bar");
  w.create(Schema.create(Type.NULL), f);
- w.close();
+ }
 
- DataFileStream<Void> r = new DataFileStream<>(new FileInputStream(f), new GenericDatumReader<>());
-
+ try (DataFileStream<Void> r = new DataFileStream<>(new FileInputStream(f), new GenericDatumReader<>())) {
  assertTrue(r.getMetaKeys().contains("hello"));
 
  assertEquals("bar", r.getMetaString("hello"));
  }
 
+ }
+
  @Test(expected = AvroRuntimeException.class)
  public void testUseMetaAfterCreate() throws IOException {
- DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>());
+ try (DataFileWriter<?> w = new DataFileWriter<>(new GenericDatumWriter<>())) {
  w.create(Schema.create(Type.NULL), new ByteArrayOutputStream());
  w.setMeta("foo", "bar");
+ }
+
  }
 
  @Test
