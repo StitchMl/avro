@@ -224,7 +224,7 @@ class Util {
  * @throws IOException
  */
  static List<Path> getFiles(List<String> fileOrDirNames) throws IOException {
- ArrayList<Path> pathList = new ArrayList<>();
+ ArrayList<Path> pathList = new ArrayList<>(fileOrDirNames.size());
  for (String name : fileOrDirNames) {
  pathList.addAll(getFiles(name));
  }
