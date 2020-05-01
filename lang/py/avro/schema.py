@@ -123,17 +123,22 @@ VALID_FIELD_SORT_ORDERS = (
 # Exceptions
 #
 
+
 class AvroException(Exception):
  pass
+
 
 class SchemaParseException(AvroException):
  pass
 
+
 class InvalidName(SchemaParseException):
  """User attempted to parse a schema with an invalid name."""
 
+
 class AvroWarning(UserWarning):
  """Base class for warnings."""
+
 
 class IgnoredLogicalType(AvroWarning):
  """Warnings for unknown or invalid logical types."""
@@ -150,9 +155,11 @@ def validate_basename(basename):
 # Base Classes
 #
 
+
 class Schema(object):
  """Base class for all Schema classes."""
  _props = None
+
  def __init__(self, type, other_props=None):
  # Ensure valid ctor args
  if not isinstance(type, basestring):
@@ -215,7 +222,6 @@ class Schema(object):
  raise Exception("Must be implemented by subclasses.")
 
 
-
 class Name(object):
  """Class to describe Avro name."""
 
@@ -225,10 +231,18 @@ class Name(object):
  """The fullname is determined in one of the following ways:
 
  - A name and namespace are both specified. For example, one might use "name": "X", "namespace": "org.foo" to indicate the fullname org.foo.X.
- - A fullname is specified. If the name specified contains a dot, then it is assumed to be a fullname, and any namespace also specified is ignored. For example, use "name": "org.foo.X" to indicate the fullname org.foo.X.
- - A name only is specified, i.e., a name that contains no dots. In this case the namespace is taken from the most tightly enclosing schema or protocol. For example, if "name": "X" is specified, and this occurs within a field of the record definition of org.foo.Y, then the fullname is org.foo.X. If there is no enclosing namespace then the null namespace is used.
+ - A fullname is specified. If the name specified contains a dot,
+ then it is assumed to be a fullname, and any namespace also specified is ignored.
+ For example, use "name": "org.foo.X" to indicate the fullname org.foo.X.
+ - A name only is specified, i.e., a name that contains no dots.
+ In this case the namespace is taken from the most tightly enclosing schema or protocol.
+ For example, if "name": "X" is specified, and this occurs within a field of
+ the record definition of org.foo.Y, then the fullname is org.foo.X.
+ If there is no enclosing namespace then the null namespace is used.
 
- References to previously defined names are as in the latter two cases above: if they contain a dot they are a fullname, if they do not contain a dot, the namespace is the namespace of the enclosing definition.
+ References to previously defined names are as in the latter two cases above:
+ if they contain a dot they are a fullname,
+ if they do not contain a dot, the namespace is the namespace of the enclosing definition.
 
  @arg name_attr: name value read in schema or None.
  @arg space_attr: namespace value read in schema or None. The empty string may be used as a namespace to indicate the null namespace.
@@ -273,6 +287,7 @@ class Name(object):
 
 class Names(object):
  """Track name set and default namespace during parsing."""
+
  def __init__(self, default_namespace=None):
  self.names = {}
  self.default_namespace = default_namespace
@@ -325,8 +340,10 @@ class Names(object):
  self.names[to_add.fullname] = new_schema
  return to_add
 
+
 class NamedSchema(Schema):
  """Named Schemas specified in NAMED_TYPES."""
+
  def __init__(self, type, name, namespace=None, names=None, other_props=None):
  # Ensure valid ctor args
  if not name:
@@ -365,6 +382,7 @@ class NamedSchema(Schema):
 # Logical type class
 #
 
+
 class LogicalSchema(object):
  def __init__(self, logical_type):
  self.logical_type = logical_type
@@ -372,6 +390,7 @@ class LogicalSchema(object):
 #
 # Decimal logical schema
 #
+
 
 class DecimalLogicalSchema(LogicalSchema):
  def __init__(self, precision, scale=0, max_precision=0):
@@ -396,7 +415,7 @@ class DecimalLogicalSchema(LogicalSchema):
 
 class Field(object):
  def __init__(self, type, name, has_default, default=None,
- order=None,names=None, doc=None, other_props=None):
+ order=None, names=None, doc=None, other_props=None):
  # Ensure valid ctor args
  if not name:
  fail_msg = 'Fields must have a non-empty name.'
@@ -413,8 +432,8 @@ class Field(object):
  self._has_default = has_default
  self._props.update(other_props or {})
 
- if (isinstance(type, basestring) and names is not None
- and names.has_name(type, None)):
+ if (isinstance(type, basestring) and names is not None and
+ names.has_name(type, None)):
  type_schema = names.get_name(type, None)
  else:
  try:
@@ -427,9 +446,12 @@ class Field(object):
  self.type = type_schema
  self.name = name
  # TODO(hammer): check to ensure default is valid
- if has_default: self.set_prop('default', default)
- if order is not None: self.set_prop('order', order)
- if doc is not None: self.set_prop('doc', doc)
+ if has_default:
+ self.set_prop('default', default)
+ if order is not None:
+ self.set_prop('order', order)
+ if doc is not None:
+ self.set_prop('doc', doc)
 
  # read-only properties
  default = property(lambda self: self.get_prop('default'))
@@ -445,6 +467,7 @@ class Field(object):
 # utility functions to manipulate properties dict
  def get_prop(self, key):
  return self._props.get(key)
+
  def set_prop(self, key, value):
  self._props[key] = value
 
@@ -465,8 +488,11 @@ class Field(object):
 #
 # Primitive Types
 #
+
+
 class PrimitiveSchema(Schema):
  """Valid primitive types are in PRIMITIVE_TYPES."""
+
  def __init__(self, type, other_props=None):
  # Ensure valid ctor args
  if type not in PRIMITIVE_TYPES:
@@ -486,9 +512,8 @@ class PrimitiveSchema(Schema):
  return self.type == writer.type or {
  'float': self.type == 'double',
  'int': self.type in {'double', 'float', 'long'},
- 'long': self.type in {'double', 'float',},
+ 'long': self.type in {'double', 'float', },
  }.get(writer.type, False)
-
 
  def to_json(self, names=None):
  if len(self.props) == 1:
@@ -502,6 +527,8 @@ class PrimitiveSchema(Schema):
 #
 # Decimal Bytes Type
 #
+
+
 class BytesDecimalSchema(PrimitiveSchema, DecimalLogicalSchema):
  def __init__(self, precision, scale=0, other_props=None):
  DecimalLogicalSchema.__init__(self, precision, scale, max_precision=((1 << 31) - 1))
@@ -562,6 +589,7 @@ class FixedSchema(NamedSchema):
 #
 # Decimal Fixed Type
 #
+
 
 class FixedDecimalSchema(FixedSchema, DecimalLogicalSchema):
  def __init__(self, size, name, precision, scale=0, namespace=None, names=None, other_props=None):
@@ -634,6 +662,7 @@ class EnumSchema(NamedSchema):
 # Complex Types (recursive)
 #
 
+
 class ArraySchema(Schema):
  def __init__(self, items, names=None, other_props=None):
  # Call parent ctor
@@ -674,10 +703,11 @@ class ArraySchema(Schema):
  to_cmp = json.loads(str(self))
  return to_cmp == json.loads(str(that))
 
+
 class MapSchema(Schema):
  def __init__(self, values, names=None, other_props=None):
  # Call parent ctor
- Schema.__init__(self, 'map',other_props)
+ Schema.__init__(self, 'map', other_props)
 
  # Add class members
  if isinstance(values, basestring) and names.has_name(values, None):
@@ -714,10 +744,12 @@ class MapSchema(Schema):
  to_cmp = json.loads(str(self))
  return to_cmp == json.loads(str(that))
 
+
 class UnionSchema(Schema):
  """
  names is a dictionary of schema objects
  """
+
  def __init__(self, schemas, names=None):
  # Ensure valid ctor args
  if not isinstance(schemas, list):
@@ -738,8 +770,8 @@ class UnionSchema(Schema):
  except Exception as e:
  raise SchemaParseException('Union item must be a valid Avro schema: %s' % str(e))
  # check the new schema
- if (new_schema.type in VALID_TYPES and new_schema.type not in NAMED_TYPES
- and new_schema.type in [schema.type for schema in schema_objects]):
+ if (new_schema.type in VALID_TYPES and new_schema.type not in NAMED_TYPES and
+ new_schema.type in [schema.type for schema in schema_objects]):
  raise SchemaParseException('%s type already in Union' % new_schema.type)
  elif new_schema.type == 'union':
  raise SchemaParseException('Unions cannot contain other unions.')
@@ -770,6 +802,7 @@ class UnionSchema(Schema):
  to_cmp = json.loads(str(self))
  return to_cmp == json.loads(str(that))
 
+
 class ErrorUnionSchema(UnionSchema):
  def __init__(self, schemas, names=None):
  # Prepend "string" to handle system errors
@@ -781,9 +814,11 @@ class ErrorUnionSchema(UnionSchema):
  to_dump = []
  for schema in self.schemas:
  # Don't print the system error schema
- if schema.type == 'string': continue
+ if schema.type == 'string':
+ continue
  to_dump.append(schema.to_json(names))
  return to_dump
+
 
 class RecordSchema(NamedSchema):
  @staticmethod
@@ -851,7 +886,8 @@ class RecordSchema(NamedSchema):
  # Add class members
  field_objects = RecordSchema.make_field_objects(fields, names)
  self.set_prop('fields', field_objects)
- if doc is not None: self.set_prop('doc', doc)
+ if doc is not None:
+ self.set_prop('doc', doc)
 
  if schema_type == 'record':
  names.default_namespace = old_default
@@ -872,7 +908,7 @@ class RecordSchema(NamedSchema):
  names = Names()
  # Request records don't have names
  if self.type == 'request':
- return [ f.to_json(names) for f in self.fields ]
+ return [f.to_json(names) for f in self.fields]
 
  if self.fullname in names.names:
  return self.name_ref(names)
@@ -880,7 +916,7 @@ class RecordSchema(NamedSchema):
  names.names[self.fullname] = self
 
  to_dump = names.prune_namespace(self.props.copy())
- to_dump['fields'] = [ f.to_json(names) for f in self.fields ]
+ to_dump['fields'] = [f.to_json(names) for f in self.fields]
  return to_dump
 
  def __eq__(self, that):
@@ -907,6 +943,7 @@ class DateSchema(LogicalSchema, PrimitiveSchema):
 # time-millis Type
 #
 
+
 class TimeMillisSchema(LogicalSchema, PrimitiveSchema):
  def __init__(self, other_props=None):
  LogicalSchema.__init__(self, constants.TIME_MILLIS)
@@ -921,6 +958,7 @@ class TimeMillisSchema(LogicalSchema, PrimitiveSchema):
 #
 # time-micros Type
 #
+
 
 class TimeMicrosSchema(LogicalSchema, PrimitiveSchema):
  def __init__(self, other_props=None):
@@ -937,6 +975,7 @@ class TimeMicrosSchema(LogicalSchema, PrimitiveSchema):
 # timestamp-millis Type
 #
 
+
 class TimestampMillisSchema(LogicalSchema, PrimitiveSchema):
  def __init__(self, other_props=None):
  LogicalSchema.__init__(self, constants.TIMESTAMP_MILLIS)
@@ -952,6 +991,7 @@ class TimestampMillisSchema(LogicalSchema, PrimitiveSchema):
 # timestamp-micros Type
 #
 
+
 class TimestampMicrosSchema(LogicalSchema, PrimitiveSchema):
  def __init__(self, other_props=None):
  LogicalSchema.__init__(self, constants.TIMESTAMP_MICROS)
@@ -966,6 +1006,8 @@ class TimestampMicrosSchema(LogicalSchema, PrimitiveSchema):
 #
 # Module Methods
 #
+
+
 def get_other_props(all_props, reserved_props):
  """
  Retrieve the non-reserved properties from a dictionary of properties
@@ -974,9 +1016,11 @@ def get_other_props(all_props, reserved_props):
  if callable(getattr(all_props, 'items', None)):
  return {k: v for k, v in all_props.items() if k not in reserved_props}
 
+
 def make_bytes_decimal_schema(other_props):
  """Make a BytesDecimalSchema from just other_props."""
  return BytesDecimalSchema(other_props.get('precision'), other_props.get('scale', 0))
+
 
 def make_logical_schema(logical_type, type_, other_props):
  """Map the logical types to the appropriate literal type and schema class."""
@@ -1005,6 +1049,7 @@ def make_logical_schema(logical_type, type_, other_props):
  except IgnoredLogicalType as warning:
  warnings.warn(warning)
  return None
+
 
 def make_avsc_object(json_data, names=None, validate_enum_symbols=True):
  """
@@ -1078,6 +1123,8 @@ def make_avsc_object(json_data, names=None, validate_enum_symbols=True):
  raise SchemaParseException(fail_msg)
 
 # TODO(hammer): make method for reading from a file?
+
+
 def parse(json_string, validate_enum_symbols=True):
  """Constructs the Schema from the JSON text.
 

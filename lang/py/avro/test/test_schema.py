@@ -93,7 +93,7 @@ ENUM_EXAMPLES = [
  InvalidTestSchema({"type": "enum", "name": "Status", "symbols": "Normal Caution Critical"}),
  InvalidTestSchema({"type": "enum", "name": [0, 1, 1, 2, 3, 5, 8],
  "symbols": ["Golden", "Mean"]}),
- InvalidTestSchema({"type": "enum", "symbols" : ["I", "will", "fail", "no", "name"]}),
+ InvalidTestSchema({"type": "enum", "symbols": ["I", "will", "fail", "no", "name"]}),
  InvalidTestSchema({"type": "enum", "name": "Test", "symbols": ["AA", "AA"]}),
  InvalidTestSchema({"type": "enum", "name": "AVRO2174", "symbols": ["white space"]}),
 ]
@@ -193,14 +193,14 @@ RECORD_EXAMPLES = [
 
 DOC_EXAMPLES = [
  ValidTestSchema({"type": "record", "name": "TestDoc", "doc": "Doc string",
- "fields": [{"name": "name", "type": "string", "doc" : "Doc String"}]}),
+ "fields": [{"name": "name", "type": "string", "doc": "Doc String"}]}),
  ValidTestSchema({"type": "enum", "name": "Test", "symbols": ["A", "B"], "doc": "Doc String"}),
 ]
 
 OTHER_PROP_EXAMPLES = [
  ValidTestSchema({"type": "record", "name": "TestRecord", "cp_string": "string",
  "cp_int": 1, "cp_array": [1, 2, 3, 4],
- "fields": [{"name": "f1", "type": "string", "cp_object": {"a": 1,"b": 2}},
+ "fields": [{"name": "f1", "type": "string", "cp_object": {"a": 1, "b": 2}},
  {"name": "f2", "type": "long", "cp_null": None}]}),
  ValidTestSchema({"type": "map", "values": "long", "cp_boolean": True}),
  ValidTestSchema({"type": "enum", "name": "TestEnum",
@@ -327,7 +327,17 @@ class TestMisc(unittest.TestCase):
 
  def test_correct_recursive_extraction(self):
  """A recursive reference within a schema should be the same type every time."""
- s = schema.parse('{"type": "record", "name": "X", "fields": [{"name": "y", "type": {"type": "record", "name": "Y", "fields": [{"name": "Z", "type": "X"}]}}]}')
+ s = schema.parse('''{
+ "type": "record",
+ "name": "X",
+ "fields": [{
+ "name": "y",
+ "type": {
+ "type": "record",
+ "name": "Y",
+ "fields": [{"name": "Z", "type": "X"}]}
+ }]
+ }''')
  t = schema.parse(str(s.fields[0].type))
  # If we've made it this far, the subschema was reasonably stringified; it ccould be reparsed.
  self.assertEqual("X", t.fields[0].type.name)
@@ -525,6 +535,7 @@ class RoundTripParseTestCase(unittest.TestCase):
  round_trip = schema.parse(str(parsed))
  self.assertEqual(parsed, round_trip)
 
+
 class DocAttributesTestCase(unittest.TestCase):
  """Enable generating document attribute test cases over all the document test schema."""
 
@@ -594,6 +605,7 @@ def load_tests(loader, default_tests, pattern):
  suite.addTests(DocAttributesTestCase(ex) for ex in DOC_EXAMPLES)
  suite.addTests(OtherAttributesTestCase(ex) for ex in OTHER_PROP_EXAMPLES)
  return suite
+
 
 if __name__ == '__main__':
  unittest.main()

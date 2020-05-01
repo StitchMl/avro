@@ -76,7 +76,7 @@ HELLO_WORLD = ValidTestProtocol({
  ],
  "messages": {
  "hello": {
- "request": [{"name": "greeting", "type": "Greeting" }],
+ "request": [{"name": "greeting", "type": "Greeting"}],
  "response": "Greeting",
  "errors": ["Curse"]
  }
@@ -86,7 +86,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "namespace": "org.apache.avro.test",
  "protocol": "Simple",
  "types": [
- {"name": "Kind", "type": "enum", "symbols": ["FOO","BAR","BAZ"]},
+ {"name": "Kind", "type": "enum", "symbols": ["FOO", "BAR", "BAZ"]},
  {"name": "MD5", "type": "fixed", "size": 16},
  {"name": "TestRecord", "type": "record", "fields": [
  {"name": "name", "type": "string", "order": "ignore"},
@@ -114,7 +114,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "errors": ["TestError"]
  }
  }
- }), ValidTestProtocol({
+}), ValidTestProtocol({
  "namespace": "org.apache.avro.test.namespace",
  "protocol": "TestNamespace",
  "types": [
@@ -123,7 +123,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  {"name": "hash", "type": "org.apache.avro.test.util.MD5"}
  ]},
  {"name": "TestError", "namespace": "org.apache.avro.test.errors", "type": "error",
- "fields": [ {"name": "message", "type": "string"}]}
+ "fields": [{"name": "message", "type": "string"}]}
  ],
  "messages": {
  "echo": {
@@ -135,13 +135,13 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "errors": ["org.apache.avro.test.errors.TestError"]
  }
  }
- }), ValidTestProtocol({
+}), ValidTestProtocol({
  "namespace": "org.apache.avro.test.namespace",
  "protocol": "TestImplicitNamespace",
  "types": [
  {"name": "org.apache.avro.test.util.MD5", "type": "fixed", "size": 16},
  {"name": "ReferencedRecord", "type": "record",
- "fields": [ {"name": "foo", "type": "string"}]},
+ "fields": [{"name": "foo", "type": "string"}]},
  {"name": "TestRecord", "type": "record",
  "fields": [{"name": "hash", "type": "org.apache.avro.test.util.MD5"},
  {"name": "unqualified", "type": "ReferencedRecord"}]
@@ -158,7 +158,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "errors": ["org.apache.avro.test.namespace.TestError"]
  }
  }
- }), ValidTestProtocol({
+}), ValidTestProtocol({
  "namespace": "org.apache.avro.test.namespace",
  "protocol": "TestNamespaceTwo",
  "types": [
@@ -183,7 +183,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "errors": ["org.apache.avro.test.namespace.TestError"]
  }
  }
- }), ValidTestProtocol({
+}), ValidTestProtocol({
  "namespace": "org.apache.avro.test.namespace",
  "protocol": "TestValidRepeatedName",
  "types": [
@@ -204,15 +204,15 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "response": "null",
  "errors": ["org.apache.avro.test.namespace.TestError"]}
  }
- }), InvalidTestProtocol({
+}), InvalidTestProtocol({
  "namespace": "org.apache.avro.test.namespace",
  "protocol": "TestInvalidRepeatedName",
  "types": [
  {"name": "org.apache.avro.test.util.MD5", "type": "fixed", "size": 16},
  {"name": "ReferencedRecord", "type": "record",
- "fields": [ {"name": "foo", "type": "string"}]},
+ "fields": [{"name": "foo", "type": "string"}]},
  {"name": "ReferencedRecord", "type": "record",
- "fields": [ {"name": "bar", "type": "double"}]},
+ "fields": [{"name": "bar", "type": "double"}]},
  {"name": "TestError",
  "type": "error", "fields": [{"name": "message", "type": "string"}]}],
  "messages": {
@@ -225,7 +225,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "errors": ["org.apache.avro.test.namespace.TestError"]
  }
  }
- }),
+}),
  ValidTestProtocol({
  "namespace": "org.apache.avro.test",
  "protocol": "BulkData",
@@ -235,7 +235,7 @@ EXAMPLES = [HELLO_WORLD, ValidTestProtocol({
  "request": [],
  "response": "bytes"
  }, "write": {
- "request": [ {"name": "data", "type": "bytes"} ],
+ "request": [{"name": "data", "type": "bytes"}],
  "response": "null"
  }
  }
@@ -316,6 +316,7 @@ class ProtocolParseTestCase(unittest.TestCase):
  else:
  self.fail("Invalid protocol should not have parsed: {!s}".format(self.test_proto))
 
+
 class ErrorSchemaTestCase(unittest.TestCase):
  """Enable generating error schema test cases across all the valid test protocols."""
 
@@ -334,6 +335,7 @@ class ErrorSchemaTestCase(unittest.TestCase):
  for k, m in p.messages.items():
  self.assertIsNotNone(m.errors, "Message {} did not have the expected implicit "
  "string error schema.".format(k))
+
 
 class RoundTripParseTestCase(unittest.TestCase):
  """Enable generating round-trip parse test cases over all the valid test protocols."""
@@ -361,6 +363,7 @@ def load_tests(loader, default_tests, pattern):
  suite.addTests(ProtocolParseTestCase(ex) for ex in EXAMPLES)
  suite.addTests(RoundTripParseTestCase(ex) for ex in VALID_EXAMPLES)
  return suite
+
 
 if __name__ == '__main__':
  unittest.main()

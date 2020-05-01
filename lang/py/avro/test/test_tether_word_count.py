@@ -42,10 +42,12 @@ except NameError:
 
 _AVRO_DIR = os.path.abspath(os.path.dirname(avro.__file__))
 
+
 def _version():
  with open(os.path.join(_AVRO_DIR, 'VERSION.txt')) as v:
  # Convert it back to the java version
  return v.read().strip().replace('+', '-')
+
 
 _AVRO_VERSION = _version()
 _JAR_PATH = os.path.join(os.path.dirname(os.path.dirname(_AVRO_DIR)),
@@ -74,7 +76,10 @@ def _has_java():
 
  On most systems, this is just checking if `java` is in the PATH.
 
- But macos always has a /usr/bin/java, which does not mean java is installed. If you invoke java on macos and java is not installed, macos will spawn a popup telling you how to install java. This code does additional work around that to be completely automatic.
+ But macos always has a /usr/bin/java, which does not mean java is installed.
+ If you invoke java on macos and java is not installed, macos will spawn a popup
+ telling you how to install java. This code does additional work around that
+ to be completely automatic.
  """
  if platform.system() == "Darwin":
  try:
@@ -161,5 +166,6 @@ class TestTetherWordCount(unittest.TestCase):
  actual_counts = {r["key"]: r["value"] for r in reader}
  self.assertDictEqual(actual_counts, expected_counts)
 
-if __name__== "__main__":
+
+if __name__ == "__main__":
  unittest.main()

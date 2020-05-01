@@ -148,6 +148,7 @@ LONG_RECORD_SCHEMA = schema.parse("""\
 
 LONG_RECORD_DATUM = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7}
 
+
 def avro_hexlify(reader):
  """Return the hex value, as a string, of a binary-encoded int or long."""
  b = []
@@ -158,11 +159,13 @@ def avro_hexlify(reader):
  b.append(hexlify(current_byte))
  return b' '.join(b)
 
+
 def print_test_name(test_name):
  print('')
  print(test_name)
  print('=' * len(test_name))
  print('')
+
 
 def write_datum(datum, writers_schema):
  writer = io.BytesIO()
@@ -171,11 +174,13 @@ def write_datum(datum, writers_schema):
  datum_writer.write(datum, encoder)
  return writer, encoder, datum_writer
 
+
 def read_datum(buffer, writers_schema, readers_schema=None):
  reader = io.BytesIO(buffer.getvalue())
  decoder = avro.io.BinaryDecoder(reader)
  datum_reader = avro.io.DatumReader(writers_schema, readers_schema)
  return datum_reader.read(decoder)
+
 
 def check_binary_encoding(number_type):
  print_test_name('TEST BINARY %s ENCODING' % number_type.upper())
@@ -190,9 +195,11 @@ def check_binary_encoding(number_type):
  hex_val = avro_hexlify(writer)
 
  print('Read Encoding: %s' % hex_val)
- if hex_encoding == hex_val: correct += 1
+ if hex_encoding == hex_val:
+ correct += 1
  print('')
  return correct
+
 
 def check_skip_number(number_type):
  print_test_name('TEST SKIP %s' % number_type.upper())
@@ -216,9 +223,11 @@ def check_skip_number(number_type):
  read_value = datum_reader.read(decoder)
 
  print('Read Value: %d' % read_value)
- if read_value == VALUE_TO_READ: correct += 1
+ if read_value == VALUE_TO_READ:
+ correct += 1
  print('')
  return correct
+
 
 class TestIO(unittest.TestCase):
  #
@@ -233,7 +242,8 @@ class TestIO(unittest.TestCase):
  print('Datum: %s' % datum)
  validated = avro.io.validate(schema.parse(example_schema), datum)
  print('Valid: %s' % validated)
- if validated: passed += 1
+ if validated:
+ passed += 1
  self.assertEquals(passed, len(SCHEMAS_TO_VALIDATE))
 
  def test_round_trip(self):
@@ -296,7 +306,8 @@ class TestIO(unittest.TestCase):
  datum_read = read_datum(writer, writers_schema, readers_schema)
  print('Writer: %s Reader: %s' % (writers_schema, readers_schema))
  print('Datum Read: %s' % datum_read)
- if datum_read != datum_to_write: incorrect += 1
+ if datum_read != datum_to_write:
+ incorrect += 1
  self.assertEquals(incorrect, 0)
 
  def test_unknown_symbol(self):
@@ -332,7 +343,8 @@ class TestIO(unittest.TestCase):
  writer, encoder, datum_writer = write_datum(datum_to_write, writers_schema)
  datum_read = read_datum(writer, writers_schema, readers_schema)
  print('Datum Read: %s' % datum_read)
- if datum_to_read == datum_read: correct += 1
+ if datum_to_read == datum_read:
+ correct += 1
  self.assertEquals(correct, len(DEFAULT_VALUE_EXAMPLES))
 
  def test_no_default_value(self):
@@ -390,6 +402,7 @@ class TestIO(unittest.TestCase):
  {"name": "E", "type": "int"}]}""")
  datum_to_write = {'E': 5, 'F': 'Bad'}
  self.assertRaises(avro.io.AvroTypeException, write_datum, datum_to_write, writers_schema)
+
 
 if __name__ == '__main__':
  unittest.main()

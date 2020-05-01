@@ -94,25 +94,32 @@ STRUCT_SIGNED_LONG = Struct('>q') # big-endian signed long
 
 class AvroTypeException(schema.AvroException):
  """Raised when datum is not an example of schema."""
+
  def __init__(self, expected_schema, datum):
  pretty_expected = json.dumps(json.loads(str(expected_schema)), indent=2)
  fail_msg = "The datum %s is not an example of the schema %s"\
  % (datum, pretty_expected)
  schema.AvroException.__init__(self, fail_msg)
 
+
 class SchemaResolutionException(schema.AvroException):
  def __init__(self, fail_msg, writers_schema=None, readers_schema=None):
  pretty_writers = json.dumps(json.loads(str(writers_schema)), indent=2)
  pretty_readers = json.dumps(json.loads(str(readers_schema)), indent=2)
- if writers_schema: fail_msg += "\nWriter's Schema: %s" % pretty_writers
- if readers_schema: fail_msg += "\nReader's Schema: %s" % pretty_readers
+ if writers_schema:
+ fail_msg += "\nWriter's Schema: %s" % pretty_writers
+ if readers_schema:
+ fail_msg += "\nReader's Schema: %s" % pretty_readers
  schema.AvroException.__init__(self, fail_msg)
 
 #
 # Validate
 #
+
+
 def _is_timezone_aware_datetime(dt):
  return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
+
 
 _valid = {
  'null': lambda s, d: d is None,
@@ -140,16 +147,17 @@ _valid = {
  'enum': lambda s, d: d in s.symbols,
 
  'array': lambda s, d: isinstance(d, list) and all(validate(s.items, item) for item in d),
- 'map': lambda s, d: (isinstance(d, dict) and all(isinstance(key, unicode) for key in d)
- and all(validate(s.values, value) for value in d.values())),
+ 'map': lambda s, d: (isinstance(d, dict) and all(isinstance(key, unicode) for key in d) and
+ all(validate(s.values, value) for value in d.values())),
  'union': lambda s, d: any(validate(branch, d) for branch in s.schemas),
- 'record': lambda s, d: (isinstance(d, dict)
- and all(validate(f.type, d.get(f.name)) for f in s.fields)
- and {f.name for f in s.fields}.issuperset(d.keys())),
+ 'record': lambda s, d: (isinstance(d, dict) and
+ all(validate(f.type, d.get(f.name)) for f in s.fields) and
+ {f.name for f in s.fields}.issuperset(d.keys())),
 }
 _valid['double'] = _valid['float']
 _valid['error_union'] = _valid['union']
 _valid['error'] = _valid['request'] = _valid['record']
+
 
 def validate(expected_schema, datum):
  """Determines if a python datum is an instance of a schema.
@@ -179,7 +187,8 @@ def validate(expected_schema, datum):
  else:
  result = _valid[expected_type](expected_schema, datum)
  if _DEBUG_VALIDATE:
- print('{!s}{!s}{!s}: {!s} -> {!s}'.format(' ' * _DEBUG_VALIDATE_INDENT, expected_schema.type, name, type(datum).__name__, result), file=sys.stderr)
+ print('{!s}{!s}{!s}: {!s} -> {!s}'.format(' ' * _DEBUG_VALIDATE_INDENT,
+ expected_schema.type, name, type(datum).__name__, result), file=sys.stderr)
  return result
 
 
@@ -189,6 +198,7 @@ def validate(expected_schema, datum):
 
 class BinaryDecoder(object):
  """Read leaf values."""
+
  def __init__(self, reader):
  """
  reader is a Python object on which we can call read, seek, and tell.
@@ -275,12 +285,12 @@ class BinaryDecoder(object):
  datum = bytearray([modified_first_byte]) + datum[1:]
  for offset in range(size):
  unscaled_datum <<= 8
- unscaled_datum += ord(datum[offset:1+offset])
- unscaled_datum += pow(-2, (size*8) - 1)
+ unscaled_datum += ord(datum[offset:1 + offset])
+ unscaled_datum += pow(-2, (size * 8) - 1)
  else:
  for offset in range(size):
  unscaled_datum <<= 8
- unscaled_datum += ord(datum[offset:1+offset])
+ unscaled_datum += ord(datum[offset:1 + offset])
 
  original_prec = getcontext().prec
  getcontext().prec = precision
@@ -389,8 +399,10 @@ class BinaryDecoder(object):
  def skip(self, n):
  self.reader.seek(self.reader.tell() + n)
 
+
 class BinaryEncoder(object):
  """Write leaf values."""
+
  def __init__(self, writer):
  """
  writer is a Python object on which we can call write.
@@ -421,7 +433,7 @@ class BinaryEncoder(object):
  """
  int and long values are written using variable-length, zig-zag coding.
  """
- self.write_long(datum);
+ self.write_long(datum)
 
  def write_long(self, datum):
  """
@@ -472,7 +484,7 @@ class BinaryEncoder(object):
 
  bytes_req += 1 if (bytes_req << 3) < bits_req else 0
  self.write_long(bytes_req)
- for index in range(bytes_req-1, -1, -1):
+ for index in range(bytes_req - 1, -1, -1):
  bits_to_write = packed_bits >> (8 * index)
  self.write(bytearray([bits_to_write & 0xff]))
 
@@ -507,13 +519,13 @@ class BinaryEncoder(object):
  if sign:
  unscaled_datum = (1 << bits_req) - unscaled_datum
  unscaled_datum = mask | unscaled_datum
- for index in range(size-1, -1, -1):
+ for index in range(size - 1, -1, -1):
  bits_to_write = unscaled_datum >> (8 * index)
  self.write(bytearray([bits_to_write & 0xff]))
  else:
  for i in range(offset_bits // 8):
  self.write(b'\x00')
- for index in range(bytes_req-1, -1, -1):
+ for index in range(bytes_req - 1, -1, -1):
  bits_to_write = unscaled_datum >> (8 * index)
  self.write(bytearray([bits_to_write & 0xff]))
 
@@ -546,7 +558,7 @@ class BinaryEncoder(object):
  Encode python time object as int.
  It stores the number of milliseconds from midnight, 00:00:00.000
  """
- milliseconds = datum.hour*3600000 + datum.minute * 60000 + datum.second * 1000 + datum.microsecond // 1000
+ milliseconds = datum.hour * 3600000 + datum.minute * 60000 + datum.second * 1000 + datum.microsecond // 1000
  self.write_int(milliseconds)
 
  def write_time_micros_long(self, datum):
@@ -554,7 +566,7 @@ class BinaryEncoder(object):
  Encode python time object as long.
  It stores the number of microseconds from midnight, 00:00:00.000000
  """
- microseconds = datum.hour*3600000000 + datum.minute * 60000000 + datum.second * 1000000 + datum.microsecond
+ microseconds = datum.hour * 3600000000 + datum.minute * 60000000 + datum.second * 1000000 + datum.microsecond
  self.write_long(microseconds)
 
  def _timedelta_total_microseconds(self, timedelta):
@@ -587,6 +599,7 @@ class BinaryEncoder(object):
 #
 class DatumReader(object):
  """Deserialize Avro-encoded data into a Python data structure."""
+
  def __init__(self, writers_schema=None, readers_schema=None):
  """
  As defined in the Avro specification, we call the schema encoded
@@ -601,10 +614,12 @@ class DatumReader(object):
  self._writers_schema = writers_schema
  writers_schema = property(lambda self: self._writers_schema,
  set_writers_schema)
+
  def set_readers_schema(self, readers_schema):
  self._readers_schema = readers_schema
  readers_schema = property(lambda self: self._readers_schema,
  set_readers_schema)
+
  def read(self, decoder):
  if self.readers_schema is None:
  self.readers_schema = self.writers_schema
@@ -937,7 +952,8 @@ class DatumReader(object):
  read_record = {}
  for field in field_schema.fields:
  json_val = default_value.get(field.name)
- if json_val is None: json_val = field.default
+ if json_val is None:
+ json_val = field.default
  field_val = self._read_default_value(field.type, json_val)
  read_record[field.name] = field_val
  return read_record
@@ -945,8 +961,10 @@ class DatumReader(object):
  fail_msg = 'Unknown type: %s' % field_schema.type
  raise schema.AvroException(fail_msg)
 
+
 class DatumWriter(object):
  """DatumWriter for generic python objects."""
+
  def __init__(self, writers_schema=None):
  self._writers_schema = writers_schema
 
@@ -1087,7 +1105,8 @@ class DatumWriter(object):
  for i, candidate_schema in enumerate(writers_schema.schemas):
  if validate(candidate_schema, datum):
  index_of_schema = i
- if index_of_schema < 0: raise AvroTypeException(writers_schema, datum)
+ if index_of_schema < 0:
+ raise AvroTypeException(writers_schema, datum)
 
  # write data
  encoder.write_long(index_of_schema)

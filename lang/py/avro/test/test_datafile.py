@@ -67,6 +67,7 @@ SCHEMAS_TO_VALIDATE = (
 FILENAME = 'test_datafile.out'
 CODECS_TO_VALIDATE = Codecs.supported_codec_names()
 
+
 class TestDataFile(unittest.TestCase):
  def test_round_trip(self):
  print('')
@@ -104,11 +105,12 @@ class TestDataFile(unittest.TestCase):
  print('Round Trip Data: %s' % round_trip_data)
  print('Round Trip Data Length: %d' % len(round_trip_data))
  is_correct = [datum] * 10 == round_trip_data
- if is_correct: correct += 1
+ if is_correct:
+ correct += 1
  print('Correct Round Trip: %s' % is_correct)
  print('')
  os.remove(FILENAME)
- self.assertEquals(correct, len(CODECS_TO_VALIDATE)*len(SCHEMAS_TO_VALIDATE))
+ self.assertEquals(correct, len(CODECS_TO_VALIDATE) * len(SCHEMAS_TO_VALIDATE))
 
  def test_append(self):
  print('')
@@ -152,11 +154,12 @@ class TestDataFile(unittest.TestCase):
  print('Appended Data: %s' % appended_data)
  print('Appended Data Length: %d' % len(appended_data))
  is_correct = [datum] * 10 == appended_data
- if is_correct: correct += 1
+ if is_correct:
+ correct += 1
  print('Correct Appended: %s' % is_correct)
  print('')
  os.remove(FILENAME)
- self.assertEquals(correct, len(CODECS_TO_VALIDATE)*len(SCHEMAS_TO_VALIDATE))
+ self.assertEquals(correct, len(CODECS_TO_VALIDATE) * len(SCHEMAS_TO_VALIDATE))
 
  def test_context_manager(self):
  """Test the writer with a 'with' statement."""
@@ -213,6 +216,7 @@ class TestDataFile(unittest.TestCase):
 
  with datafile.DataFileReader(open(FILENAME, 'rb'), io.DatumReader()) as dfr:
  self.assertEqual([], list(dfr))
+
 
 if __name__ == '__main__':
  unittest.main()
