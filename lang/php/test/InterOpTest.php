@@ -17,12 +17,17 @@
  * limitations under the License.
  */
 
-require_once('test_helper.php');
+namespace Apache\Avro\Tests;
 
-class InterOpTest extends PHPUnit\Framework\TestCase
+use Apache\Avro\DataFile\AvroDataIO;
+use Apache\Avro\IO\AvroFile;
+use Apache\Avro\Schema\AvroSchema;
+use PHPUnit\Framework\TestCase;
+
+class InterOpTest extends TestCase
 {
- var $projection_json;
- var $projection;
+ private $projection_json;
+ private $projection;
 
  public function setUp(): void
  {
@@ -35,17 +40,21 @@ class InterOpTest extends PHPUnit\Framework\TestCase
  {
  $data_dir = AVRO_BUILD_DATA_DIR;
  $data_files = array();
- if (!($dh = opendir($data_dir)))
+ if (!($dh = opendir($data_dir))) {
  die("Could not open data dir '$data_dir'\n");
+ }
 
- while ($file = readdir($dh))
- if (0 < preg_match('/^[a-z]+(_deflate|_snappy|_zstandard|_bzip2)?\.avro$/', $file))
- $data_files []= implode(DIRECTORY_SEPARATOR, array($data_dir, $file));
+ while ($file = readdir($dh)) {
+ if (0 < preg_match('/^[a-z]+(_deflate|_snappy|_zstandard|_bzip2)?\.avro$/', $file)) {
+ $data_files [] = implode(DIRECTORY_SEPARATOR, array($data_dir, $file));
+ }
+ }
  closedir($dh);
 
  $ary = array();
- foreach ($data_files as $df)
- $ary []= array($df);
+ foreach ($data_files as $df) {
+ $ary [] = array($df);
+ }
  return $ary;
  }
 
@@ -54,18 +63,15 @@ class InterOpTest extends PHPUnit\Framework\TestCase
  */
  public function test_read($file_name)
  {
-
- $dr = AvroDataIO::open_file(
+ $dr = AvroDataIO::openFile(
  $file_name, AvroFile::READ_MODE, $this->projection_json);
 
  $data = $dr->data();
 
- $this->assertNotEquals(0, count($data),
- sprintf("no data read from %s", $file_name));
+ $this->assertNotCount(0, $data, sprintf("no data read from %s", $file_name));
 
- foreach ($data as $idx => $datum)
+ foreach ($data as $idx => $datum) {
  $this->assertNotNull($datum, sprintf("null datum from %s", $file_name));
-
  }
-
+ }
 }

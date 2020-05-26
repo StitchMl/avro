@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -17,23 +18,42 @@
  * limitations under the License.
  */
 
-namespace Apache\Avro\Tests;
+namespace Apache\Avro\Protocol;
 
-use Apache\Avro\Datum\AvroIODatumReader;
+use Apache\Avro\Schema\AvroName;
+use Apache\Avro\Schema\AvroPrimitiveSchema;
+use Apache\Avro\Schema\AvroRecordSchema;
 use Apache\Avro\Schema\AvroSchema;
-use PHPUnit\Framework\TestCase;
 
-class IODatumReaderTest extends TestCase
+class AvroProtocolMessage
 {
- public function testSchemaMatching()
+ /**
+ * @var AvroRecordSchema $request
+ */
+ public $request;
+
+ public $response;
+
+ public function __construct($name, $avro, $protocol)
  {
- $writers_schema = <<<JSON
- { "type": "map",
- "values": "bytes" }
-JSON;
- $readers_schema = $writers_schema;
- $this->assertTrue(AvroIODatumReader::schemasMatch(
- AvroSchema::parse($writers_schema),
- AvroSchema::parse($readers_schema)));
+ $this->name = $name;
+ $this->request = new AvroRecordSchema(
+ new AvroName($name, null, $protocol->namespace),
+ null,
+ $avro['request'],
+ $protocol->schemata,
+ AvroSchema::REQUEST_SCHEMA
+ );
+
+ if (array_key_exists('response', $avro)) {
+ $this->response = $protocol->schemata->schemaByName(new AvroName(
+ $avro['response'],
+ $protocol->namespace,
+ $protocol->namespace
+ ));
+ if ($this->response == null) {
+ $this->response = new AvroPrimitiveSchema($avro['response']);
+ }
+ }
  }
 }

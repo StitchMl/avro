@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -17,51 +18,28 @@
  * limitations under the License.
  */
 
-/**
- * @package Avro
- */
+namespace Apache\Avro\Datum;
+
+use Apache\Avro\AvroException;
+use Apache\Avro\Schema\AvroSchema;
 
 /**
- * Class for static utility methods used in Avro.
+ * Exceptions arising from writing or reading Avro data.
  *
  * @package Avro
  */
-class AvroUtil
+class AvroIOTypeException extends AvroException
 {
  /**
- * Determines whether the given array is an associative array
- * (what is termed a map, hash, or dictionary in other languages)
- * or a list (an array with monotonically increasing integer indicies
- * starting with zero).
- *
- * @param array $ary array to test
- * @returns true if the array is a list and false otherwise.
- *
+ * @param AvroSchema $expectedSchema
+ * @param mixed $datum
  */
- static function is_list($ary)
+ public function __construct($expectedSchema, $datum)
  {
- if (is_array($ary))
- {
- $i = 0;
- foreach ($ary as $k => $v)
- {
- if ($i !== $k)
- return false;
- $i++;
- }
- return true;
- }
- return false;
- }
-
- /**
- * @param array $ary
- * @param string $key
- * @returns mixed the value of $ary[$key] if it is set,
- * and null otherwise.
- */
- static function array_value($ary, $key)
- {
- return isset($ary[$key]) ? $ary[$key] : null;
+ parent::__construct(sprintf(
+ 'The datum %s is not an example of schema %s',
+ var_export($datum, true),
+ $expectedSchema
+ ));
  }
 }

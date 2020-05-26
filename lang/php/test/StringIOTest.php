@@ -17,11 +17,20 @@
  * limitations under the License.
  */
 
-require_once('test_helper.php');
+namespace Apache\Avro\Tests;
 
-class StringIOTest extends PHPUnit\Framework\TestCase
+use Apache\Avro\AvroDebug;
+use Apache\Avro\AvroIO;
+use Apache\Avro\DataFile\AvroDataIOReader;
+use Apache\Avro\DataFile\AvroDataIOWriter;
+use Apache\Avro\Datum\AvroIODatumReader;
+use Apache\Avro\Datum\AvroIODatumWriter;
+use Apache\Avro\IO\AvroStringIO;
+use Apache\Avro\Schema\AvroSchema;
+use PHPUnit\Framework\TestCase;
+
+class StringIOTest extends TestCase
 {
-
  public function test_write()
  {
  $strio = new AvroStringIO();
@@ -71,7 +80,7 @@ class StringIOTest extends PHPUnit\Framework\TestCase
  $dw->close();
 
  $this->assertEquals(57, strlen($strio->string()),
- AvroDebug::ascii_string($strio->string()));
+ AvroDebug::asciiString($strio->string()));
 
  $read_strio = new AvroStringIO($strio->string());
 
@@ -81,5 +90,4 @@ class StringIOTest extends PHPUnit\Framework\TestCase
  $datum_count = count($read_data);
  $this->assertEquals(0, $datum_count);
  }
-
 }

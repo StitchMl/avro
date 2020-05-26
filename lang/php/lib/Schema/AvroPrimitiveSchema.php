@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -17,23 +18,37 @@
  * limitations under the License.
  */
 
-namespace Apache\Avro\Tests;
+namespace Apache\Avro\Schema;
 
-use Apache\Avro\Datum\AvroIODatumReader;
-use Apache\Avro\Schema\AvroSchema;
-use PHPUnit\Framework\TestCase;
-
-class IODatumReaderTest extends TestCase
+/**
+ * Avro schema for basic types such as null, int, long, string.
+ * @package Avro
+ */
+class AvroPrimitiveSchema extends AvroSchema
 {
- public function testSchemaMatching()
+ /**
+ * @param string $type the primitive schema type name
+ * @throws AvroSchemaParseException if the given $type is not a
+ * primitive schema type name
+ */
+ public function __construct($type)
  {
- $writers_schema = <<<JSON
- { "type": "map",
- "values": "bytes" }
-JSON;
- $readers_schema = $writers_schema;
- $this->assertTrue(AvroIODatumReader::schemasMatch(
- AvroSchema::parse($writers_schema),
- AvroSchema::parse($readers_schema)));
+ if (!self::isPrimitiveType($type)) {
+ throw new AvroSchemaParseException(sprintf('%s is not a valid primitive type.', $type));
+ }
+ parent::__construct($type);
+ }
+
+ /**
+ * @returns mixed
+ */
+ public function toAvro()
+ {
+ $avro = parent::toAvro();
+ // FIXME: Is this if really necessary? When *wouldn't* this be the case?
+ if (1 == count($avro)) {
+ return $this->type;
+ }
+ return $avro;
  }
 }

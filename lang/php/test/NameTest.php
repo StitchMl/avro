@@ -17,7 +17,11 @@
  * limitations under the License.
  */
 
-require_once('test_helper.php');
+namespace Apache\Avro\Tests;
+
+use Apache\Avro\Schema\AvroName;
+use Apache\Avro\Schema\AvroSchemaParseException;
+use PHPUnit\Framework\TestCase;
 
 class NameExample
 {
@@ -26,9 +30,14 @@ class NameExample
  var $namespace;
  var $default_namespace;
  var $expected_fullname;
- function __construct($name, $namespace, $default_namespace, $is_valid,
- $expected_fullname=null)
- {
+
+ function __construct(
+ $name,
+ $namespace,
+ $default_namespace,
+ $is_valid,
+ $expected_fullname = null
+ ) {
  $this->name = $name;
  $this->namespace = $namespace;
  $this->default_namespace = $default_namespace;
@@ -42,12 +51,13 @@ class NameExample
  }
 }
 
-class NameTest extends PHPUnit\Framework\TestCase
+class NameTest extends TestCase
 {
 
  function fullname_provider()
  {
- $examples = array(new NameExample('foo', null, null, true, 'foo'),
+ $examples = array(
+ new NameExample('foo', null, null, true, 'foo'),
  new NameExample('foo', 'bar', null, true, 'bar.foo'),
  new NameExample('bar.foo', 'baz', null, true, 'bar.foo'),
  new NameExample('_bar.foo', 'baz', null, true, '_bar.foo'),
@@ -61,8 +71,9 @@ class NameTest extends PHPUnit\Framework\TestCase
  new NameExample('bar. ', 'baz', null, false)
  );
  $exes = array();
- foreach ($examples as $ex)
- $exes []= array($ex);
+ foreach ($examples as $ex) {
+ $exes [] = array($ex);
+ }
  return $exes;
  }
 
@@ -71,14 +82,11 @@ class NameTest extends PHPUnit\Framework\TestCase
  */
  function test_fullname($ex)
  {
- try
- {
+ try {
  $name = new AvroName($ex->name, $ex->namespace, $ex->default_namespace);
  $this->assertTrue($ex->is_valid);
  $this->assertEquals($ex->expected_fullname, $name->fullname());
- }
- catch (AvroSchemaParseException $e)
- {
+ } catch (AvroSchemaParseException $e) {
  $this->assertFalse($ex->is_valid, sprintf("%s:\n%s",
  $ex,
  $e->getMessage()));
@@ -87,13 +95,15 @@ class NameTest extends PHPUnit\Framework\TestCase
 
  function name_provider()
  {
- return array(array('a', true),
- array('_', true),
- array('1a', false),
- array('', false),
- array(null, false),
- array(' ', false),
- array('Cons', true));
+ return [
+ ['a', true],
+ ['_', true],
+ ['1a', false],
+ ['', false],
+ [null, false],
+ [' ', false],
+ ['Cons', true]
+ ];
  }
 
  /**
@@ -101,6 +111,6 @@ class NameTest extends PHPUnit\Framework\TestCase
  */
  function test_name($name, $is_well_formed)
  {
- $this->assertEquals(AvroName::is_well_formed_name($name), $is_well_formed);
+ $this->assertEquals(AvroName::isWellFormedName($name), $is_well_formed);
  }
 }
