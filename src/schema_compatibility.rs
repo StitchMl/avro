@@ -422,9 +422,8 @@ mod tests {
  union_schema(vec![])
  }
 
- fn null_union_schema() -> Schema {
- union_schema(vec![Schema::Null])
- }
+ // unused
+ // fn null_union_schema() -> Schema { union_schema(vec![Schema::Null]) }
 
  fn int_union_schema() -> Schema {
  union_schema(vec![Schema::Int])
@@ -755,6 +754,8 @@ mod tests {
  assert!(SchemaCompatibility::can_read(&enum_schema1, &enum_schema2));
  }
 
+ // unused
+ /*
  fn point_2d_schema() -> Schema {
  Schema::parse_str(
  r#"
@@ -766,6 +767,7 @@ mod tests {
  )
  .unwrap()
  }
+ */
 
  fn point_2d_fullname_schema() -> Schema {
  Schema::parse_str(
@@ -792,6 +794,8 @@ mod tests {
  .unwrap()
  }
 
+ // unused
+ /*
  fn point_3d_schema() -> Schema {
  Schema::parse_str(
  r#"
@@ -817,6 +821,7 @@ mod tests {
  )
  .unwrap()
  }
+ */
 
  #[test]
  fn test_union_resolution_no_structure_match() {
