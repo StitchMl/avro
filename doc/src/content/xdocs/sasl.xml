@@ -90,7 +90,7 @@
 	<p>Once either the client or server send a FAIL message then
  negotiation has failed. UTF-8-encoded text is included in
  the failure message. Once either a FAIL message has been
- sent or recieved, or any other error occurs in the
+ sent or received, or any other error occurs in the
  negotiation, further communication on this connection must
  cease.</p>
 
@@ -132,7 +132,7 @@
  <source>| 0 | 0009 | ANONYMOUS | 0000 |</source>
  <p>If a server uses the anonymous mechanism, it should check
  that the mechanism name in the start message prefixing the first
- request recieved is 'ANONYMOUS', then simply prefix its initial
+ request received is 'ANONYMOUS', then simply prefix its initial
  response with a COMPLETE message of:</p>
  <source>| 3 | 0000 |</source>
  <p>If an anonymous server recieves some other mechanism name,
