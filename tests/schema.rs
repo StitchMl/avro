@@ -2,8 +2,7 @@
 use avro_rs::{schema::Name, Error, Schema};
 use lazy_static::lazy_static;
 
-lazy_static! {
- static ref PRIMITIVE_EXAMPLES: Vec<(&'static str, bool)> = vec![
+const PRIMITIVE_EXAMPLES: &[(&str, bool)] = &[
  (r#""null""#, true),
  (r#"{"type": "null"}"#, true),
  (r#""boolean""#, true),
@@ -24,8 +23,9 @@ lazy_static! {
  (r#"true"#, false),
  (r#"{"no_type": "test"}"#, false),
  (r#"{"type": "panther"}"#, false),
- ];
- static ref FIXED_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const FIXED_EXAMPLES: &[(&str, bool)] = &[
  (r#"{"type": "fixed", "name": "Test", "size": 1}"#, true),
  (
  r#"{
@@ -34,20 +34,24 @@ lazy_static! {
  "namespace": "org.apache.hadoop.avro",
  "size": 1
  }"#,
- true
+ true,
  ),
  (r#"{"type": "fixed", "name": "Missing size"}"#, false),
  (r#"{"type": "fixed", "size": 314}"#, false),
- ];
- static ref ENUM_EXAMPLES: Vec<(&'static str, bool)> = vec![
- (r#"{"type": "enum", "name": "Test", "symbols": ["A", "B"]}"#, true),
+];
+
+const ENUM_EXAMPLES: &[(&str, bool)] = &[
+ (
+ r#"{"type": "enum", "name": "Test", "symbols": ["A", "B"]}"#,
+ true,
+ ),
  (
  r#"{
  "type": "enum",
  "name": "Status",
  "symbols": "Normal Caution Critical"
  }"#,
- false
+ false,
  ),
  (
  r#"{
@@ -55,14 +59,14 @@ lazy_static! {
  "name": [ 0, 1, 1, 2, 3, 5, 8 ],
  "symbols": ["Golden", "Mean"]
  }"#,
- false
+ false,
  ),
  (
  r#"{
  "type": "enum",
  "symbols" : ["I", "will", "fail", "no", "name"]
  }"#,
- false
+ false,
  ),
  (
  r#"{
@@ -70,30 +74,33 @@ lazy_static! {
  "name": "Test"
  "symbols" : ["AA", "AA"]
  }"#,
- false
+ false,
  ),
- ];
- static ref ARRAY_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const ARRAY_EXAMPLES: &[(&str, bool)] = &[
  (r#"{"type": "array", "items": "long"}"#, true),
  (
  r#"{
  "type": "array",
  "items": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
  }"#,
- true
+ true,
  ),
- ];
- static ref MAP_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const MAP_EXAMPLES: &[(&str, bool)] = &[
  (r#"{"type": "map", "values": "long"}"#, true),
  (
  r#"{
  "type": "map",
  "values": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
  }"#,
- true
+ true,
  ),
- ];
- static ref UNION_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const UNION_EXAMPLES: &[(&str, bool)] = &[
  (r#"["string", "null", "long"]"#, true),
  (r#"["null", "null"]"#, false),
  (r#"["long", "long"]"#, false),
@@ -102,17 +109,18 @@ lazy_static! {
  {"type": "array", "items": "long"}
  {"type": "array", "items": "string"}
  ]"#,
- false
+ false,
  ),
- ];
- static ref RECORD_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const RECORD_EXAMPLES: &[(&str, bool)] = &[
  (
  r#"{
  "type": "record",
  "name": "Test",
  "fields": [{"name": "f", "type": "long"}]
  }"#,
- true
+ true,
  ),
  /*
  // TODO: (#91) figure out why "type": "error" seems to be valid (search in spec) and uncomment
@@ -200,7 +208,7 @@ lazy_static! {
  }
  ]
  }"#,
- true
+ true,
  ),
  (
  r#"{
@@ -224,7 +232,7 @@ lazy_static! {
  {"name":"meta", "type":["null", { "type":"map", "values":"bytes"}]}
  ]
  }"#,
- true
+ true,
  ),
  /*
  // TODO: (#95) support same types but with different names in unions and uncomment (below the explanation)
@@ -259,7 +267,7 @@ lazy_static! {
  {"type": "string", "name": "City"}
  ]
  }"#,
- false
+ false,
  ),
  (
  r#"{
@@ -267,7 +275,7 @@ lazy_static! {
  "name": "Event",
  "fields": [{"name": "Sponsor"}, {"name": "City", "type": "string"}]
  }"#,
- false
+ false,
  ),
  (
  r#"{
@@ -276,7 +284,7 @@ lazy_static! {
  "name",
  "Rainer"
  }"#,
- false
+ false,
  ),
  (
  r#"{
@@ -284,10 +292,11 @@ lazy_static! {
  "type": "record",
  "fields": [{"name": "name", "type": "string"}]
  }"#,
- false
+ false,
  ),
- ];
- static ref DOC_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const DOC_EXAMPLES: &[(&str, bool)] = &[
  (
  r#"{
  "type": "record",
@@ -295,14 +304,15 @@ lazy_static! {
  "doc": "Doc string",
  "fields": [{"name": "name", "type": "string", "doc" : "Doc String"}]
  }"#,
- true
+ true,
  ),
  (
  r#"{"type": "enum", "name": "Test", "symbols": ["A", "B"], "doc": "Doc String"}"#,
- true
+ true,
  ),
- ];
- static ref OTHER_ATTRIBUTES_EXAMPLES: Vec<(&'static str, bool)> = vec![
+];
+
+const OTHER_ATTRIBUTES_EXAMPLES: &[(&str, bool)] = &[
  (
  r#"{
  "type": "record",
@@ -315,11 +325,11 @@ lazy_static! {
  {"name": "f2", "type": "long", "cp_null": null}
  ]
  }"#,
- true
+ true,
  ),
  (
  r#"{"type": "map", "values": "long", "cp_boolean": true}"#,
- true
+ true,
  ),
  (
  r#"{
@@ -328,11 +338,12 @@ lazy_static! {
  "symbols": [ "one", "two", "three" ],
  "cp_float" : 1.0
  }"#,
- true
+ true,
  ),
  (r#"{"type": "long", "date": "true"}"#, true),
- ];
- static ref DECIMAL_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
+];
+
+const DECIMAL_LOGICAL_TYPE: &[(&str, bool)] = &[
  /*
  // TODO: (#93) support logical types and uncomment
  (
@@ -416,8 +427,9 @@ lazy_static! {
  false
  ),
  */
- ];
- static ref DECIMAL_LOGICAL_TYPE_ATTRIBUTES: Vec<(&'static str, bool)> = vec![
+];
+
+const DECIMAL_LOGICAL_TYPE_ATTRIBUTES: &[(&str, bool)] = &[
  /*
  // TODO: (#93) support logical types and attributes and uncomment
  (
@@ -440,69 +452,89 @@ lazy_static! {
  true
  ),
  */
- ];
- static ref DATE_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
- /*
- // TODO: (#93) support logical types and uncomment
+];
+
+const DATE_LOGICAL_TYPE: &[(&str, bool)] = &[
  (r#"{"type": "int", "logicalType": "date"}"#, true),
- (r#"{"type": "int", "logicalType": "date1"}"#, false),
+ // this is valid even though its logical type is "date1", because unknown logical types are
+ // ignored
+ (r#"{"type": "int", "logicalType": "date1"}"#, true),
  (r#"{"type": "long", "logicalType": "date"}"#, false),
- */
- ];
- static ref TIMEMILLIS_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
- /*
- // TODO: (#93) support logical types and uncomment
+];
+
+const TIMEMILLIS_LOGICAL_TYPE: &[(&str, bool)] = &[
  (r#"{"type": "int", "logicalType": "time-millis"}"#, true),
- (r#"{"type": "int", "logicalType": "time-milis"}"#, false),
+ // this is valid even though its logical type is "time-milis" (missing the second "l"),
+ // because unknown logical types are ignored
+ (r#"{"type": "int", "logicalType": "time-milis"}"#, true),
  (r#"{"type": "long", "logicalType": "time-millis"}"#, false),
- */
- ];
- static ref TIMEMICROS_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
- /*
- // TODO: (#93) support logical types and uncomment
+];
+
+const TIMEMICROS_LOGICAL_TYPE: &[(&str, bool)] = &[
  (r#"{"type": "long", "logicalType": "time-micros"}"#, true),
- (r#"{"type": "long", "logicalType": "time-micro"}"#, false),
+ // this is valid even though its logical type is "time-micro" (missing the last "s"), because
+ // unknown logical types are ignored
+ (r#"{"type": "long", "logicalType": "time-micro"}"#, true),
  (r#"{"type": "int", "logicalType": "time-micros"}"#, false),
- */
- ];
- static ref TIMESTAMPMILLIS_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
- /*
- // TODO: (#93) support logical types and uncomment
- (r#"{"type": "long", "logicalType": "timestamp-millis"}"#, true),
- (r#"{"type": "long", "logicalType": "timestamp-milis"}"#, false),
- (r#"{"type": "int", "logicalType": "timestamp-millis"}"#, false),
- */
- ];
- static ref TIMESTAMPMICROS_LOGICAL_TYPE: Vec<(&'static str, bool)> = vec![
- /*
- // TODO: (#93) support logical types and uncomment
- (r#"{"type": "long", "logicalType": "timestamp-micros"}"#, true),
- (r#"{"type": "long", "logicalType": "timestamp-micro"}"#, false),
- (r#"{"type": "int", "logicalType": "timestamp-micros"}"#, false),
- */
- ];
+];
+
+const TIMESTAMPMILLIS_LOGICAL_TYPE: &[(&str, bool)] = &[
+ (
+ r#"{"type": "long", "logicalType": "timestamp-millis"}"#,
+ true,
+ ),
+ // this is valid even though its logical type is "timestamp-milis" (missing the second "l"), because
+ // unknown logical types are ignored
+ (
+ r#"{"type": "long", "logicalType": "timestamp-milis"}"#,
+ true,
+ ),
+ (
+ r#"{"type": "int", "logicalType": "timestamp-millis"}"#,
+ false,
+ ),
+];
+
+const TIMESTAMPMICROS_LOGICAL_TYPE: &[(&str, bool)] = &[
+ (
+ r#"{"type": "long", "logicalType": "timestamp-micros"}"#,
+ true,
+ ),
+ // this is valid even though its logical type is "timestamp-micro" (missing the last "s"), because
+ // unknown logical types are ignored
+ (
+ r#"{"type": "long", "logicalType": "timestamp-micro"}"#,
+ true,
+ ),
+ (
+ r#"{"type": "int", "logicalType": "timestamp-micros"}"#,
+ false,
+ ),
+];
+
+lazy_static! {
  static ref EXAMPLES: Vec<(&'static str, bool)> = Vec::new()
  .iter()
- .cloned()
- .chain(PRIMITIVE_EXAMPLES.iter().cloned())
- .chain(FIXED_EXAMPLES.iter().cloned())
- .chain(ENUM_EXAMPLES.iter().cloned())
- .chain(ARRAY_EXAMPLES.iter().cloned())
- .chain(MAP_EXAMPLES.iter().cloned())
- .chain(UNION_EXAMPLES.iter().cloned())
- .chain(RECORD_EXAMPLES.iter().cloned())
- .chain(DOC_EXAMPLES.iter().cloned())
- .chain(OTHER_ATTRIBUTES_EXAMPLES.iter().cloned())
- .chain(DECIMAL_LOGICAL_TYPE.iter().cloned())
- .chain(DECIMAL_LOGICAL_TYPE_ATTRIBUTES.iter().cloned())
- .chain(DATE_LOGICAL_TYPE.iter().cloned())
- .chain(TIMEMILLIS_LOGICAL_TYPE.iter().cloned())
- .chain(TIMEMICROS_LOGICAL_TYPE.iter().cloned())
- .chain(TIMESTAMPMILLIS_LOGICAL_TYPE.iter().cloned())
- .chain(TIMESTAMPMICROS_LOGICAL_TYPE.iter().cloned())
+ .copied()
+ .chain(PRIMITIVE_EXAMPLES.iter().copied())
+ .chain(FIXED_EXAMPLES.iter().copied())
+ .chain(ENUM_EXAMPLES.iter().copied())
+ .chain(ARRAY_EXAMPLES.iter().copied())
+ .chain(MAP_EXAMPLES.iter().copied())
+ .chain(UNION_EXAMPLES.iter().copied())
+ .chain(RECORD_EXAMPLES.iter().copied())
+ .chain(DOC_EXAMPLES.iter().copied())
+ .chain(OTHER_ATTRIBUTES_EXAMPLES.iter().copied())
+ .chain(DECIMAL_LOGICAL_TYPE.iter().copied())
+ .chain(DECIMAL_LOGICAL_TYPE_ATTRIBUTES.iter().copied())
+ .chain(DATE_LOGICAL_TYPE.iter().copied())
+ .chain(TIMEMILLIS_LOGICAL_TYPE.iter().copied())
+ .chain(TIMEMICROS_LOGICAL_TYPE.iter().copied())
+ .chain(TIMESTAMPMILLIS_LOGICAL_TYPE.iter().copied())
+ .chain(TIMESTAMPMICROS_LOGICAL_TYPE.iter().copied())
  .collect();
  static ref VALID_EXAMPLES: Vec<(&'static str, bool)> =
- EXAMPLES.iter().cloned().filter(|s| s.1).collect();
+ EXAMPLES.iter().copied().filter(|s| s.1).collect();
 }
 
 /*
@@ -551,7 +583,6 @@ fn test_correct_recursive_extraction() {
 
 #[test]
 fn test_parse() {
- //assert_eq!(EXAMPLES.len(), 10);
  for (raw_schema, valid) in EXAMPLES.iter() {
  let schema = Schema::parse_str(raw_schema);
  if *valid {
