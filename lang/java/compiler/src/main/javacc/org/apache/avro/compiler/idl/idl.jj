@@ -243,6 +243,7 @@ TOKEN :
 | < TIMESTAMP: "timestamp_ms" >
 | < DECIMAL: "decimal" >
 | < LOCAL_TIMESTAMP: "local_timestamp_ms" >
+| < UUID: "uuid" >
 }
 
 /* LITERALS */
@@ -1500,6 +1501,7 @@ Schema PrimitiveType():
 | "timestamp_ms" { return LogicalTypes.timestampMillis().addToSchema(Schema.create(Type.LONG)); }
 | "local_timestamp_ms" { return LogicalTypes.localTimestampMillis().addToSchema(Schema.create(Type.LONG)); }
 | "decimal" { return DecimalTypeProperties(); }
+| "uuid" {return LogicalTypes.uuid().addToSchema(Schema.create(Type.STRING));}
 }
 
 Schema DecimalTypeProperties():
