@@ -1,5 +1,11 @@
 # Migration Guide
 ## Unreleased
+All changes are backward-compatible so far.
+
+# 0.12.0
+All changes are backward compatible.
+
+## 0.11.0
 - A custom `Error` enum has been introduced to replace all existing errors and
  the `failure` crate has been replaced by `thiserror`.
 
