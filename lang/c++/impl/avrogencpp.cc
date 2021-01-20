@@ -524,11 +524,11 @@ string CodeGen::generateDeclaration(const NodePtr& n)
 
 void CodeGen::generateEnumTraits(const NodePtr& n)
 {
-	string dname = decorate(n->name());
-	string fn = fullname(dname);
-	string last = n->nameAt(n->names() - 1);
+ string dname = decorate(n->name());
+ string fn = fullname(dname);
+ string last = n->nameAt(n->names() - 1);
 
-	os_ << "template<> struct codec_traits<" << fn << "> {\n"
+ os_ << "template<> struct codec_traits<" << fn << "> {\n"
  << " static void encode(Encoder& e, " << fn << " v) {\n"
  << " if (v > " << fn << "::" << last << ")\n"
  << " {\n"
