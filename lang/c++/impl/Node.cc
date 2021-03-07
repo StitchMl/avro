@@ -24,21 +24,17 @@ namespace avro {
 
 using std::string;
 
-Node::~Node()
-{ }
+Node::~Node() = default;
 
-Name::Name(const std::string& name)
-{
+Name::Name(const std::string &name) {
  fullname(name);
 }
 
-const string Name::fullname() const
-{
+string Name::fullname() const {
  return (ns_.empty()) ? simpleName_ : ns_ + "." + simpleName_;
 }
 
-void Name::fullname(const string& name)
-{
+void Name::fullname(const string &name) {
  string::size_type n = name.find_last_of('.');
  if (n == string::npos) {
  simpleName_ = name;
@@ -50,35 +46,30 @@ void Name::fullname(const string& name)
  check();
 }
 
-bool Name::operator < (const Name& n) const
-{
- return (ns_ < n.ns_) ? true :
- (n.ns_ < ns_) ? false :
- (simpleName_ < n.simpleName_);
+bool Name::operator<(const Name &n) const {
+ return (ns_ < n.ns_) || (!(n.ns_ < ns_) && (simpleName_ < n.simpleName_));
 }
 
-static bool invalidChar1(char c)
-{
+static bool invalidChar1(char c) {
  return !isalnum(c) && c != '_' && c != '.' && c != '$';
 }
 
-static bool invalidChar2(char c)
-{
+static bool invalidChar2(char c) {
  return !isalnum(c) && c != '_';
 }
 
-void Name::check() const
-{
- if (! ns_.empty() && (ns_[0] == '.' || ns_[ns_.size() - 1] == '.' || std::find_if(ns_.begin(), ns_.end(), invalidChar1) != ns_.end())) {
+void Name::check() const {
+ if (!ns_.empty() && (ns_[0] == '.' || ns_[ns_.size() - 1] == '.'
+ || std::find_if(ns_.begin(), ns_.end(), invalidChar1) != ns_.end())) {
  throw Exception("Invalid namespace: " + ns_);
  }
- if (simpleName_.empty() || std::find_if(simpleName_.begin(), simpleName_.end(), invalidChar2) != simpleName_.end()) {
+ if (simpleName_.empty()
+ || std::find_if(simpleName_.begin(), simpleName_.end(), invalidChar2) != simpleName_.end()) {
  throw Exception("Invalid name: " + simpleName_);
  }
 }
 
-bool Name::operator == (const Name& n) const
-{
+bool Name::operator==(const Name &n) const {
  return ns_ == n.ns_ && simpleName_ == n.simpleName_;
 }
 
@@ -87,8 +78,7 @@ void Node::setLogicalType(LogicalType logicalType) {
 
  // Check that the logical type is applicable to the node type.
  switch (logicalType.type()) {
- case LogicalType::NONE:
- break;
+ case LogicalType::NONE:break;
  case LogicalType::DECIMAL: {
  if (type_ != AVRO_BYTES && type_ != AVRO_FIXED) {
  throw Exception("DECIMAL logical type can annotate "

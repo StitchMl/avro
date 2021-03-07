@@ -21,7 +21,6 @@
 #include "Types.hh"
 
 namespace avro {
-
 namespace strings {
 const std::string typeToString[] = {
  "string",
@@ -41,7 +40,7 @@ const std::string typeToString[] = {
  "symbolic"
 };
 
-static_assert((sizeof(typeToString)/sizeof(std::string)) == (AVRO_NUM_TYPES+1),
+static_assert((sizeof(typeToString) / sizeof(std::string)) == (AVRO_NUM_TYPES + 1),
  "Incorrect Avro typeToString");
 
 } // namespace strings
@@ -51,8 +50,7 @@ static_assert((sizeof(typeToString)/sizeof(std::string)) == (AVRO_NUM_TYPES+1),
 // and it would be a problem for this flag if we ever supported more than 32 types
 static_assert(AVRO_NUM_TYPES < 32, "Too many Avro types");
 
-const std::string& toString(Type type)
-{
+const std::string &toString(Type type) noexcept {
  static std::string undefinedType = "Undefined type";
  if (isAvroTypeOrPseudoType(type)) {
  return strings::typeToString[type];
@@ -61,19 +59,16 @@ const std::string& toString(Type type)
  }
 }
 
-std::ostream &operator<< (std::ostream &os, Type type)
-{
- if(isAvroTypeOrPseudoType(type)) {
+std::ostream &operator<<(std::ostream &os, Type type) {
+ if (isAvroTypeOrPseudoType(type)) {
  os << strings::typeToString[type];
- }
- else {
+ } else {
  os << static_cast<int>(type);
  }
  return os;
 }
 
-std::ostream &operator<< (std::ostream &os, const Null &)
-{
+std::ostream &operator<<(std::ostream &os, const Null &) {
  os << "(null value)";
  return os;
 }
