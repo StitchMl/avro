@@ -33,9 +33,9 @@ using std::shared_ptr;
 using std::static_pointer_cast;
 
 namespace avro {
- using SymbolMap = std::map<Name, NodePtr>;
+using SymbolMap = std::map<Name, NodePtr>;
 
- static bool validate(const NodePtr &node, SymbolMap &symbolMap) {
+static bool validate(const NodePtr &node, SymbolMap &symbolMap) {
  if (!node->isValid()) {
  throw Exception(format("Schema is invalid, due to bad node of type %1%")
  % node->type());
@@ -71,7 +71,7 @@ namespace avro {
 
  node->lock();
  auto leaves = node->leaves();
- for (size_t i = 0; i < leaves; ++i) {
+ for (auto i = 0; i < leaves; ++i) {
  const NodePtr &leaf(node->leafAt(i));
 
  if (!validate(leaf, symbolMap)) {
@@ -87,51 +87,51 @@ namespace avro {
  }
 
  return true;
- }
+}
 
- static void validate(const NodePtr &p) {
+static void validate(const NodePtr &p) {
  SymbolMap m;
  validate(p, m);
- }
+}
 
- ValidSchema::ValidSchema(NodePtr root) : root_(std::move(root)) {
+ValidSchema::ValidSchema(NodePtr root) : root_(std::move(root)) {
  validate(root_);
- }
+}
 
- ValidSchema::ValidSchema(const Schema &schema) : root_(schema.root()) {
+ValidSchema::ValidSchema(const Schema &schema) : root_(schema.root()) {
  validate(root_);
- }
+}
 
- ValidSchema::ValidSchema() : root_(NullSchema().root()) {
+ValidSchema::ValidSchema() : root_(NullSchema().root()) {
  validate(root_);
- }
+}
 
- void
- ValidSchema::setSchema(const Schema &schema) {
+void
+ValidSchema::setSchema(const Schema &schema) {
  root_ = schema.root();
  validate(root_);
- }
+}
 
- void
- ValidSchema::toJson(std::ostream &os) const {
+void
+ValidSchema::toJson(std::ostream &os) const {
  root_->printJson(os, 0);
  os << '\n';
- }
+}
 
- string
- ValidSchema::toJson(bool prettyPrint) const {
+string
+ValidSchema::toJson(bool prettyPrint) const {
  ostringstream oss;
  toJson(oss);
  if (!prettyPrint) {
  return compactSchema(oss.str());
  }
  return oss.str();
- }
+}
 
- void
- ValidSchema::toFlatList(std::ostream &os) const {
+void
+ValidSchema::toFlatList(std::ostream &os) const {
  root_->printBasicInfo(os);
- }
+}
 
 /*
  * compactSchema compacts and returns a formatted string representation
@@ -140,7 +140,7 @@ namespace avro {
  * in UTF-8 format. Note that this method is not responsible for validating
  * the schema.
  */
- string ValidSchema::compactSchema(const string &schema) {
+string ValidSchema::compactSchema(const string &schema) {
  auto insideQuote = false;
  size_t newPos = 0;
  string data = schema;
@@ -173,16 +173,14 @@ namespace avro {
  }
  data[newPos++] = c;
  }
-
  if (insideQuote) {
  throw Exception("Schema is not well formed with mismatched quotes");
  }
-
  if (newPos < schema.size()) {
  data.resize(newPos);
  }
  return data;
- }
+}
 
 } // namespace avro
 
