@@ -21,13 +21,13 @@
 #include "ValidSchema.hh"
 
 #include <boost/test/included/unit_test_framework.hpp>
-#include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 namespace avro {
 namespace schema {
 
-const char* basicSchemas[] = {
+const char *basicSchemas[] = {
  "\"null\"",
  "\"boolean\"",
  "\"int\"",
@@ -107,7 +107,7 @@ const char* basicSchemas[] = {
  "[{\"name\":\"f\",\"type\":\"long\"}]}",
 };
 
-const char* basicSchemaErrors[] = {
+const char *basicSchemaErrors[] = {
  // Record
  // No fields
  "{\"type\":\"record\",\"name\":\"LongList\"}",
@@ -154,7 +154,7 @@ const char* basicSchemaErrors[] = {
 
 };
 
-const char* roundTripSchemas[] = {
+const char *roundTripSchemas[] = {
  "\"null\"",
  "\"boolean\"",
  "\"int\"",
@@ -170,7 +170,7 @@ const char* roundTripSchemas[] = {
  "{\"type\":\"record\",\"name\":\"Test\",\"fields\":"
  "[{\"name\":\"f1\",\"type\":\"long\"},"
  "{\"name\":\"f2\",\"type\":\"int\"}]}",
-/* Avro-C++ cannot do a round-trip on error schemas.
+ /* Avro-C++ cannot do a round-trip on error schemas.
  * "{\"type\":\"error\",\"name\":\"Test\",\"fields\":"
  * "[{\"name\":\"f1\",\"type\":\"long\"},"
  * "{\"name\":\"f2\",\"type\":\"int\"}]}"
@@ -219,7 +219,7 @@ const char* roundTripSchemas[] = {
  "[{\"name\":\"f\",\"type\":\"long\"}]}",
 };
 
-const char* malformedLogicalTypes[] = {
+const char *malformedLogicalTypes[] = {
  // Wrong base type.
  "{\"type\":\"long\",\"logicalType\": \"decimal\",\"precision\": 10}",
  "{\"type\":\"string\",\"logicalType\":\"date\"}",
@@ -235,9 +235,8 @@ const char* malformedLogicalTypes[] = {
  "{\"type\":\"fixed\",\"logicalType\":\"decimal\",\"size\":4,\"name\":\"a\",\"precision\":20}",
  "{\"type\":\"fixed\",\"logicalType\":\"decimal\",\"size\":129,\"name\":\"a\",\"precision\":311}",
  // Scale is larger than precision.
- "{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":5,\"scale\":10}"
-};
-const char* schemasToCompact[] = {
+ "{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":5,\"scale\":10}"};
+const char *schemasToCompact[] = {
  // Schema without any whitespace
  "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[]}",
 
@@ -254,7 +253,7 @@ const char* schemasToCompact[] = {
  "\"doc\": \"extra slashes\\\\\\\\\"}"
  "]}"};
 
-const char* compactSchemas[] = {
+const char *compactSchemas[] = {
  "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[]}",
  "{\"type\":\"record\",\"name\":\"Test\",\"fields\":[]}",
  "{\"type\":\"record\",\"name\":\"ComplexInteger\","
@@ -268,28 +267,24 @@ void testTypes() {
  BOOST_CHECK_EQUAL(isAvroType(AVRO_BOOL), true);
 }
 
-static void testBasic(const char* schema)
-{
+static void testBasic(const char *schema) {
  BOOST_TEST_CHECKPOINT(schema);
  compileJsonSchemaFromString(schema);
 }
 
-static void testBasic_fail(const char* schema)
-{
+static void testBasic_fail(const char *schema) {
  BOOST_TEST_CHECKPOINT(schema);
  BOOST_CHECK_THROW(compileJsonSchemaFromString(schema), Exception);
 }
 
-static void testCompile(const char* schema)
-{
+static void testCompile(const char *schema) {
  BOOST_TEST_CHECKPOINT(schema);
  compileJsonSchemaFromString(std::string(schema));
 }
 
 // Test that the JSON output from a valid schema matches the JSON that was
 // used to construct it, apart from whitespace changes.
-static void testRoundTrip(const char* schema)
-{
+static void testRoundTrip(const char *schema) {
  BOOST_TEST_CHECKPOINT(schema);
  avro::ValidSchema compiledSchema =
  compileJsonSchemaFromString(std::string(schema));
@@ -304,11 +299,9 @@ static void testRoundTrip(const char* schema)
  BOOST_CHECK(result2 == std::string(schema));
 }
 
-static void testCompactSchemas()
-{
- for (size_t i = 0; i < sizeof(schemasToCompact)/ sizeof(schemasToCompact[0]); i++)
- {
- const char* schema = schemasToCompact[i];
+static void testCompactSchemas() {
+ for (size_t i = 0; i < sizeof(schemasToCompact) / sizeof(schemasToCompact[0]); i++) {
+ const char *schema = schemasToCompact[i];
  BOOST_TEST_CHECKPOINT(schema);
  avro::ValidSchema compiledSchema =
  compileJsonSchemaFromString(std::string(schema));
@@ -318,15 +311,14 @@ static void testCompactSchemas()
  }
 }
 
-static void testLogicalTypes()
-{
- const char* bytesDecimalType = "{\n\
+static void testLogicalTypes() {
+ const char *bytesDecimalType = "{\n\
  \"type\": \"bytes\",\n\
  \"logicalType\": \"decimal\",\n\
  \"precision\": 10,\n\
  \"scale\": 2\n\
  }";
- const char* fixedDecimalType = "{\n\
+ const char *fixedDecimalType = "{\n\
  \"type\": \"fixed\",\n\
  \"size\": 16,\n\
  \"name\": \"fixedDecimalType\",\n\
@@ -334,28 +326,28 @@ static void testLogicalTypes()
  \"precision\": 12,\n\
  \"scale\": 6\n\
  }";
- const char* dateType = "{\n\
+ const char *dateType = "{\n\
  \"type\": \"int\", \"logicalType\": \"date\"\n\
  }";
- const char* timeMillisType = "{\n\
+ const char *timeMillisType = "{\n\
  \"type\": \"int\", \"logicalType\": \"time-millis\"\n\
  }";
- const char* timeMicrosType = "{\n\
+ const char *timeMicrosType = "{\n\
  \"type\": \"long\", \"logicalType\": \"time-micros\"\n\
  }";
- const char* timestampMillisType = "{\n\
+ const char *timestampMillisType = "{\n\
  \"type\": \"long\", \"logicalType\": \"timestamp-millis\"\n\
  }";
- const char* timestampMicrosType = "{\n\
+ const char *timestampMicrosType = "{\n\
  \"type\": \"long\", \"logicalType\": \"timestamp-micros\"\n\
  }";
- const char* durationType = "{\n\
+ const char *durationType = "{\n\
  \"type\": \"fixed\",\n\
  \"size\": 12,\n\
  \"name\": \"durationType\",\n\
  \"logicalType\": \"duration\"\n\
  }";
- const char* uuidType = "{\n\
+ const char *uuidType = "{\n\
  \"type\": \"string\",\n\
  \"logicalType\": \"uuid\"\n\
  }";
@@ -414,8 +406,7 @@ static void testLogicalTypes()
  LogicalType logicalType = schema.root()->logicalType();
  BOOST_CHECK(logicalType.type() == LogicalType::TIMESTAMP_MILLIS);
  GenericDatum datum(schema);
- BOOST_CHECK(datum.logicalType().type() ==
- LogicalType::TIMESTAMP_MILLIS);
+ BOOST_CHECK(datum.logicalType().type() == LogicalType::TIMESTAMP_MILLIS);
  }
  {
  BOOST_TEST_CHECKPOINT(timestampMicrosType);
@@ -424,8 +415,7 @@ static void testLogicalTypes()
  LogicalType logicalType = schema.root()->logicalType();
  BOOST_CHECK(logicalType.type() == LogicalType::TIMESTAMP_MICROS);
  GenericDatum datum(schema);
- BOOST_CHECK(datum.logicalType().type() ==
- LogicalType::TIMESTAMP_MICROS);
+ BOOST_CHECK(datum.logicalType().type() == LogicalType::TIMESTAMP_MICROS);
  }
  {
  BOOST_TEST_CHECKPOINT(durationType);
@@ -448,8 +438,7 @@ static void testLogicalTypes()
  }
 }
 
-static void testMalformedLogicalTypes(const char* schema)
-{
+static void testMalformedLogicalTypes(const char *schema) {
  BOOST_TEST_CHECKPOINT(schema);
  ValidSchema parsedSchema = compileJsonSchemaFromString(schema);
  LogicalType logicalType = parsedSchema.root()->logicalType();
@@ -458,21 +447,19 @@ static void testMalformedLogicalTypes(const char* schema)
  BOOST_CHECK(datum.logicalType().type() == LogicalType::NONE);
 }
 
-}
-}
+} // namespace schema
+} // namespace avro
 
 #define ENDOF(x) (x + sizeof(x) / sizeof(x[0]))
 
 #define ADD_PARAM_TEST(ts, func, data) \
  ts->add(BOOST_PARAM_TEST_CASE(&func, data, ENDOF(data)))
 
-
-boost::unit_test::test_suite*
-init_unit_test_suite(int argc, char* argv[])
-{
+boost::unit_test::test_suite *
+init_unit_test_suite(int argc, char *argv[]) {
  using namespace boost::unit_test;
 
- test_suite* ts= BOOST_TEST_SUITE("Avro C++ unit tests for schemas");
+ test_suite *ts = BOOST_TEST_SUITE("Avro C++ unit tests for schemas");
  ts->add(BOOST_TEST_CASE(&avro::schema::testTypes));
  ADD_PARAM_TEST(ts, avro::schema::testBasic, avro::schema::basicSchemas);
  ADD_PARAM_TEST(ts, avro::schema::testBasic_fail,

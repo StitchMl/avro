@@ -21,12 +21,12 @@
 
 #include "Config.hh"
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "ValidSchema.hh"
 #include "Stream.hh"
+#include "ValidSchema.hh"
 
 /// \file
 ///

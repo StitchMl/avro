@@ -20,8 +20,8 @@
 #ifndef _WIN32
 #include <ctime>
 #endif
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <set>
 
@@ -35,23 +35,23 @@
 #include <boost/algorithm/string_regex.hpp>
 
 #include "Compiler.hh"
-#include "ValidSchema.hh"
 #include "NodeImpl.hh"
+#include "ValidSchema.hh"
 
-using std::ostream;
+using avro::NodePtr;
+using avro::resolveSymbol;
 using std::ifstream;
-using std::ofstream;
 using std::map;
+using std::ofstream;
+using std::ostream;
 using std::set;
 using std::string;
 using std::vector;
-using avro::NodePtr;
-using avro::resolveSymbol;
 
 using boost::lexical_cast;
 
-using avro::ValidSchema;
 using avro::compileJsonSchema;
+using avro::ValidSchema;
 
 #if __cplusplus >= 201703L
 #define ANY_NS "std"
@@ -65,21 +65,19 @@ struct PendingSetterGetter {
  string name;
  size_t idx;
 
- PendingSetterGetter(string sn, string t, string n, size_t i) :
- structName(std::move(sn)), type(std::move(t)), name(std::move(n)), idx(i) { }
+ PendingSetterGetter(string sn, string t, string n, size_t i) : structName(std::move(sn)), type(std::move(t)), name(std::move(n)), idx(i) {}
 };
 
 struct PendingConstructor {
  string structName;
  string memberName;
  bool initMember;
- PendingConstructor(string sn, string n, bool im) :
- structName(std::move(sn)), memberName(std::move(n)), initMember(im) { }
+ PendingConstructor(string sn, string n, bool im) : structName(std::move(sn)), memberName(std::move(n)), initMember(im) {}
 };
 
 class CodeGen {
  size_t unionNumber_;
- std::ostream& os_;
+ std::ostream &os_;
  bool inNamespace_;
  const std::string ns_;
  const std::string schemaFile_;
@@ -96,36 +94,35 @@ class CodeGen {
  set<NodePtr> doing;
 
  std::string guard();
- std::string fullname(const string& name) const;
- std::string generateEnumType(const NodePtr& n);
- std::string cppTypeOf(const NodePtr& n);
- std::string generateRecordType(const NodePtr& n);
+ std::string fullname(const string &name) const;
+ std::string generateEnumType(const NodePtr &n);
+ std::string cppTypeOf(const NodePtr &n);
+ std::string generateRecordType(const NodePtr &n);
  std::string unionName();
- std::string generateUnionType(const NodePtr& n);
- std::string generateType(const NodePtr& n);
- std::string generateDeclaration(const NodePtr& n);
- std::string doGenerateType(const NodePtr& n);
- void generateEnumTraits(const NodePtr& n);
- void generateTraits(const NodePtr& n);
- void generateRecordTraits(const NodePtr& n);
- void generateUnionTraits(const NodePtr& n);
+ std::string generateUnionType(const NodePtr &n);
+ std::string generateType(const NodePtr &n);
+ std::string generateDeclaration(const NodePtr &n);
+ std::string doGenerateType(const NodePtr &n);
+ void generateEnumTraits(const NodePtr &n);
+ void generateTraits(const NodePtr &n);
+ void generateRecordTraits(const NodePtr &n);
+ void generateUnionTraits(const NodePtr &n);
  void emitCopyright();
+
 public:
- CodeGen(std::ostream& os, std::string ns,
+ CodeGen(std::ostream &os, std::string ns,
  std::string schemaFile, std::string headerFile,
  std::string guardString,
- std::string includePrefix, bool noUnion) :
- unionNumber_(0), os_(os), inNamespace_(false), ns_(std::move(ns)),
+ std::string includePrefix, bool noUnion) : unionNumber_(0), os_(os), inNamespace_(false), ns_(std::move(ns)),
  schemaFile_(std::move(schemaFile)), headerFile_(std::move(headerFile)),
  includePrefix_(std::move(includePrefix)), noUnion_(noUnion),
  guardString_(std::move(guardString)),
- random_(static_cast<uint32_t>(::time(nullptr))) { }
- void generate(const ValidSchema& schema);
+ random_(static_cast<uint32_t>(::time(nullptr))) {}
+ void generate(const ValidSchema &schema);
 };
 
-static string decorate(const std::string &name)
-{
- static const char * cppReservedWords[] = {
+static string decorate(const std::string &name) {
+ static const char *cppReservedWords[] = {
  "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
  "case", "catch", "char", "char8_t", "char16_t", "char32_t", "class", "compl", "concept",
  "const", "consteval", "constexpr", "const_cast", "continue", "co_await", "co_return",
@@ -136,27 +133,23 @@ static string decorate(const std::string &name)
  "register", "reinterpret_cast", "requires", "return", "short", "signed", "sizeof", "static",
  "static_assert", "static_cast", "struct", "switch", "synchronized", "template", "this",
  "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned",
- "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"
- };
+ "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"};
 
- for (auto & cppReservedWord : cppReservedWords)
+ for (auto &cppReservedWord : cppReservedWords)
  if (strcmp(name.c_str(), cppReservedWord) == 0)
  return name + '_';
  return name;
 }
 
-static string decorate(const avro::Name& name)
-{
+static string decorate(const avro::Name &name) {
  return decorate(name.simpleName());
 }
 
-string CodeGen::fullname(const string& name) const
-{
+string CodeGen::fullname(const string &name) const {
  return ns_.empty() ? name : (ns_ + "::" + name);
 }
 
-string CodeGen::generateEnumType(const NodePtr& n)
-{
+string CodeGen::generateEnumType(const NodePtr &n) {
  string s = decorate(n->name());
  os_ << "enum class " << s << ": unsigned {\n";
  size_t c = n->names();
@@ -167,8 +160,7 @@ string CodeGen::generateEnumType(const NodePtr& n)
  return s;
 }
 
-string CodeGen::cppTypeOf(const NodePtr& n)
-{
+string CodeGen::cppTypeOf(const NodePtr &n) {
  switch (n->type()) {
  case avro::AVRO_STRING:
  return "std::string";
@@ -185,8 +177,7 @@ string CodeGen::cppTypeOf(const NodePtr& n)
  case avro::AVRO_BOOL:
  return "bool";
  case avro::AVRO_RECORD:
- case avro::AVRO_ENUM:
- {
+ case avro::AVRO_ENUM: {
  string nm = decorate(n->name());
  return inNamespace_ ? nm : fullname(nm);
  }
@@ -195,8 +186,7 @@ string CodeGen::cppTypeOf(const NodePtr& n)
  case avro::AVRO_MAP:
  return "std::map<std::string, " + cppTypeOf(n->leafAt(1)) + " >";
  case avro::AVRO_FIXED:
- return "std::array<uint8_t, " +
- lexical_cast<string>(n->fixedSize()) + ">";
+ return "std::array<uint8_t, " + lexical_cast<string>(n->fixedSize()) + ">";
  case avro::AVRO_SYMBOLIC:
  return cppTypeOf(resolveSymbol(n));
  case avro::AVRO_UNION:
@@ -208,8 +198,7 @@ string CodeGen::cppTypeOf(const NodePtr& n)
  }
 }
 
-static string cppNameOf(const NodePtr& n)
-{
+static string cppNameOf(const NodePtr &n) {
  switch (n->type()) {
  case avro::AVRO_NULL:
  return "null";
@@ -242,8 +231,7 @@ static string cppNameOf(const NodePtr& n)
  }
 }
 
-string CodeGen::generateRecordType(const NodePtr& n)
-{
+string CodeGen::generateRecordType(const NodePtr &n) {
  size_t c = n->leaves();
  string decoratedName = decorate(n->name());
  vector<string> types;
@@ -257,7 +245,7 @@ string CodeGen::generateRecordType(const NodePtr& n)
  }
 
  os_ << "struct " << decoratedName << " {\n";
- if (! noUnion_) {
+ if (!noUnion_) {
  for (size_t i = 0; i < c; ++i) {
  if (n->leafAt(i)->type() == avro::AVRO_UNION) {
  os_ << " typedef " << types[i]
@@ -269,7 +257,7 @@ string CodeGen::generateRecordType(const NodePtr& n)
  // the nameAt(i) does not take c++ reserved words into account
  // so we need to call decorate on it
  std::string decoratedNameAt = decorate(n->nameAt(i));
- if (! noUnion_ && n->leafAt(i)->type() == avro::AVRO_UNION) {
+ if (!noUnion_ && n->leafAt(i)->type() == avro::AVRO_UNION) {
  os_ << " " << decoratedNameAt << "_t";
  } else {
  os_ << " " << types[i];
@@ -287,7 +275,7 @@ string CodeGen::generateRecordType(const NodePtr& n)
  // so we need to call decorate on it
  std::string decoratedNameAt = decorate(n->nameAt(i));
  os_ << " " << decoratedNameAt << "(";
- if (! noUnion_ && n->leafAt(i)->type() == avro::AVRO_UNION) {
+ if (!noUnion_ && n->leafAt(i)->type() == avro::AVRO_UNION) {
  // the nameAt(i) does not take c++ reserved words into account
  // so we need to call decorate on it
  os_ << decoratedNameAt << "_t";
@@ -305,21 +293,19 @@ string CodeGen::generateRecordType(const NodePtr& n)
  return decoratedName;
 }
 
-void makeCanonical(string& s, bool foldCase)
-{
- for (char & c : s) {
+void makeCanonical(string &s, bool foldCase) {
+ for (char &c : s) {
  if (isalpha(c)) {
  if (foldCase) {
  c = static_cast<char>(toupper(c));
  }
- } else if (! isdigit(c)) {
+ } else if (!isdigit(c)) {
  c = '_';
  }
  }
 }
 
-string CodeGen::unionName()
-{
+string CodeGen::unionName() {
  string s = schemaFile_;
  string::size_type n = s.find_last_of("/\\");
  if (n != string::npos) {
@@ -330,10 +316,9 @@ string CodeGen::unionName()
  return s + "_Union__" + boost::lexical_cast<string>(unionNumber_++) + "__";
 }
 
-static void generateGetterAndSetter(ostream& os,
- const string& structName, const string& type, const string& name,
- size_t idx)
-{
+static void generateGetterAndSetter(ostream &os,
+ const string &structName, const string &type, const string &name,
+ size_t idx) {
  string sn = " " + structName + "::";
 
  os << "inline\n";
@@ -354,9 +339,9 @@ static void generateGetterAndSetter(ostream& os,
  << "}\n\n";
 }
 
-static void generateConstructor(ostream& os,
- const string& structName, bool initMember,
- const string& type) {
+static void generateConstructor(ostream &os,
+ const string &structName, bool initMember,
+ const string &type) {
  os << "inline " << structName << "::" << structName << "() : idx_(0)";
  if (initMember) {
  os << ", value_(" << type << "())";
@@ -370,8 +355,7 @@ static void generateConstructor(ostream& os,
  * such names must be declared and the inline functions deferred until all
  * types are fully defined.
  */
-string CodeGen::generateUnionType(const NodePtr& n)
-{
+string CodeGen::generateUnionType(const NodePtr &n) {
  size_t c = n->leaves();
  vector<string> types;
  vector<string> names;
@@ -379,14 +363,14 @@ string CodeGen::generateUnionType(const NodePtr& n)
  auto it = doing.find(n);
  if (it != doing.end()) {
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  types.push_back(generateDeclaration(nn));
  names.push_back(cppNameOf(nn));
  }
  } else {
  doing.insert(n);
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  types.push_back(generateType(nn));
  names.push_back(cppNameOf(nn));
  }
@@ -406,7 +390,7 @@ string CodeGen::generateUnionType(const NodePtr& n)
  << " size_t idx() const { return idx_; }\n";
 
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  if (nn->type() == avro::AVRO_NULL) {
  os_ << " bool is_null() const {\n"
  << " return (idx_ == " << i << ");\n"
@@ -416,10 +400,11 @@ string CodeGen::generateUnionType(const NodePtr& n)
  << " value_ = " << ANY_NS << "::any();\n"
  << " }\n";
  } else {
- const string& type = types[i];
- const string& name = names[i];
+ const string &type = types[i];
+ const string &name = names[i];
  os_ << " " << type << " get_" << name << "() const;\n"
- " void set_" << name << "(const " << type << "& v);\n";
+ " void set_"
+ << name << "(const " << type << "& v);\n";
  pendingGettersAndSetters.emplace_back(result, type, name, i);
  }
  }
@@ -435,8 +420,7 @@ string CodeGen::generateUnionType(const NodePtr& n)
 /**
  * Returns the type for the given schema node and emits code to os.
  */
-string CodeGen::generateType(const NodePtr& n)
-{
+string CodeGen::generateType(const NodePtr &n) {
  NodePtr nn = (n->type() == avro::AVRO_SYMBOLIC) ? resolveSymbol(n) : n;
 
  map<NodePtr, string>::const_iterator it = done.find(nn);
@@ -448,8 +432,7 @@ string CodeGen::generateType(const NodePtr& n)
  return result;
 }
 
-string CodeGen::doGenerateType(const NodePtr& n)
-{
+string CodeGen::doGenerateType(const NodePtr &n) {
  switch (n->type()) {
  case avro::AVRO_STRING:
  case avro::AVRO_BYTES:
@@ -461,9 +444,8 @@ string CodeGen::doGenerateType(const NodePtr& n)
  case avro::AVRO_NULL:
  case avro::AVRO_FIXED:
  return cppTypeOf(n);
- case avro::AVRO_ARRAY:
- {
- const NodePtr& ln = n->leafAt(0);
+ case avro::AVRO_ARRAY: {
+ const NodePtr &ln = n->leafAt(0);
  string dn;
  if (doing.find(n) == doing.end()) {
  doing.insert(n);
@@ -474,9 +456,8 @@ string CodeGen::doGenerateType(const NodePtr& n)
  }
  return "std::vector<" + dn + " >";
  }
- case avro::AVRO_MAP:
- {
- const NodePtr& ln = n->leafAt(1);
+ case avro::AVRO_MAP: {
+ const NodePtr &ln = n->leafAt(1);
  string dn;
  if (doing.find(n) == doing.end()) {
  doing.insert(n);
@@ -499,8 +480,7 @@ string CodeGen::doGenerateType(const NodePtr& n)
  return "$Undefined$";
 }
 
-string CodeGen::generateDeclaration(const NodePtr& n)
-{
+string CodeGen::generateDeclaration(const NodePtr &n) {
  NodePtr nn = (n->type() == avro::AVRO_SYMBOLIC) ? resolveSymbol(n) : n;
  switch (nn->type()) {
  case avro::AVRO_STRING:
@@ -516,8 +496,7 @@ string CodeGen::generateDeclaration(const NodePtr& n)
  case avro::AVRO_ARRAY:
  return "std::vector<" + generateDeclaration(nn->leafAt(0)) + " >";
  case avro::AVRO_MAP:
- return "std::map<std::string, " +
- generateDeclaration(nn->leafAt(1)) + " >";
+ return "std::map<std::string, " + generateDeclaration(nn->leafAt(1)) + " >";
  case avro::AVRO_RECORD:
  os_ << "struct " << cppTypeOf(nn) << ";\n";
  return cppTypeOf(nn);
@@ -532,8 +511,7 @@ string CodeGen::generateDeclaration(const NodePtr& n)
  return "$Undefined$";
 }
 
-void CodeGen::generateEnumTraits(const NodePtr& n)
-{
+void CodeGen::generateEnumTraits(const NodePtr &n) {
  string dname = decorate(n->name());
  string fn = fullname(dname);
 
@@ -546,7 +524,8 @@ void CodeGen::generateEnumTraits(const NodePtr& n)
  << " if (v > " << fn << "::" << last << ")\n"
  << " {\n"
  << " std::ostringstream error;\n"
- << R"( error << "enum value " << static_cast<unsigned>(v) << " is out of bound for )" << fn << " and cannot be encoded\";\n"
+ << R"( error << "enum value " << static_cast<unsigned>(v) << " is out of bound for )" << fn
+ << " and cannot be encoded\";\n"
  << " throw avro::Exception(error.str());\n"
  << " }\n"
  << " e.encodeEnum(static_cast<size_t>(v));\n"
@@ -556,7 +535,8 @@ void CodeGen::generateEnumTraits(const NodePtr& n)
  << " if (index > static_cast<size_t>(" << fn << "::" << last << "))\n"
  << " {\n"
  << " std::ostringstream error;\n"
- << R"( error << "enum value " << index << " is out of bound for )" << fn << " and cannot be decoded\";\n"
+ << R"( error << "enum value " << index << " is out of bound for )" << fn
+ << " and cannot be decoded\";\n"
  << " throw avro::Exception(error.str());\n"
  << " }\n"
  << " v = static_cast<" << fn << ">(index);\n"
@@ -564,8 +544,7 @@ void CodeGen::generateEnumTraits(const NodePtr& n)
  << "};\n\n";
 }
 
-void CodeGen::generateRecordTraits(const NodePtr& n)
-{
+void CodeGen::generateRecordTraits(const NodePtr &n) {
  size_t c = n->leaves();
  for (size_t i = 0; i < c; ++i) {
  generateTraits(n->leafAt(i));
@@ -616,12 +595,11 @@ void CodeGen::generateRecordTraits(const NodePtr& n)
  << "};\n\n";
 }
 
-void CodeGen::generateUnionTraits(const NodePtr& n)
-{
+void CodeGen::generateUnionTraits(const NodePtr &n) {
  size_t c = n->leaves();
 
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  generateTraits(nn);
  }
 
@@ -634,7 +612,7 @@ void CodeGen::generateUnionTraits(const NodePtr& n)
  << " switch (v.idx()) {\n";
 
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  os_ << " case " << i << ":\n";
  if (nn->type() == avro::AVRO_NULL) {
  os_ << " e.encodeNull();\n";
@@ -654,7 +632,7 @@ void CodeGen::generateUnionTraits(const NodePtr& n)
  << " switch (n) {\n";
 
  for (size_t i = 0; i < c; ++i) {
- const NodePtr& nn = n->leafAt(i);
+ const NodePtr &nn = n->leafAt(i);
  os_ << " case " << i << ":\n";
  if (nn->type() == avro::AVRO_NULL) {
  os_ << " d.decodeNull();\n"
@@ -673,8 +651,7 @@ void CodeGen::generateUnionTraits(const NodePtr& n)
  << "};\n\n";
 }
 
-void CodeGen::generateTraits(const NodePtr& n)
-{
+void CodeGen::generateTraits(const NodePtr &n) {
  switch (n->type()) {
  case avro::AVRO_STRING:
  case avro::AVRO_BYTES:
@@ -704,10 +681,8 @@ void CodeGen::generateTraits(const NodePtr& n)
  }
 }
 
-void CodeGen::emitCopyright()
-{
- os_ <<
- "/**\n"
+void CodeGen::emitCopyright() {
+ os_ << "/**\n"
  " * Licensed to the Apache Software Foundation (ASF) under one\n"
  " * or more contributor license agreements. See the NOTICE file\n"
  " * distributed with this work for additional information\n"
@@ -730,15 +705,13 @@ void CodeGen::emitCopyright()
  " */\n\n\n";
 }
 
-string CodeGen::guard()
-{
+string CodeGen::guard() {
  string h = headerFile_;
  makeCanonical(h, true);
  return h + "_" + lexical_cast<string>(random_()) + "__H_";
 }
 
-void CodeGen::generate(const ValidSchema& schema)
-{
+void CodeGen::generate(const ValidSchema &schema) {
  emitCopyright();
 
  string h = guardString_.empty() ? guard() : guardString_;
@@ -758,7 +731,7 @@ void CodeGen::generate(const ValidSchema& schema)
  << "\n";
 
  vector<string> nsVector;
- if (! ns_.empty()) {
+ if (!ns_.empty()) {
  boost::algorithm::split_regex(nsVector, ns_, boost::regex("::"));
  for (vector<string>::const_iterator it =
  nsVector.begin();
@@ -768,7 +741,7 @@ void CodeGen::generate(const ValidSchema& schema)
  inNamespace_ = true;
  }
 
- const NodePtr& root = schema.root();
+ const NodePtr &root = schema.root();
  generateType(root);
 
  for (vector<PendingSetterGetter>::const_iterator it =
@@ -785,7 +758,7 @@ void CodeGen::generate(const ValidSchema& schema)
  it->initMember, it->memberName);
  }
 
- if (! ns_.empty()) {
+ if (!ns_.empty()) {
  inNamespace_ = false;
  for (vector<string>::const_iterator it =
  nsVector.begin();
@@ -804,13 +777,11 @@ void CodeGen::generate(const ValidSchema& schema)
 
  os_ << "#endif\n";
  os_.flush();
-
 }
 
 namespace po = boost::program_options;
 
-static string readGuard(const string& filename)
-{
+static string readGuard(const string &filename) {
  std::ifstream ifs(filename.c_str());
  string buf;
  string candidate;
@@ -831,8 +802,7 @@ static string readGuard(const string& filename)
  return candidate;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
  const string NS("namespace");
  const string OUT("output");
  const string IN("input");
@@ -840,19 +810,12 @@ int main(int argc, char** argv)
  const string NO_UNION_TYPEDEF("no-union-typedef");
 
  po::options_description desc("Allowed options");
- desc.add_options()
- ("help,h", "produce help message")
- ("include-prefix,p", po::value<string>()->default_value("avro"),
- "prefix for include headers, - for none, default: avro")
- ("no-union-typedef,U", "do not generate typedefs for unions in records")
- ("namespace,n", po::value<string>(), "set namespace for generated code")
- ("input,i", po::value<string>(), "input file")
- ("output,o", po::value<string>(), "output file to generate");
+ desc.add_options()("help,h", "produce help message")("include-prefix,p", po::value<string>()->default_value("avro"),
+ "prefix for include headers, - for none, default: avro")("no-union-typedef,U", "do not generate typedefs for unions in records")("namespace,n", po::value<string>(), "set namespace for generated code")("input,i", po::value<string>(), "input file")("output,o", po::value<string>(), "output file to generate");
 
  po::variables_map vm;
  po::store(po::parse_command_line(argc, argv, desc), vm);
  po::notify(vm);
-
 
  if (vm.count("help") || vm.count(IN) == 0 || vm.count(OUT) == 0) {
  std::cout << desc << std::endl;
@@ -873,20 +836,19 @@ int main(int argc, char** argv)
  try {
  ValidSchema schema;
 
- if (! inf.empty()) {
+ if (!inf.empty()) {
  ifstream in(inf.c_str());
  compileJsonSchema(in, schema);
  } else {
  compileJsonSchema(std::cin, schema);
  }
 
- if (! outf.empty()) {
+ if (!outf.empty()) {
  string g = readGuard(outf);
  ofstream out(outf.c_str());
  CodeGen(out, ns, inf, outf, g, incPrefix, noUnion).generate(schema);
  } else {
- CodeGen(std::cout, ns, inf, outf, "", incPrefix, noUnion).
- generate(schema);
+ CodeGen(std::cout, ns, inf, outf, "", incPrefix, noUnion).generate(schema);
  }
  return 0;
  } catch (std::exception &e) {
@@ -894,5 +856,4 @@ int main(int argc, char** argv)
  << e.what() << std::endl;
  return 1;
  }
-
 }
