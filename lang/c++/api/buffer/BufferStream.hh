@@ -42,7 +42,7 @@ public:
  ostream() : std::ostream(&obuf_) {}
 
  /// Output to a specific buffer.
- ostream(OutputBuffer &buf) : std::ostream(&obuf_),
+ explicit ostream(OutputBuffer &buf) : std::ostream(&obuf_),
  obuf_(buf) {}
 
  /// Return the output buffer created by the write operations to this ostream.
