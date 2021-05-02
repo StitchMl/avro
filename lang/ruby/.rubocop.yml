@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -15,10 +14,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'rubygems'
-require 'test/unit'
-require 'stringio'
-require 'fileutils'
-FileUtils.mkdir_p('tmp')
-require 'avro'
-require 'random_data'
+AllCops:
+ TargetRubyVersion: 2.6
+ NewCops: disable
+
+Bundler:
+ Enabled: false
+
+Layout:
+ Enabled: false
+
+Lint:
+ Enabled: true
+
+Metrics:
+ Enabled: false
+
+Naming:
+ Enabled: false
+
+Security:
+ Enabled: false
+
+Style:
+ Enabled: false
+
+Style/FrozenStringLiteralComment:
+ Enabled: true
+
+Style/MutableConstant:
+ Enabled: true
+
+Style/RedundantFreeze:
+ Enabled: true

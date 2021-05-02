@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -74,7 +75,7 @@ class RandomData
  return nil if len == 0
  symbols[rand(len)]
  when :fixed
- f = ""
+ f = +""
  schm.size.times { f << BYTEPOOL[rand(BYTEPOOL.size), 1] }
  f
  end
@@ -95,7 +96,7 @@ class RandomData
  BYTEPOOL = '12345abcd'
 
  def randstr(chars=CHARPOOL, length=20)
- str = ''
+ str = +''
  rand(length+1).times { str << chars[rand(chars.size)] }
  str
  end
