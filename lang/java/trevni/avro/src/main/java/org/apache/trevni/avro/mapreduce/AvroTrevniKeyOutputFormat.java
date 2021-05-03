@@ -45,9 +45,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  *
  * <p>
  * Writes a directory of files per task, each comprising a single
- * filesystem block. To reduce the number of files, increase the default
- * filesystem block size for the job. Each task also requires enough
- * memory to buffer a filesystem block.
+ * filesystem block. To reduce the number of files, increase the
+ * default filesystem block size for the job. Each task also requires
+ * enough memory to buffer a filesystem block.
  */
 public class AvroTrevniKeyOutputFormat<T> extends FileOutputFormat<AvroKey<T>, NullWritable> {
 
