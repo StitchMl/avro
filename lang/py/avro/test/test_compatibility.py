@@ -20,6 +20,7 @@
 # limitations under the License.
 
 import json
+import unittest
 
 from avro.compatibility import ReaderWriterCompatibilityChecker, SchemaCompatibilityType, SchemaType
 from avro.schema import ArraySchema, MapSchema, Names, PrimitiveSchema, Schema, UnionSchema, parse
@@ -373,7 +374,8 @@ RECORD1_WITH_ENUM_ABC = parse(
 )
 
 
-def test_simple_schema_promotion():
+class TestCompatibility(unittest.TestCase):
+ def test_simple_schema_promotion(self):
  field_alias_reader = parse(
  json.dumps({
  "name": "foo",
@@ -412,12 +414,11 @@ def test_simple_schema_promotion():
  )
  # alias testing
  res = ReaderWriterCompatibilityChecker().get_compatibility(field_alias_reader, writer)
- assert res.compatibility is SchemaCompatibilityType.compatible, res.locations
+ self.assertIs(res.compatibility, SchemaCompatibilityType.compatible, res.locations)
  res = ReaderWriterCompatibilityChecker().get_compatibility(record_alias_reader, writer)
- assert res.compatibility is SchemaCompatibilityType.compatible, res.locations
+ self.assertIs(res.compatibility, SchemaCompatibilityType.compatible, res.locations)
 
-
-def test_schema_compatibility():
+ def test_schema_compatibility(self):
  # testValidateSchemaPairMissingField
  writer = parse(
  json.dumps({
@@ -433,10 +434,10 @@ def test_schema_compatibility():
  })
  )
  reader = parse(json.dumps({"type": SchemaType.RECORD, "name": "Record", "fields": [{"name": "oldField1", "type": SchemaType.INT}]}))
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  # testValidateSchemaPairMissingSecondField
  reader = parse(json.dumps({"type": SchemaType.RECORD, "name": "Record", "fields": [{"name": "oldField2", "type": SchemaType.STRING}]}))
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  # testValidateSchemaPairAllFields
  reader = parse(
  json.dumps({
@@ -451,7 +452,7 @@ def test_schema_compatibility():
  }]
  })
  )
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  # testValidateSchemaNewFieldWithDefault
  reader = parse(
  json.dumps({
@@ -467,7 +468,7 @@ def test_schema_compatibility():
  }]
  })
  )
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  # testValidateSchemaNewField
  reader = parse(
  json.dumps({
@@ -482,19 +483,19 @@ def test_schema_compatibility():
  }]
  })
  )
- assert not are_compatible(reader, writer)
+ self.assertFalse(self.are_compatible(reader, writer))
  # testValidateArrayWriterSchema
  writer = parse(json.dumps({"type": SchemaType.ARRAY, "items": {"type": SchemaType.STRING}}))
  reader = parse(json.dumps({"type": SchemaType.ARRAY, "items": {"type": SchemaType.STRING}}))
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  reader = parse(json.dumps({"type": SchemaType.MAP, "values": {"type": SchemaType.STRING}}))
- assert not are_compatible(reader, writer)
+ self.assertFalse(self.are_compatible(reader, writer))
  # testValidatePrimitiveWriterSchema
  writer = parse(json.dumps({"type": SchemaType.STRING}))
  reader = parse(json.dumps({"type": SchemaType.STRING}))
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
  reader = parse(json.dumps({"type": SchemaType.INT}))
- assert not are_compatible(reader, writer)
+ self.assertFalse(self.are_compatible(reader, writer))
  # testUnionReaderWriterSubsetIncompatibility
  writer = parse(
  json.dumps({
@@ -506,12 +507,16 @@ def test_schema_compatibility():
  }]
  })
  )
- reader = parse(json.dumps({"name": "Record", "type": SchemaType.RECORD, "fields": [{"name": "f1", "type": [SchemaType.INT, SchemaType.STRING]}]}))
+ reader = parse(json.dumps({
+ "name": "Record",
+ "type": SchemaType.RECORD,
+ "fields": [
+ {"name": "f1", "type": [SchemaType.INT, SchemaType.STRING]}]}))
  reader = reader.fields[0].type
  writer = writer.fields[0].type
- assert isinstance(reader, UnionSchema)
- assert isinstance(writer, UnionSchema)
- assert not are_compatible(reader, writer)
+ self.assertIsInstance(reader, UnionSchema)
+ self.assertIsInstance(writer, UnionSchema)
+ self.assertFalse(self.are_compatible(reader, writer))
  # testReaderWriterCompatibility
  compatible_reader_writer_test_cases = [
  (BOOLEAN_SCHEMA, BOOLEAN_SCHEMA),
@@ -588,10 +593,9 @@ def test_schema_compatibility():
  ]
 
  for (reader, writer) in compatible_reader_writer_test_cases:
- assert are_compatible(reader, writer)
+ self.assertTrue(self.are_compatible(reader, writer))
 
-
-def test_schema_compatibility_fixed_size_mismatch():
+ def test_schema_compatibility_fixed_size_mismatch(self):
  incompatible_fixed_pairs = [
  (FIXED_4_BYTES, FIXED_8_BYTES, "expected: 8, found: 4", "/size"),
  (FIXED_8_BYTES, FIXED_4_BYTES, "expected: 4, found: 8", "/size"),
@@ -600,12 +604,11 @@ def test_schema_compatibility_fixed_size_mismatch():
  ]
  for (reader, writer, message, location) in incompatible_fixed_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert location in result.locations, "expected {}, found {}".format(location, result)
- assert message in result.messages, "expected {}, found {}".format(location, result)
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertIn(location, result.locations, "expected {}, found {}".format(location, result))
+ self.assertIn(message, result.messages, "expected {}, found {}".format(location, result))
 
-
-def test_schema_compatibility_missing_enum_symbols():
+ def test_schema_compatibility_missing_enum_symbols(self):
  incompatible_pairs = [
  # str(set) representation
  (ENUM1_AB_SCHEMA, ENUM1_ABC_SCHEMA, "{'C'}", "/symbols"),
@@ -614,12 +617,11 @@ def test_schema_compatibility_missing_enum_symbols():
  ]
  for (reader, writer, message, location) in incompatible_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert message in result.messages
- assert location in result.locations
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertIn(message, result.messages)
+ self.assertIn(location, result.locations)
 
-
-def test_schema_compatibility_missing_union_branch():
+ def test_schema_compatibility_missing_union_branch(self):
  incompatible_pairs = [
  (INT_UNION_SCHEMA, INT_STRING_UNION_SCHEMA, {"reader union lacking writer type: STRING"}, {"/1"}),
  (STRING_UNION_SCHEMA, INT_STRING_UNION_SCHEMA, {"reader union lacking writer type: INT"}, {"/0"}),
@@ -650,38 +652,37 @@ def test_schema_compatibility_missing_union_branch():
 
  for (reader, writer, message, location) in incompatible_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert result.messages == message
- assert result.locations == location
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertEqual(result.messages, message)
+ self.assertEqual(result.locations, location)
 
-
-def test_schema_compatibility_name_mismatch():
- incompatible_pairs = [(ENUM1_AB_SCHEMA, ENUM2_AB_SCHEMA, "expected: Enum2", "/name"),
+ def test_schema_compatibility_name_mismatch(self):
+ incompatible_pairs = [
+ (ENUM1_AB_SCHEMA, ENUM2_AB_SCHEMA, "expected: Enum2", "/name"),
  (EMPTY_RECORD2, EMPTY_RECORD1, "expected: Record1", "/name"),
  (FIXED_4_BYTES, FIXED_4_ANOTHER_NAME, "expected: AnotherName", "/name"),
  (A_DINT_B_DENUM_1_RECORD1, A_DINT_B_DENUM_2_RECORD1, "expected: Enum2", "/fields/1/type/name")]
 
  for (reader, writer, message, location) in incompatible_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert message in result.messages
- assert location in result.locations
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertIn(message, result.messages)
+ self.assertIn(location, result.locations)
 
-
-def test_schema_compatibility_reader_field_missing_default_value():
+ def test_schema_compatibility_reader_field_missing_default_value(self):
  incompatible_pairs = [
  (A_INT_RECORD1, EMPTY_RECORD1, "a", "/fields/0"),
  (A_INT_B_DINT_RECORD1, EMPTY_RECORD1, "a", "/fields/0"),
  ]
  for (reader, writer, message, location) in incompatible_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert len(result.messages) == 1 and len(result.locations) == 1
- assert message == "".join(result.messages)
- assert location == "".join(result.locations)
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertEqual(len(result.messages), 1)
+ self.assertEqual(len(result.locations), 1)
+ self.assertEqual(message, "".join(result.messages))
+ self.assertEqual(location, "".join(result.locations))
 
-
-def test_schema_compatibility_type_mismatch():
+ def test_schema_compatibility_type_mismatch(self):
  incompatible_pairs = [
  (NULL_SCHEMA, INT_SCHEMA, "reader type: NULL not compatible with writer type: INT", "/"),
  (NULL_SCHEMA, LONG_SCHEMA, "reader type: NULL not compatible with writer type: LONG", "/"),
@@ -718,11 +719,10 @@ def test_schema_compatibility_type_mismatch():
  ]
  for (reader, writer, message, location) in incompatible_pairs:
  result = ReaderWriterCompatibilityChecker().get_compatibility(reader, writer)
- assert result.compatibility is SchemaCompatibilityType.incompatible
- assert message in result.messages
- assert location in result.locations
+ self.assertIs(result.compatibility, SchemaCompatibilityType.incompatible)
+ self.assertIn(message, result.messages)
+ self.assertIn(location, result.locations)
 
-
-def are_compatible(reader: Schema, writer: Schema) -> bool:
+ def are_compatible(self, reader: Schema, writer: Schema) -> bool:
  return ReaderWriterCompatibilityChecker(
  ).get_compatibility(reader, writer).compatibility is SchemaCompatibilityType.compatible
