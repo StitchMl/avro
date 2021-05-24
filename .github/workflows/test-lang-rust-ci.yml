@@ -16,23 +16,61 @@
 # under the License.
 
 on:
- schedule:
- - cron: '0 0 * * *'
- paths:
- - '**/Cargo.toml'
- - '**/Cargo.lock'
  workflow_dispatch:
+ push:
+ branches: [ master ]
+ pull_request:
+ branches: [ master ]
+ paths:
+ - .github/workflows/test-lang-rust-ci.yml
+ - lang/rust/**
 
-name: Security Audit
+name: Continuous Integration
 
 jobs:
- audit:
+ ci:
  runs-on: ubuntu-latest
+ strategy:
+ matrix:
+ rust:
+ - stable
+ - beta
+ - nightly
+ - 1.48.0 # MSRV
+
  steps:
  - name: Checkout
- uses: actions/checkout@v1
+ uses: actions/checkout@v2
 
- - name: Audit
- uses: actions-rs/audit-check@v1
+ - name: Toolchain
+ uses: actions-rs/toolchain@v1
  with:
- token: ${{ secrets.GITHUB_TOKEN }}
+ profile: minimal
+ toolchain: ${{ matrix.rust }}
+ override: true
+ components: rustfmt
+
+ - name: Format
+ uses: actions-rs/cargo@v1
+ with:
+ command: fmt
+ args: --all -- --check
+
+ - name: Build
+ uses: actions-rs/cargo@v1
+ with:
+ command: build
+ args: --all-features --all-targets
+
+ - name: Test
+ uses: actions-rs/cargo@v1
+ with:
+ command: test
+ args: --all-features --all-targets
+
+ # because of https://github.com/rust-lang/cargo/issues/6669
+ - name: Test docs
+ uses: actions-rs/cargo@v1
+ with:
+ command: test
+ args: --doc
