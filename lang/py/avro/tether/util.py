@@ -18,16 +18,12 @@
 # limitations under the License.
 
 import socket
+from typing import cast
 
 
-def find_port():
- """
- Return an unbound port
- """
- s = socket.socket()
+def find_port() -> int:
+ """Return an unbound port"""
+ with socket.socket() as s:
  s.bind(("127.0.0.1", 0))
-
  port = s.getsockname()[1]
- s.close()
-
- return port
+ return cast(int, port)
