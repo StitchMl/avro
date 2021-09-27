@@ -37,7 +37,7 @@ public class FooBarSpecificRecord extends org.apache.avro.specific.SpecificRecor
  return SCHEMA$;
  }
 
- private static SpecificData MODEL$ = new SpecificData();
+ private static final SpecificData MODEL$ = new SpecificData();
 
  private static final BinaryMessageEncoder<FooBarSpecificRecord> ENCODER = new BinaryMessageEncoder<>(MODEL$, SCHEMA$);
 
