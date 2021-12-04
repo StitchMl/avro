@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -16,37 +16,16 @@
  * limitations under the License.
  */
 
-/** An example protocol in Avro IDL */
-@namespace("org.apache.avro.grpc.test")
-protocol TestService {
+/**
+ * A stripped down version of a previous `simple.avdl`, keeping the part where a type reference had an annotation (this is wrong).
+ */
+@namespace("org.apache.avro.test")
+protocol Simple {
+ /** An MD5 hash. */
+ fixed MD5(16);
 
- enum Kind {
- FOO,
- BAR,
- BAZ
- }
-
- fixed MD5(4);
-
+ /** A TestRecord. */
  record TestRecord {
- string @order("ignore") name;
-
- Kind @order("descending") kind;
-
- MD5 hash;
-
- union { MD5, null} @aliases(["hash"]) nullableHash;
-
- array<long> arrayOfLongs;
+ @foo("bar") MD5 hash = "0000000000000000";
  }
-
- error TestError {
- string message;
- }
-
- TestRecord echo(TestRecord `record`);
- int add(int arg1, int arg2, int arg3);
- void `error`(boolean declared) throws TestError;
- void ping() oneway;
- union {null, string} concatenate(string val1, boolean val2, long val3, int val4);
 }
