@@ -343,6 +343,25 @@ mod tests {
  6u8, 102u8, 111u8, 111u8, 84u8, 6u8, 98u8, 97u8, 114u8, 94u8, 61u8, 54u8, 221u8, 190u8,
  207u8, 108u8, 180u8, 158u8, 57u8, 114u8, 40u8, 173u8, 199u8, 228u8, 239u8,
  ];
+
+ #[test]
+ fn test_from_avro_datum() {
+ let schema = Schema::parse_str(SCHEMA).unwrap();
+ let mut encoded: &'static [u8] = &[54, 6, 102, 111, 111];
+
+ let mut record = Record::new(&schema).unwrap();
+ record.put("a", 27i64);
+ record.put("b", "foo");
+ let expected = record.into();
+
+ assert_eq!(
+ from_avro_datum(&schema, &mut encoded, None).unwrap(),
+ expected
+ );
+ }
+
+ #[test]
+ fn test_from_avro_datum_with_union_to_struct() {
  const TEST_RECORD_SCHEMA_3240: &str = r#"
  {
  "type": "record",
@@ -385,24 +404,6 @@ mod tests {
  a_nullable_string: Option<String>,
  }
 
- #[test]
- fn test_from_avro_datum() {
- let schema = Schema::parse_str(SCHEMA).unwrap();
- let mut encoded: &'static [u8] = &[54, 6, 102, 111, 111];
-
- let mut record = Record::new(&schema).unwrap();
- record.put("a", 27i64);
- record.put("b", "foo");
- let expected = record.into();
-
- assert_eq!(
- from_avro_datum(&schema, &mut encoded, None).unwrap(),
- expected
- );
- }
-
- #[test]
- fn test_from_avro_datum_with_union_to_struct() {
  let schema = Schema::parse_str(TEST_RECORD_SCHEMA_3240).unwrap();
  let mut encoded: &'static [u8] = &[54, 6, 102, 111, 111];
 
