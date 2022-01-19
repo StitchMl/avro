@@ -20,7 +20,7 @@ use crate::{
  types::Value,
  util::{zig_i32, zig_i64},
 };
-use std::convert::TryInto;
+use std::{collections::HashMap, convert::TryInto};
 
 /// Encode a `Value` into avro format.
 ///
@@ -51,6 +51,25 @@ fn encode_int(i: i32, buffer: &mut Vec<u8>) {
 /// be valid with regards to the schema. Schema are needed only to guide the
 /// encoding for complex type values.
 pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
+ fn encode_ref0(
+ value: &Value,
+ schema: &Schema,
+ buffer: &mut Vec<u8>,
+ schemas_by_name: &mut HashMap<String, Schema>,
+ ) {
+ match &schema {
+ Schema::Ref { ref name } => {
+ let resolved = schemas_by_name.get(name.name.as_str()).unwrap();
+ return encode_ref0(value, resolved, buffer, &mut schemas_by_name.clone());
+ }
+ Schema::Record { ref name, .. }
+ | Schema::Enum { ref name, .. }
+ | Schema::Fixed { ref name, .. } => {
+ schemas_by_name.insert(name.name.clone(), schema.clone());
+ }
+ _ => (),
+ }
+
  match value {
  Value::Null => (),
  Value::Boolean(b) => buffer.push(if *b { 1u8 } else { 0u8 }),
@@ -75,10 +94,12 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  }
  encode(&Value::Fixed(size, bytes), inner, buffer)
  }
- Schema::Bytes => encode(&Value::Bytes(decimal.try_into().unwrap()), inner, buffer),
+ Schema::Bytes => {
+ encode(&Value::Bytes(decimal.try_into().unwrap()), inner, buffer)
+ }
  _ => panic!("invalid inner type for decimal: {:?}", inner),
  },
- _ => panic!("invalid type for decimal: {:?}", schema),
+ _ => panic!("invalid schema type for decimal: {:?}", schema),
  },
  &Value::Duration(duration) => {
  let slice: [u8; 12] = duration.into();
@@ -88,7 +109,7 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  Value::Bytes(bytes) => match *schema {
  Schema::Bytes => encode_bytes(bytes, buffer),
  Schema::Fixed { .. } => buffer.extend(bytes),
- _ => (),
+ _ => error!("invalid schema type for bytes: {:?}", schema),
  },
  Value::String(s) => match *schema {
  Schema::String => {
@@ -99,7 +120,7 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  encode_int(index as i32, buffer);
  }
  }
- _ => (),
+ _ => error!("invalid schema type for String: {:?}", schema),
  },
  Value::Fixed(_, bytes) => buffer.extend(bytes),
  Value::Enum(i, _) => encode_int(*i, buffer),
@@ -111,7 +132,9 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  .find_schema(item)
  .expect("Invalid Union validation occurred");
  encode_long(idx as i64, buffer);
- encode_ref(&*item, inner_schema, buffer);
+ encode_ref0(&*item, inner_schema, buffer, schemas_by_name);
+ } else {
+ error!("invalid schema type for Union: {:?}", schema);
  }
  }
  Value::Array(items) => {
@@ -119,10 +142,12 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  if !items.is_empty() {
  encode_long(items.len() as i64, buffer);
  for item in items.iter() {
- encode_ref(item, inner, buffer);
+ encode_ref0(item, inner, buffer, schemas_by_name);
  }
  }
  buffer.push(0u8);
+ } else {
+ error!("invalid schema type for Array: {:?}", schema);
  }
  }
  Value::Map(items) => {
@@ -131,10 +156,12 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  encode_long(items.len() as i64, buffer);
  for (key, value) in items {
  encode_bytes(key, buffer);
- encode_ref(value, inner, buffer);
+ encode_ref0(value, inner, buffer, schemas_by_name);
  }
  }
  buffer.push(0u8);
+ } else {
+ error!("invalid schema type for Map: {:?}", schema);
  }
  }
  Value::Record(fields) => {
@@ -144,11 +171,15 @@ pub fn encode_ref(value: &Value, schema: &Schema, buffer: &mut Vec<u8>) {
  } = *schema
  {
  for (i, &(_, ref value)) in fields.iter().enumerate() {
- encode_ref(value, &schema_fields[i].schema, buffer);
+ encode_ref0(value, &schema_fields[i].schema, buffer, schemas_by_name);
  }
  }
  }
  }
+ }
+
+ let mut schemas_by_name = HashMap::new();
+ encode_ref0(value, schema, buffer, &mut schemas_by_name)
 }
 
 pub fn encode_to_vec(value: &Value, schema: &Schema) -> Vec<u8> {

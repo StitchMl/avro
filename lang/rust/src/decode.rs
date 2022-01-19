@@ -68,6 +68,11 @@ fn decode_seq_len<R: Read>(reader: &mut R) -> AvroResult<usize> {
 
 /// Decode a `Value` from avro format given its `Schema`.
 pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
+ fn decode0<R: Read>(
+ schema: &Schema,
+ reader: &mut R,
+ schemas_by_name: &mut HashMap<String, Schema>,
+ ) -> AvroResult<Value> {
  match *schema {
  Schema::Null => Ok(Value::Null),
  Schema::Boolean => {
@@ -88,18 +93,18 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
  }
  }
  Schema::Decimal { ref inner, .. } => match &**inner {
- Schema::Fixed { .. } => match decode(inner, reader)? {
+ Schema::Fixed { .. } => match decode0(inner, reader, schemas_by_name)? {
  Value::Fixed(_, bytes) => Ok(Value::Decimal(Decimal::from(bytes))),
  value => Err(Error::FixedValue(value.into())),
  },
- Schema::Bytes => match decode(inner, reader)? {
+ Schema::Bytes => match decode0(inner, reader, schemas_by_name)? {
  Value::Bytes(bytes) => Ok(Value::Decimal(Decimal::from(bytes))),
  value => Err(Error::BytesValue(value.into())),
  },
  schema => Err(Error::ResolveDecimalSchema(schema.into())),
  },
  Schema::Uuid => Ok(Value::Uuid(
- Uuid::from_str(match decode(&Schema::String, reader)? {
+ Uuid::from_str(match decode0(&Schema::String, reader, schemas_by_name)? {
  Value::String(ref s) => s,
  value => return Err(Error::GetUuidFromStringValue(value.into())),
  })
@@ -149,7 +154,8 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
  }
  }
  }
- Schema::Fixed { size, .. } => {
+ Schema::Fixed { ref name, size, .. } => {
+ schemas_by_name.insert(name.name.clone(), schema.clone());
  let mut buf = vec![0u8; size];
  reader
  .read_exact(&mut buf)
@@ -167,7 +173,7 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
 
  items.reserve(len);
  for _ in 0..len {
- items.push(decode(inner, reader)?);
+ items.push(decode0(inner, reader, schemas_by_name)?);
  }
  }
 
@@ -184,9 +190,9 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
 
  items.reserve(len);
  for _ in 0..len {
- match decode(&Schema::String, reader)? {
+ match decode0(&Schema::String, reader, schemas_by_name)? {
  Value::String(key) => {
- let value = decode(inner, reader)?;
+ let value = decode0(inner, reader, schemas_by_name)?;
  items.insert(key, value);
  }
  value => return Err(Error::MapKeyType(value.into())),
@@ -200,12 +206,15 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
  Ok(index) => {
  let variants = inner.variants();
  let variant = variants
- .get(usize::try_from(index).map_err(|e| Error::ConvertI64ToUsize(e, index))?)
+ .get(
+ usize::try_from(index)
+ .map_err(|e| Error::ConvertI64ToUsize(e, index))?,
+ )
  .ok_or_else(|| Error::GetUnionVariant {
  index,
  num_variants: variants.len(),
  })?;
- let value = decode(variant, reader)?;
+ let value = decode0(variant, reader, schemas_by_name)?;
  Ok(Value::Union(Box::new(value)))
  }
  Err(Error::ReadVariableIntegerBytes(io_err)) => {
@@ -218,16 +227,29 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
  Err(io_err) => Err(io_err),
  },
 
- Schema::Record { ref fields, .. } => {
+ Schema::Record {
+ ref name,
+ ref fields,
+ ..
+ } => {
+ schemas_by_name.insert(name.name.clone(), schema.clone());
  // Benchmarks indicate ~10% improvement using this method.
  let mut items = Vec::with_capacity(fields.len());
  for field in fields {
  // TODO: This clone is also expensive. See if we can do away with it...
- items.push((field.name.clone(), decode(&field.schema, reader)?));
+ items.push((
+ field.name.clone(),
+ decode0(&field.schema, reader, schemas_by_name)?,
+ ));
  }
  Ok(Value::Record(items))
  }
- Schema::Enum { ref symbols, .. } => {
+ Schema::Enum {
+ ref name,
+ ref symbols,
+ ..
+ } => {
+ schemas_by_name.insert(name.name.clone(), schema.clone());
  Ok(if let Value::Int(raw_index) = decode_int(reader)? {
  let index = usize::try_from(raw_index)
  .map_err(|e| Error::ConvertI32ToUsize(e, raw_index))?;
@@ -244,7 +266,19 @@ pub fn decode<R: Read>(schema: &Schema, reader: &mut R) -> AvroResult<Value> {
  return Err(Error::GetEnumSymbol);
  })
  }
+ Schema::Ref { ref name } => {
+ let name = &name.name;
+ if let Some(resolved) = schemas_by_name.get(name.as_str()) {
+ decode0(resolved, reader, &mut schemas_by_name.clone())
+ } else {
+ Err(Error::SchemaResolutionError(name.clone()))
  }
+ }
+ }
+ }
+
+ let mut schemas_by_name: HashMap<String, Schema> = HashMap::new();
+ decode0(schema, reader, &mut schemas_by_name)
 }
 
 #[cfg(test)]
