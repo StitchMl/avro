@@ -50,13 +50,20 @@ do
  dotnet pack --configuration Release Avro.sln
 
  # add the binary LICENSE and NOTICE to the tarball
- mkdir build/
+ mkdir -p build/
  cp LICENSE NOTICE build/
 
  # add binaries to the tarball
- mkdir build/main/
+ mkdir -p build/main/
  cp -R src/apache/main/bin/Release/* build/main/
- mkdir build/codegen/
+ # add codec binaries to the tarball
+ for codec in Avro.File.Snappy Avro.File.BZip2 Avro.File.XZ Avro.File.Zstandard
+ do
+ mkdir -p build/codec/$codec/
+ cp -R src/apache/codec/$codec/bin/Release/* build/codec/$codec/
+ done
+ # add codegen binaries to the tarball
+ mkdir -p build/codegen/
  cp -R src/apache/codegen/bin/Release/* build/codegen/
 
  # build the tarball
@@ -74,7 +81,7 @@ do
  ;;
 
  interop-data-test)
- LANG=en_US.UTF-8 dotnet test --filter "TestCategory=Interop" --verbosity normal
+ LANG=en_US.UTF-8 dotnet test --filter "TestCategory=Interop" --logger "console;verbosity=normal;noprogress=true" src/apache/test/Avro.test.csproj
  ;;
 
  clean)
