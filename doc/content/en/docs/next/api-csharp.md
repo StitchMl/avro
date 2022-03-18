@@ -1,7 +1,8 @@
 ---
-title: "Java API"
-linkTitle: "Java API"
-weight: 4
+title: "C# API"
+linkTitle: "C# API"
+weight: 103
+manualLink: next/api/csharp/html/
 ---
 
 <!--
@@ -25,4 +26,4 @@ weight: 4
 
 -->
 
-The Javadocs could be found [here](https://avro.apache.org/docs/current/api/java/index.html)
+The C# API documentation can be found <a href="next/api/csharp/html/">here</a>.

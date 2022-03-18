@@ -1,7 +1,8 @@
 ---
-title: "C++ API"
-linkTitle: "C++ API"
-weight: 5
+title: "Java API"
+linkTitle: "Java API"
+weight: 100
+manualLink: next/api/java/
 ---
 
 <!--
@@ -25,4 +26,4 @@ weight: 5
 
 -->
 
-The C++ API documentation could be found <a href="../external/c++-api/index.html">here</a>.
+The Javadocs can be found <a href="next/api/java/">here</a>.
