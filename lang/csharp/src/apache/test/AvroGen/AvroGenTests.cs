@@ -621,6 +621,29 @@ namespace Avro.Test.AvroGen
  ]
 }",
  new object[] { "schematest.LogicalTypes", typeof(Guid?), typeof(Guid), typeof(DateTime?), typeof(DateTime), typeof(DateTime?), typeof(DateTime), typeof(TimeSpan?), typeof(TimeSpan), typeof(TimeSpan?), typeof(TimeSpan), typeof(AvroDecimal?), typeof(AvroDecimal) })]
+ [TestCase(@"
+{
+ ""namespace"": ""enum.base"",
+ ""type"": ""record"",
+ ""name"": ""EnumInDifferentNamespace"",
+ ""doc"": ""Test enum with a default value in a different namespace"",
+ ""fields"": [
+ {
+ ""name"": ""anEnum"",
+ ""type"": {
+ ""namespace"": ""enum.base.other"",
+ ""type"": ""enum"",
+ ""name"": ""AnEnum"",
+ ""symbols"": [
+ ""A"",
+ ""B""
+ ],
+ ""default"": ""A""
+ }
+ }
+ ]
+}",
+ new object[] { "enum.base.EnumInDifferentNamespace", "enum.base.other.AnEnum" })]
  public void GenerateSchemaCheckFields(string schema, object[] result)
  {
  Assembly assembly = TestSchema(schema);
