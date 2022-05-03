@@ -198,9 +198,7 @@ namespace Avro
  /// <returns></returns>
  public override int GetHashCode()
  {
-#pragma warning disable CA1307 // Specify StringComparison
  return Name.GetHashCode() +
-#pragma warning restore CA1307 // Specify StringComparison
  Request.GetHashCode() +
  (Response == null ? 0 : Response.GetHashCode()) +
  (Error == null ? 0 : Error.GetHashCode());
