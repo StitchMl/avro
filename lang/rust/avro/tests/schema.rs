@@ -368,17 +368,42 @@ const OTHER_ATTRIBUTES_EXAMPLES: &[(&str, bool)] = &[
 ];
 
 const DECIMAL_LOGICAL_TYPE: &[(&str, bool)] = &[
- /*
  (
  r#"{
+ "type": {
  "type": "fixed",
- "logicalType": "decimal",
  "name": "TestDecimal",
+ "size": 10
+ },
+ "logicalType": "decimal",
  "precision": 4,
- "size": 10,
  "scale": 2
  }"#,
  true,
+ ),
+ (
+ r#"{
+ "type": {
+ "type": "fixed",
+ "name": "ScaleIsImplicitlyZero",
+ "size": 10
+ },
+ "logicalType": "decimal",
+ "precision": 4
+ }"#,
+ true,
+ ),
+ (
+ r#"{
+ "type": {
+ "type": "fixed",
+ "name": "PrecisionMustBeGreaterThanZero",
+ "size": 10
+ },
+ "logicalType": "decimal",
+ "precision": 0
+ }"#,
+ false,
  ),
  (
  r#"{
@@ -449,7 +474,6 @@ const DECIMAL_LOGICAL_TYPE: &[(&str, bool)] = &[
  }"#,
  false,
  ),
- */
 ];
 
 const DECIMAL_LOGICAL_TYPE_ATTRIBUTES: &[(&str, bool)] = &[
