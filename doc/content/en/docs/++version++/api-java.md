@@ -1,8 +1,8 @@
 ---
-title: "C API"
-linkTitle: "C API"
-weight: 101
-manualLink: next/api/c/
+title: "Java API"
+linkTitle: "Java API"
+weight: 100
+manualLink: ++version++/api/java/
 ---
 
 <!--
@@ -26,4 +26,4 @@ manualLink: next/api/c/
 
 -->
 
-The C API documentation can be found <a href="next/api/c/">here</a>.
+The Javadocs can be found <a href="++version++/api/java/">here</a>.
