@@ -15,13 +15,34 @@
 # specific language governing permissions and limitations
 # under the License.
 
+[package]
+name = "apache-avro-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde = { version = "1", features = ["derive"] }
+
+[dependencies.apache-avro]
+path = "../avro"
+features = ["derive"]
+
 [workspace]
-members = [
- "avro_test_helper",
- "avro_derive",
- "avro",
- "wasm-demo"
-]
-exclude = [
- "fuzz"
-]
+members = ["."]
+
+[features]
+debug = []
+
+[[bin]]
+name = "roundtrip"
+path = "fuzz_targets/roundtrip.rs"
+test = false
+doc = false
+
+[profile.release]
+debug = true
