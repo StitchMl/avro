@@ -19,6 +19,9 @@
 
 package org.apache.avro.ipc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,9 +46,8 @@ import org.apache.avro.util.Utf8;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestSaslDigestMd5 extends TestProtocolGeneric {
 
@@ -88,7 +90,7 @@ public class TestSaslDigestMd5 extends TestProtocolGeneric {
  }
  }
 
- @Before
+ @BeforeEach
  public void testStartServer() throws Exception {
  if (server != null)
  return;
@@ -101,10 +103,11 @@ public class TestSaslDigestMd5 extends TestProtocolGeneric {
  requestor = new GenericRequestor(PROTOCOL, client);
  }
 
- @Test(expected = SaslException.class)
- public void testAnonymousClient() throws Exception {
- Server s = new SaslSocketServer(new TestResponder(), new InetSocketAddress(0), DIGEST_MD5_MECHANISM, SERVICE, HOST,
- DIGEST_MD5_PROPS, new TestSaslCallbackHandler());
+ @Test
+ void anonymousClient() throws Exception {
+ assertThrows(SaslException.class, () -> {
+ Server s = new SaslSocketServer(new TestResponder(), new InetSocketAddress(0), DIGEST_MD5_MECHANISM, SERVICE,
+ HOST, DIGEST_MD5_PROPS, new TestSaslCallbackHandler());
  s.start();
  Transceiver c = new SaslSocketTransceiver(new InetSocketAddress(s.getPort()));
  GenericRequestor requestor = new GenericRequestor(PROTOCOL, c);
@@ -114,6 +117,7 @@ public class TestSaslDigestMd5 extends TestProtocolGeneric {
  assertEquals(new Utf8("goodbye"), response);
  s.close();
  c.close();
+ });
  }
 
  private static class WrongPasswordCallbackHandler implements CallbackHandler {
@@ -135,10 +139,11 @@ public class TestSaslDigestMd5 extends TestProtocolGeneric {
  }
  }
 
- @Test(expected = SaslException.class)
- public void testWrongPassword() throws Exception {
- Server s = new SaslSocketServer(new TestResponder(), new InetSocketAddress(0), DIGEST_MD5_MECHANISM, SERVICE, HOST,
- DIGEST_MD5_PROPS, new TestSaslCallbackHandler());
+ @Test
+ void wrongPassword() throws Exception {
+ assertThrows(SaslException.class, () -> {
+ Server s = new SaslSocketServer(new TestResponder(), new InetSocketAddress(0), DIGEST_MD5_MECHANISM, SERVICE,
+ HOST, DIGEST_MD5_PROPS, new TestSaslCallbackHandler());
  s.start();
  SaslClient saslClient = Sasl.createSaslClient(new String[] { DIGEST_MD5_MECHANISM }, PRINCIPAL, SERVICE, HOST,
  DIGEST_MD5_PROPS, new WrongPasswordCallbackHandler());
@@ -150,14 +155,15 @@ public class TestSaslDigestMd5 extends TestProtocolGeneric {
  assertEquals(new Utf8("goodbye"), response);
  s.close();
  c.close();
+ });
  }
 
  @Override
- public void testHandshake() throws IOException {
+ public void handshake() throws IOException {
  }
 
  @Override
- public void testResponseChange() throws IOException {
+ public void responseChange() throws IOException {
  }
 
 }
