@@ -16,44 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "CustomFields.hh"
+#include "CustomAttributes.hh"
 #include <map>
 #include <memory>
 #include "Exception.hh"
 
 namespace avro {
 
-using json::Entity;
-
-Entity CustomFields::getField(const std::string &fieldName) const {
- std::map<std::string, Entity>::const_iterator iter =
- fields_.find(fieldName);
- if (iter == fields_.end()) {
- return Entity();
+std::string CustomAttributes::getAttribute(const std::string &name) const {
+ std::map<std::string, std::string>::const_iterator iter =
+ attributes_.find(name);
+ if (iter == attributes_.end()) {
+ return NULL;
  }
  return iter->second;
 }
 
-void CustomFields::addField(const std::string& fieldName,
- const std::string& fieldValue) {
- addField(fieldName,
- json::Entity(std::make_shared<std::string>(fieldValue)));
-}
-
-void CustomFields::addField(const std::string& fieldName,
- const Entity& fieldValue) {
+void CustomAttributes::addAttribute(const std::string& name,
+ const std::string& value) {
  auto iter_and_find =
- fields_.insert(std::pair<std::string, Entity>(fieldName, fieldValue));
+ attributes_.insert(std::pair<std::string, std::string>(name, value));
  if (!iter_and_find.second) {
- throw Exception(fieldName + " already exists and cannot be added");
+ throw Exception(name + " already exists and cannot be added");
  }
 }
 
-void CustomFields::printJson(std::ostream& os,
- const std::string& fieldName) const {
- if (fields_.find(fieldName) == fields_.end()) {
- throw Exception(fieldName + " doesn't exist");
+void CustomAttributes::printJson(std::ostream& os,
+ const std::string& name) const {
+ if (attributes().find(name) == attributes().end()) {
+ throw Exception(name + " doesn't exist");
  }
- os << "\"" << fieldName << "\": " << fields_.at(fieldName).toString();
+ os << "\"" << name << "\": \"" << attributes().at(name) << "\"";
 }
 } // namespace avro
