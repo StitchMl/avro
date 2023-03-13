@@ -339,7 +339,13 @@ impl Value {
  /// See the [Avro specification](https://avro.apache.org/docs/current/spec.html)
  /// for the full set of rules of schema validation.
  pub fn validate(&self, schema: &Schema) -> bool {
- let rs = ResolvedSchema::try_from(schema).expect("Schema didn't successfully parse");
+ self.validate_schemata(vec![schema])
+ }
+
+ pub fn validate_schemata(&self, schemata: Vec<&Schema>) -> bool {
+ let rs = ResolvedSchema::try_from(schemata.clone())
+ .expect("Schemata didn't successfully resolve");
+ schemata.iter().any(|schema| {
  let enclosing_namespace = schema.namespace();
 
  match self.validate_internal(schema, rs.get_names(), &enclosing_namespace) {
@@ -352,6 +358,7 @@ impl Value {
  }
  None => true,
  }
+ })
  }
 
  fn accumulate(accumulator: Option<String>, other: Option<String>) -> Option<String> {
