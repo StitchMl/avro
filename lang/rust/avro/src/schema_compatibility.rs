@@ -912,7 +912,7 @@ mod tests {
  }
 
  #[test]
- fn avro_3772_enum_default() -> TestResult {
+ fn test_avro_3772_enum_default() -> TestResult {
  let writer_raw_schema = r#"
  {
  "type": "record",
@@ -925,9 +925,9 @@ mod tests {
  "type": {
  "type": "enum",
  "name": "suit",
- "symbols": ["diamonds", "spades", "clubs", "hearts"]
- },
+ "symbols": ["diamonds", "spades", "clubs", "hearts"],
  "default": "spades"
+ }
  }
  ]
  }
@@ -945,9 +945,9 @@ mod tests {
  "type": {
  "type": "enum",
  "name": "suit",
- "symbols": ["diamonds", "spades", "ninja", "hearts"]
- },
+ "symbols": ["diamonds", "spades", "ninja", "hearts"],
  "default": "spades"
+ }
  }
  ]
  }
@@ -976,7 +976,7 @@ mod tests {
  }
 
  #[test]
- fn avro_3772_enum_default_less_symbols() -> TestResult {
+ fn test_avro_3772_enum_default_less_symbols() -> TestResult {
  let writer_raw_schema = r#"
  {
  "type": "record",
@@ -989,9 +989,9 @@ mod tests {
  "type": {
  "type": "enum",
  "name": "suit",
- "symbols": ["diamonds", "spades", "clubs", "hearts"]
- },
+ "symbols": ["diamonds", "spades", "clubs", "hearts"],
  "default": "spades"
+ }
  }
  ]
  }
@@ -1009,9 +1009,9 @@ mod tests {
  "type": {
  "type": "enum",
  "name": "suit",
- "symbols": ["hearts", "spades"]
- },
+ "symbols": ["hearts", "spades"],
  "default": "spades"
+ }
  }
  ]
  }
