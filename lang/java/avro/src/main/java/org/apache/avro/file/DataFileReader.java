@@ -312,11 +312,12 @@ public class DataFileReader<D> extends DataFileStream<D> implements FileReader<D
  long length = in.length();
  long remaining = length - position;
  if (remaining > skip) {
- in.seek(position + skip);
- } else {
- in.seek(length);
- }
+ in.seek(skip);
  return in.tell() - position;
+ } else {
+ in.seek(remaining);
+ return in.tell() - position;
+ }
  }
 
  @Override
