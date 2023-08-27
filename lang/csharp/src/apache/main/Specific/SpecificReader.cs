@@ -130,7 +130,8 @@ namespace Avro.Specific
  }
  }
 
- var defaultStream = new MemoryStream();
+ using (var defaultStream = new MemoryStream())
+ {
  var defaultEncoder = new BinaryEncoder(defaultStream);
  var defaultDecoder = new BinaryDecoder(defaultStream);
  foreach (Field rf in rs)
@@ -144,6 +145,7 @@ namespace Avro.Specific
 
  obj = rec.Get(rf.Pos);
  rec.Put(rf.Pos, Read(obj, rf.Schema, rf.Schema, defaultDecoder));
+ }
  }
 
  return rec;

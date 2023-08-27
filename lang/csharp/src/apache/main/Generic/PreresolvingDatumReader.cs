@@ -274,7 +274,8 @@ namespace Avro.Generic
  {
  if (writerSchema.Contains(rf.Name)) continue;
 
- var defaultStream = new MemoryStream();
+ using (var defaultStream = new MemoryStream())
+ {
  var defaultEncoder = new BinaryEncoder(defaultStream);
 
  defaultStream.Position = 0; // reset for writing
@@ -285,16 +286,17 @@ namespace Avro.Generic
  var readItem = ResolveReader(rf.Schema, rf.Schema);
 
  var rfInstance = rf;
- if(IsReusable(rf.Schema.Tag))
+ if (IsReusable(rf.Schema.Tag))
  {
  readSteps.Add((rec, d) => recordAccess.AddField(rec, rfInstance.Name, rfInstance.Pos,
  readItem(recordAccess.GetField(rec, rfInstance.Name, rfInstance.Pos),
- new BinaryDecoder(new MemoryStream( defaultBytes)))));
+ new BinaryDecoder(new MemoryStream(defaultBytes)))));
  }
  else
  {
  readSteps.Add((rec, d) => recordAccess.AddField(rec, rfInstance.Name, rfInstance.Pos,
  readItem(null, new BinaryDecoder(new MemoryStream(defaultBytes)))));
+ }
  }
  }
 
