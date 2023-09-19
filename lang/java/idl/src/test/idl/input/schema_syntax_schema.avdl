@@ -16,16 +16,33 @@
  * limitations under the License.
  */
 
-package org.apache.avro.mojo;
-
-/**
- * Generate Java classes and interfaces from AvroIDL files (.avdl)
- *
- * @goal idl-protocol
- * @requiresDependencyResolution runtime
- * @phase generate-sources
- * @threadSafe
+/*
+ * NOTE: the correct extension for this new syntax is also '.avdl'. The test
+ * files end with '_schema.avdl' only to distinguish them from .avdl files using
+ * the protocol syntax, because the result is a schema file instead of a protocol file.
  */
-public class IDLProtocolMojo extends IDLMojo {
- // Empty; kept for backwards compatibility.
+namespace monitoring;
+schema array<StatusUpdate>;
+
+record StatusUpdate {
+ /**
+ * The moment of the status change.
+ */
+ timestamp_ms timestamp;
+ /**
+ * The process whose status changed.
+ */
+ string processName;
+ /**
+ * The new status of the process.
+ */
+ Status newStatus;
+ /**
+ * A description why this status change occurred (optional).
+ */
+ string? description;
 }
+
+import idl "status_schema.avdl";
+import schema "foo.avsc";
+import protocol "bar.avpr";

@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -15,17 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+namespace org.apache.avro.test;
+schema TestRecord;
 
-package org.apache.avro.mojo;
-
-/**
- * Generate Java classes and interfaces from AvroIDL files (.avdl)
- *
- * @goal idl-protocol
- * @requiresDependencyResolution runtime
- * @phase generate-sources
- * @threadSafe
- */
-public class IDLProtocolMojo extends IDLMojo {
- // Empty; kept for backwards compatibility.
+record TestRecord {
+	string @order("ignore") name;
+	Kind @order("descending") kind;
+	MD5 hash;
+	MD5? @aliases(["hash"]) nullableHash;
+	array<long> arrayOfLongs;
 }
+
+@aliases(["org.foo.KindOf"])
+enum Kind {
+	FOO,
+	BAR, // the bar enum value
+	BAZ
+}
+
+fixed MD5(16);
