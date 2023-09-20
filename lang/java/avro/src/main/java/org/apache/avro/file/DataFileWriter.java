@@ -22,6 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
@@ -439,10 +440,10 @@ public class DataFileWriter<D> implements Closeable, Flushable {
  }
 
  /**
- * If this writer was instantiated using a File or using an
- * {@linkplain Syncable} instance, this method flushes all buffers for this
- * writer to disk. In other cases, this method behaves exactly like
- * {@linkplain #flush()}.
+ * If this writer was instantiated using a {@linkplain File},
+ * {@linkplain FileOutputStream} or {@linkplain Syncable} instance, this method
+ * flushes all buffers for this writer to disk. In other cases, this method
+ * behaves exactly like {@linkplain #flush()}.
  *
  * @throws IOException
  */
@@ -450,6 +451,8 @@ public class DataFileWriter<D> implements Closeable, Flushable {
  flush();
  if (underlyingStream instanceof Syncable) {
  ((Syncable) underlyingStream).sync();
+ } else if (underlyingStream instanceof FileOutputStream) {
+ ((FileOutputStream) underlyingStream).getFD().sync();
  }
  }
 
