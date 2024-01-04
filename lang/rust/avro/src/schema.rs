@@ -6438,7 +6438,7 @@ mod tests {
  "logicalType": "decimal",
  "scale": 10,
  "precision": 36
- }"#;
+}"#;
 
  assert_eq!(serialized_json, expected_json);
  Ok(())
@@ -6459,7 +6459,7 @@ mod tests {
  "logicalType": "decimal",
  "scale": 10,
  "precision": 36
- }"#;
+}"#;
 
  assert_eq!(serialized_json, expected_json);
  Ok(())
