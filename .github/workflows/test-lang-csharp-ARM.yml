@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: 'Test Python'
+name: 'Test C# on ARM'
 on:
  workflow_dispatch:
  push:
@@ -21,12 +21,12 @@ on:
  pull_request:
  branches: [ main ]
  paths:
- - .github/workflows/test-lang-py.yml
- - lang/py/**
+ - .github/workflows/test-lang-csharp.yml
+ - lang/csharp/**
 
 defaults:
  run:
- working-directory: lang/py
+ working-directory: lang/csharp
 
 concurrency:
  group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,90 +34,55 @@ concurrency:
 
 jobs:
  test:
- name: Python ${{ matrix.python }} Tests
- runs-on: ubuntu-20.04
- strategy:
- fail-fast: false
- matrix:
- python:
- - '3.11'
- - '3.10'
- - '3.9'
- - '3.8'
- - '3.7'
- - 'pypy-3.7'
- - 'pypy-3.8'
- - 'pypy-3.9'
- - 'pypy-3.10'
-
+ runs-on: ubuntu-latest
  steps:
  - uses: actions/checkout@v4
 
- - name: Setup Python
- uses: actions/setup-python@v5
+ - name: Add libzstd
+ shell: bash
+ run: sudo apt-get install -y libzstd-dev
+
+ - name: Install .NET SDKs
+ uses: actions/setup-dotnet@v4
  with:
- python-version: ${{ matrix.python }}
+ dotnet-version: |
+ 3.1.x
+ 5.0.x
+ 6.0.x
+ 7.0.x
+ 8.0.x
 
- - name: Apt Install Compression Libs
- run: |
- sudo apt-get install -qqy --no-install-recommends libbz2-dev \
- libjansson-dev \
- liblzma-dev \
- libsnappy-dev \
- libzstd-dev
-
- - name: Install Dependencies
- run: |
- python3 -m pip install --upgrade pip setuptools tox
+ - uses: actions/cache@v4
+ with:
+ path: ~/.nuget/packages
+ key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+ restore-keys: |
+ ${{ runner.os }}-nuget-
 
  - name: Lint
- if: ${{ matrix.python == '3.10' }}
- run: python3 -m tox -e lint
-
- - name: Typechecks
- if: ${{ matrix.python == '3.10' }}
- run: python3 -m tox -e typechecks
+ run: ./build.sh lint
 
  - name: Test
- run: python3 -m tox -e py
+ run: ./build.sh test
 
  interop:
- name: Python ${{ matrix.python }} Interop
- runs-on: ubuntu-20.04
- strategy:
- fail-fast: false
- matrix:
- python:
- - '3.11'
- - '3.10'
- - '3.9'
- - '3.8'
- - '3.7'
- - 'pypy-3.7'
- - 'pypy-3.8'
- - 'pypy-3.9'
- - 'pypy-3.10'
-
+ runs-on: ubuntu-latest
  steps:
  - uses: actions/checkout@v4
 
- - name: Setup Python
- uses: actions/setup-python@v5
+ - name: Add libzstd
+ shell: bash
+ run: sudo apt-get install -y libzstd-dev
+
+ - name: Install .NET SDKs
+ uses: actions/setup-dotnet@v4
  with:
- python-version: ${{ matrix.python }}
-
- - name: Apt Install Compression Libs
- run: |
- sudo apt-get install -qqy --no-install-recommends libbz2-dev \
- libjansson-dev \
- liblzma-dev \
- libsnappy-dev \
- libzstd-dev
-
- - name: Install Dependencies
- run: |
- python3 -m pip install --upgrade pip setuptools tox
- python3 -m pip install python-snappy zstandard
+ dotnet-version: |
+ 3.1.x
+ 5.0.x
+ 6.0.x
+ 7.0.x
+ 8.0.x
 
  - name: Cache Local Maven Repository
  uses: actions/cache@v4
@@ -159,3 +124,37 @@ jobs:
 
  - name: Run Interop Tests
  run: ./build.sh interop-data-test
+
+ arm64:
+ name: C# on Linux ARM64
+ runs-on: ["self-hosted", "asf-arm"]
+
+ steps:
+ - name: Checkout
+ uses: actions/checkout@v4
+
+ - name: Cache Nuget
+ uses: actions/cache@v4
+ with:
+ path: ~/.nuget/packages
+ key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+ restore-keys: |
+ ${{ runner.os }}-nuget-
+
+ - name: Install dependencies
+ run: |
+ sudo apt-get update -q
+ sudo apt-get install -q -y wget libzstd-dev libicu-dev
+ wget https://dot.net/v1/dotnet-install.sh
+ bash ./dotnet-install.sh --channel "3.1" --install-dir "$HOME/.dotnet" # 3.1
+ bash ./dotnet-install.sh --channel "5.0" --install-dir "$HOME/.dotnet" # 5.0
+ bash ./dotnet-install.sh --channel "6.0" --install-dir "$HOME/.dotnet" # 6.0
+ bash ./dotnet-install.sh --channel "7.0" --install-dir "$HOME/.dotnet" # 7.0
+ bash ./dotnet-install.sh --channel "8.0" --install-dir "$HOME/.dotnet" # 8.0
+
+ - name: Build
+ run: |
+ set -x
+ export PATH=$HOME/.dotnet:$PATH
+ dotnet --list-sdks
+ ./build.sh clean test

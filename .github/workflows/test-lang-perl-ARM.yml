@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: 'Test Python'
+name: 'Test Perl on ARM'
 on:
  workflow_dispatch:
  push:
@@ -21,12 +21,12 @@ on:
  pull_request:
  branches: [ main ]
  paths:
- - .github/workflows/test-lang-py.yml
- - lang/py/**
+ - .github/workflows/test-lang-perl.yml
+ - lang/perl/**
 
 defaults:
  run:
- working-directory: lang/py
+ working-directory: lang/perl
 
 concurrency:
  group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,90 +34,86 @@ concurrency:
 
 jobs:
  test:
- name: Python ${{ matrix.python }} Tests
- runs-on: ubuntu-20.04
+ name: Perl ${{ matrix.perl }} Tests
+ runs-on: ubuntu-latest
  strategy:
- fail-fast: false
  matrix:
- python:
- - '3.11'
- - '3.10'
- - '3.9'
- - '3.8'
- - '3.7'
- - 'pypy-3.7'
- - 'pypy-3.8'
- - 'pypy-3.9'
- - 'pypy-3.10'
-
+ perl:
+ - '5.32'
  steps:
  - uses: actions/checkout@v4
 
- - name: Setup Python
- uses: actions/setup-python@v5
+ - uses: shogo82148/actions-setup-perl@v1
  with:
- python-version: ${{ matrix.python }}
-
- - name: Apt Install Compression Libs
- run: |
- sudo apt-get install -qqy --no-install-recommends libbz2-dev \
- libjansson-dev \
- liblzma-dev \
- libsnappy-dev \
- libzstd-dev
+ perl-version: ${{ matrix.perl }}
 
  - name: Install Dependencies
  run: |
- python3 -m pip install --upgrade pip setuptools tox
+ sudo apt-get -qqy install --no-install-recommends libjansson-dev \
+ libcompress-raw-zlib-perl \
+ libcpan-uploader-perl \
+ libencode-perl \
+ libio-string-perl \
+ libjson-xs-perl \
+ libmodule-install-perl \
+ libmodule-install-readmefrompod-perl \
+ libobject-tiny-perl \
+ libperl-critic-perl \
+ libsnappy-dev \
+ libtest-exception-perl \
+ libtest-pod-perl
+ cpanm --mirror https://www.cpan.org/ install Compress::Zstd \
+ Error::Simple \
+ Module::Install::Repository \
+ Regexp::Common \
+ Try::Tiny \
+ inc::Module::Install \
+ Module::Install::ReadmeFromPod \
+ Test::Exception \
+ IO::String \
+ Object::Tiny
 
  - name: Lint
- if: ${{ matrix.python == '3.10' }}
- run: python3 -m tox -e lint
-
- - name: Typechecks
- if: ${{ matrix.python == '3.10' }}
- run: python3 -m tox -e typechecks
+ run: ./build.sh lint
 
  - name: Test
- run: python3 -m tox -e py
+ run: ./build.sh test
 
  interop:
- name: Python ${{ matrix.python }} Interop
- runs-on: ubuntu-20.04
+ name: Perl ${{ matrix.perl }} Interop
+ runs-on: ubuntu-latest
  strategy:
- fail-fast: false
  matrix:
- python:
- - '3.11'
- - '3.10'
- - '3.9'
- - '3.8'
- - '3.7'
- - 'pypy-3.7'
- - 'pypy-3.8'
- - 'pypy-3.9'
- - 'pypy-3.10'
-
+ perl:
+ - '5.32'
  steps:
  - uses: actions/checkout@v4
 
- - name: Setup Python
- uses: actions/setup-python@v5
+ - uses: shogo82148/actions-setup-perl@v1
  with:
- python-version: ${{ matrix.python }}
-
- - name: Apt Install Compression Libs
- run: |
- sudo apt-get install -qqy --no-install-recommends libbz2-dev \
- libjansson-dev \
- liblzma-dev \
- libsnappy-dev \
- libzstd-dev
+ perl-version: ${{ matrix.perl }}
 
  - name: Install Dependencies
  run: |
- python3 -m pip install --upgrade pip setuptools tox
- python3 -m pip install python-snappy zstandard
+ sudo apt-get -qqy install --no-install-recommends libcompress-raw-zlib-perl \
+ libcpan-uploader-perl \
+ libencode-perl \
+ libio-string-perl \
+ libjansson-dev \
+ libjson-xs-perl \
+ libmodule-install-perl \
+ libmodule-install-readmefrompod-perl \
+ libobject-tiny-perl \
+ libsnappy-dev \
+ libtest-exception-perl \
+ libtest-pod-perl
+ cpanm --mirror https://www.cpan.org/ install Compress::Zstd \
+ Error::Simple \
+ Module::Install::Repository \
+ Object::Tiny \
+ Regexp::Common \
+ Try::Tiny \
+ inc::Module::Install
 
  - name: Cache Local Maven Repository
  uses: actions/cache@v4

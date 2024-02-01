@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Test C++
+name: 'Test PHP on ARM'
 on:
  workflow_dispatch:
  push:
@@ -21,37 +21,38 @@ on:
  pull_request:
  branches: [ main ]
  paths:
- - '.github/workflows/test-lang-c\+\+.yml'
- - 'lang/c\+\+/**'
+ - .github/workflows/test-lang-php.yml
+ - lang/php/**
 
 defaults:
  run:
- working-directory: lang/c++
+ working-directory: lang/php
 
 concurrency:
  group: ${{ github.workflow }}-${{ github.ref }}
  cancel-in-progress: true
 
 jobs:
- test:
- runs-on: ubuntu-latest
+ arm64:
+ name: PHP on Linux ARM64
+ runs-on: ["self-hosted", "asf-arm"]
+
  steps:
- - uses: actions/checkout@v4
+ - name: Checkout
+ uses: actions/checkout@v4
 
- - name: Install Dependencies
- run: sudo apt update && sudo apt-get install -qqy cppcheck libboost-all-dev libsnappy-dev cmake
-
- - name: Clean
- run: ./build.sh clean
-
- - name: Lint
- run: ./build.sh lint
-
- - name: Test
- run: ./build.sh test
-
- - name: Release build
+ - name: Install dependencies
  run: |
- mkdir -p build
- cd build
- cmake -G "Unix Makefiles" -D CMAKE_BUILD_TYPE=Release ..
+ sudo apt-get update -q
+ sudo apt-get install -q -y wget php php-xml php-mbstring php-curl php-gmp php-bz2 unzip libtidy-dev libpq5
+ php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+ php -r "if (hash_file('sha384', 'composer-setup.php') === file_get_contents('https://composer.github.io/installer.sig')) { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+ php composer-setup.php --version=2.2.5
+ php -r "unlink('composer-setup.php');"
+ sudo mv composer.phar /usr/local/bin/composer
+
+ - name: Build
+ run: |
+ set -x
+ composer --version
+ ./build.sh clean test
