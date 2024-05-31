@@ -42,11 +42,11 @@ Name::Name(std::string simpleName, std::string ns) : ns_(std::move(ns)), simpleN
  check();
 }
 
-Name::Name(const Name& other) {
+Name::Name(const Name &other) {
  *this = other;
 }
 
-Name& Name::operator=(const Name& other) {
+Name &Name::operator=(const Name &other) {
  if (this != &other) {
  ns_ = other.ns_;
  simpleName_ = other.simpleName_;
@@ -57,9 +57,9 @@ Name& Name::operator=(const Name& other) {
  return *this;
 }
 
-Name::Name(Name&& other) = default;
+Name::Name(Name &&other) = default;
 
-Name& Name::operator=(Name&& other) = default;
+Name &Name::operator=(Name &&other) = default;
 
 Name::~Name() = default;
 
@@ -79,7 +79,7 @@ void Name::fullname(const string &name) {
  check();
 }
 
-const std::vector<std::string>& Name::aliases() const {
+const std::vector<std::string> &Name::aliases() const {
  static const std::vector<std::string> emptyAliases;
  return aliases_ ? aliases_->raw : emptyAliases;
 }

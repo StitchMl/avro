@@ -118,12 +118,11 @@ void DataFileWriterBase::init(const ValidSchema &schema, size_t syncInterval, co
  lastSync_ = stream_->byteCount();
 }
 
-DataFileWriterBase::~DataFileWriterBase()
-{
+DataFileWriterBase::~DataFileWriterBase() {
  if (stream_) {
  try {
  close();
- } catch(...) {}
+ } catch (...) {}
  }
 }
 

@@ -43,7 +43,6 @@
 #include "NodeImpl.hh"
 #include "Types.hh"
 
-
 using namespace avro;
 
 static const uint8_t fixeddata[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
@@ -80,8 +79,7 @@ struct TestSchema {
  bool caught = false;
  try {
  customAttributeLong.addAttribute("extra_info_mylong", std::string("duplicate"));
- }
- catch(Exception &e) {
+ } catch (Exception &e) {
  std::cout << "(intentional) exception: " << e.what() << '\n';
  caught = true;
  }
@@ -413,27 +411,27 @@ struct TestSchema {
  }
 
  void testNodeRecord(const NodeRecord &nodeRecord,
- const std::string &expectedJson)
- {
+ const std::string &expectedJson) {
  BOOST_CHECK_EQUAL(nodeRecord.isValid(), true);
 
  std::ostringstream oss;
  nodeRecord.printJson(oss, 0);
  std::string actual = oss.str();
  actual.erase(std::remove_if(actual.begin(), actual.end(),
- ::isspace), actual.end());
+ ::isspace),
+ actual.end());
 
  std::string expected = expectedJson;
  expected.erase(std::remove_if(expected.begin(), expected.end(),
- ::isspace), expected.end());
+ ::isspace),
+ expected.end());
 
  BOOST_CHECK_EQUAL(actual, expected);
  }
 
  // Create NodeRecord with custom attributes at field level
  // validate json serialization
- void checkNodeRecordWithCustomAttribute()
- {
+ void checkNodeRecordWithCustomAttribute() {
  Name recordName("Test");
  HasName nameConcept(recordName);
  concepts::MultiAttribute<std::string> fieldNames;
@@ -450,7 +448,7 @@ struct TestSchema {
  cf.addAttribute("arrayField", std::string("[1]"));
  cf.addAttribute("mapField", std::string("{\\\"key1\\\":\\\"value1\\\", \\\"key2\\\":\\\"value2\\\"}"));
  fieldNames.add("f1");
- fieldValues.add(NodePtr( new NodePrimitive(Type::AVRO_LONG)));
+ fieldValues.add(NodePtr(new NodePrimitive(Type::AVRO_LONG)));
  customAttributes.add(cf);
 
  NodeRecord nodeRecordWithCustomAttribute(nameConcept, fieldValues,
@@ -472,8 +470,7 @@ struct TestSchema {
 
  // Create NodeRecord without custom attributes at field level
  // validate json serialization
- void checkNodeRecordWithoutCustomAttribute()
- {
+ void checkNodeRecordWithoutCustomAttribute() {
  Name recordName("Test");
  HasName nameConcept(recordName);
  concepts::MultiAttribute<std::string> fieldNames;
@@ -481,7 +478,7 @@ struct TestSchema {
  std::vector<GenericDatum> defaultValues;
 
  fieldNames.add("f1");
- fieldValues.add(NodePtr( new NodePrimitive(Type::AVRO_LONG)));
+ fieldValues.add(NodePtr(new NodePrimitive(Type::AVRO_LONG)));
 
  NodeRecord nodeRecordWithoutCustomAttribute(nameConcept, fieldValues,
  fieldNames, defaultValues);
@@ -492,8 +489,7 @@ struct TestSchema {
  expectedJsonWithoutCustomAttribute);
  }
 
- void checkCustomAttributes_getAttribute()
- {
+ void checkCustomAttributes_getAttribute() {
  CustomAttributes cf;
  cf.addAttribute("field1", std::string("1"));
 

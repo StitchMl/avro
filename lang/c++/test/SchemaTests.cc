@@ -111,8 +111,7 @@ const char *basicSchemas[] = {
  "[{\"name\": \"f1\",\"type\": \"long\",\"extra field\": \"1\"}]}",
  "{\"type\": \"record\",\"name\": \"Test\",\"fields\": "
  "[{\"name\": \"f1\",\"type\": \"long\","
- "\"extra field1\": \"1\",\"extra field2\": \"2\"}]}"
-};
+ "\"extra field1\": \"1\",\"extra field2\": \"2\"}]}"};
 
 const char *basicSchemaErrors[] = {
  // Record
@@ -368,7 +367,7 @@ static void testLogicalTypes() {
  \"logicalType\": \"uuid\"\n\
  }";
  // AVRO-2923 Union with LogicalType
- const char* unionType = "[\n\
+ const char *unionType = "[\n\
  {\"type\":\"string\", \"logicalType\":\"uuid\"},\"null\"\n\
  ]";
  {

@@ -152,7 +152,7 @@ struct Field {
  const GenericDatum defaultValue;
  const CustomAttributes customAttributes;
 
- Field(string n, vector<string> a, NodePtr v, GenericDatum dv, const CustomAttributes& ca)
+ Field(string n, vector<string> a, NodePtr v, GenericDatum dv, const CustomAttributes &ca)
  : name(std::move(n)), aliases(std::move(a)), schema(std::move(v)), defaultValue(std::move(dv)), customAttributes(ca) {}
 };
 
@@ -263,7 +263,7 @@ static GenericDatum makeGenericDatum(NodePtr n,
  }
 }
 
-static const std::unordered_set<std::string>& getKnownFields() {
+static const std::unordered_set<std::string> &getKnownFields() {
  // return known fields
  static const std::unordered_set<std::string> kKnownFields =
  {"name", "type", "aliases", "default", "doc", "size", "logicalType",
@@ -271,11 +271,10 @@ static const std::unordered_set<std::string>& getKnownFields() {
  return kKnownFields;
 }
 
-static void getCustomAttributes(const Object& m, CustomAttributes &customAttributes)
-{
+static void getCustomAttributes(const Object &m, CustomAttributes &customAttributes) {
  // Don't add known fields on primitive type and fixed type into custom
  // fields.
- const std::unordered_set<std::string>& kKnownFields = getKnownFields();
+ const std::unordered_set<std::string> &kKnownFields = getKnownFields();
  for (const auto &entry : m) {
  if (kKnownFields.find(entry.first) == kKnownFields.end()) {
  customAttributes.addAttribute(entry.first, entry.second.stringValue());
