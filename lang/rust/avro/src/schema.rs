@@ -545,7 +545,7 @@ impl TryFrom<Schema> for ResolvedOwnedSchema {
  names,
  root_schema: schema,
  };
- Self::from_internal(&rs.root_schema, &mut rs.names, &None)?;
+ resolve_names(&rs.root_schema, &mut rs.names, &None)?;
  Ok(rs)
  }
 }
@@ -557,18 +557,19 @@ impl ResolvedOwnedSchema {
  pub(crate) fn get_names(&self) -> &Names {
  &self.names
  }
+}
 
- fn from_internal(
+pub(crate) fn resolve_names(
  schema: &Schema,
  names: &mut Names,
  enclosing_namespace: &Namespace,
- ) -> AvroResult<()> {
+) -> AvroResult<()> {
  match schema {
- Schema::Array(schema) => Self::from_internal(&schema.items, names, enclosing_namespace),
- Schema::Map(schema) => Self::from_internal(&schema.types, names, enclosing_namespace),
+ Schema::Array(schema) => resolve_names(&schema.items, names, enclosing_namespace),
+ Schema::Map(schema) => resolve_names(&schema.types, names, enclosing_namespace),
  Schema::Union(UnionSchema { schemas, .. }) => {
  for schema in schemas {
- Self::from_internal(schema, names, enclosing_namespace)?
+ resolve_names(schema, names, enclosing_namespace)?
  }
  Ok(())
  }
@@ -593,7 +594,7 @@ impl ResolvedOwnedSchema {
  } else {
  let record_namespace = fully_qualified_name.namespace;
  for field in fields {
- Self::from_internal(&field.schema, names, &record_namespace)?
+ resolve_names(&field.schema, names, &record_namespace)?
  }
  Ok(())
  }
@@ -607,7 +608,17 @@ impl ResolvedOwnedSchema {
  }
  _ => Ok(()),
  }
+}
+
+pub(crate) fn resolve_names_with_schemata(
+ schemata: &Vec<&Schema>,
+ names: &mut Names,
+ enclosing_namespace: &Namespace,
+) -> AvroResult<()> {
+ for schema in schemata {
+ resolve_names(schema, names, enclosing_namespace)?;
  }
+ Ok(())
 }
 
 /// Represents a `field` in a `record` Avro schema.
