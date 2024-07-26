@@ -38,8 +38,7 @@
 //! There are basically two ways of handling Avro data in Rust:
 //!
 //! * **as Avro-specialized data types** based on an Avro schema;
-//! * **as generic Rust serde-compatible types** implementing/deriving `Serialize` and
-//! `Deserialize`;
+//! * **as generic Rust serde-compatible types** implementing/deriving `Serialize` and `Deserialize`;
 //!
 //! **apache-avro** provides a way to read and write both these data representations easily and
 //! efficiently.
@@ -644,7 +643,7 @@
 //!
 //! let mut record = Record::new(writer.schema()).unwrap();
 //! record.put("decimal_fixed", Decimal::from(9936.to_bigint().unwrap().to_signed_bytes_be()));
-//! record.put("decimal_var", Decimal::from((-32442.to_bigint().unwrap()).to_signed_bytes_be()));
+//! record.put("decimal_var", Decimal::from(((-32442).to_bigint().unwrap()).to_signed_bytes_be()));
 //! record.put("uuid", uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap());
 //! record.put("date", Value::Date(1));
 //! record.put("time_millis", Value::TimeMillis(2));
