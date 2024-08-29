@@ -123,7 +123,8 @@ For example, playing card suits might be defined with:
 {
  "type": "enum",
  "name": "Suit",
- "symbols" : ["SPADES", "HEARTS", "DIAMONDS", "CLUBS"]
+ "symbols" : ["SPADES", "HEARTS", "DIAMONDS", "CLUBS"],
+ "default" : "CLUBS"
 }
 ```
 
@@ -137,7 +138,6 @@ For example, an array of strings is declared with:
 {
  "type": "array",
  "items" : "string",
- "default": []
 }
 ```
 
@@ -153,7 +153,6 @@ For example, a map from string to long is declared with:
 {
  "type": "map",
  "values" : "long",
- "default": {}
 }
 ```
 
