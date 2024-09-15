@@ -175,14 +175,11 @@ public class BufferedBinaryEncoder extends BinaryEncoder {
 
  @Override
  protected void writeZero() throws IOException {
- writeByte(0);
- }
-
- private void writeByte(int b) throws IOException {
+ // inlined, shorter version of writeZero
  if (pos == buf.length) {
  flushBuffer();
  }
- buf[pos++] = (byte) (b & 0xFF);
+ buf[pos++] = (byte) 0;
  }
 
  @Override
