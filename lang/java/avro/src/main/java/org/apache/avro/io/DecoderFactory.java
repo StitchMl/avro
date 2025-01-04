@@ -24,10 +24,14 @@ import org.apache.avro.Schema;
 
 /**
  * A factory for creating and configuring {@link Decoder}s.
- * <p/>
+ * <p>
  * Factories are thread-safe, and are generally cached by applications for
  * performance reasons. Multiple instances are only required if multiple
  * concurrent configurations are needed.
+ * </p>
+ * <p>
+ * Although Factories are thread-safe the {@link Decoder}s they return are not.
+ * </p>
  *
  * @see Decoder
  */
