@@ -173,7 +173,7 @@ public abstract class Encoder implements Flushable {
  /**
  * A shorthand for <tt>writeFixed(bytes, 0, bytes.length)</tt>
  *
- * @param bytes
+ * @param bytes the data
  */
  public void writeFixed(byte[] bytes) throws IOException {
  writeFixed(bytes, 0, bytes.length);
@@ -195,7 +195,7 @@ public abstract class Encoder implements Flushable {
  /**
  * Writes an enumeration.
  *
- * @param e
+ * @param e the enumeration to write
  * @throws AvroTypeException If this is a stateful writer and an enumeration is
  * not expected or the <tt>e</tt> is out of range.
  * @throws IOException
@@ -214,7 +214,7 @@ public abstract class Encoder implements Flushable {
  * the array have been written, call {@link #writeArrayEnd}.
  *
  * As an example, let's say you want to write an array of records, the record
- * consisting of an Long field and a Boolean field. Your code would look
+ * consisting of a Long field and a Boolean field. Your code would look
  * something like this:
  *
  * <pre>
@@ -249,7 +249,7 @@ public abstract class Encoder implements Flushable {
  * Start a new item of an array or map. See {@link #writeArrayStart} for usage
  * information.
  *
- * @throws AvroTypeException If called outside of an array or map context
+ * @throws AvroTypeException If called outside an array or map context
  */
  public abstract void startItem() throws IOException;
 
@@ -268,7 +268,7 @@ public abstract class Encoder implements Flushable {
  * usage.
  *
  * As an example of usage, let's say you want to write a map of records, the
- * record consisting of an Long field and a Boolean field. Your code would look
+ * record consisting of a Long field and a Boolean field. Your code would look
  * something like this:
  *
  * <pre>
@@ -302,7 +302,7 @@ public abstract class Encoder implements Flushable {
  * Call this method to write the tag of a union.
  *
  * As an example of usage, let's say you want to write a union, whose second
- * branch is a record consisting of an Long field and a Boolean field. Your code
+ * branch is a record consisting of a Long field and a Boolean field. Your code
  * would look something like this:
  *
  * <pre>

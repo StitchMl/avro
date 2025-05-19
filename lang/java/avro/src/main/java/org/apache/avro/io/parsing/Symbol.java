@@ -51,15 +51,15 @@ public abstract class Symbol {
  IMPLICIT_ACTION,
  /** non-terminal action symbol which is explicitly consumed */
  EXPLICIT_ACTION
- };
+ }
 
  /// The kind of this symbol.
  public final Kind kind;
 
  /**
  * The production for this symbol. If this symbol is a terminal this is
- * <tt>null</tt>. Otherwise this holds the the sequence of the symbols that
- * forms the production for this symbol. The sequence is in the reverse order of
+ * <tt>null</tt>. Otherwise this holds the sequence of the symbols that forms
+ * the production for this symbol. The sequence is in the reverse order of
  * production. This is useful for easy copying onto parsing stack.
  *
  * Please note that this is a final. So the production for a symbol should be
@@ -201,7 +201,7 @@ public abstract class Symbol {
  * @param skip The position where the output input sub-array starts.
  * @param map A map of symbols which have already been expanded. Useful for
  * handling recursive definitions and for caching.
- * @param map2 A map to to store the list of fix-ups.
+ * @param map2 A map to store the list of fix-ups.
  */
  static void flatten(Symbol[] in, int start, Symbol[] out, int skip, Map<Sequence, Sequence> map,
  Map<Sequence, List<Fixup>> map2) {
@@ -317,7 +317,7 @@ public abstract class Symbol {
 
  @Override
  public Iterator<Symbol> iterator() {
- return new Iterator<Symbol>() {
+ return new Iterator<>() {
  private int pos = production.length;
 
  @Override

@@ -30,7 +30,7 @@ import org.apache.avro.util.Utf8;
  * <p/>
  * The other type of methods support the reading of maps and arrays. These
  * methods are {@link #readArrayStart}, {@link #arrayNext}, and similar methods
- * for maps). See {@link #readArrayStart} for details on these methods.)
+ * for maps. See {@link #readArrayStart} for details on these methods.
  * <p/>
  * {@link DecoderFactory} contains Decoder construction and configuration
  * facilities.
@@ -201,9 +201,9 @@ public abstract class Decoder {
 
  /**
  * Processes the next block of an array and returns the number of items in the
- * block and let's the caller read those items.
+ * block and lets the caller read those items.
  *
- * @throws AvroTypeException When called outside of an array context
+ * @throws AvroTypeException When called outside an array context
  */
  public abstract long arrayNext() throws IOException;
 
@@ -240,7 +240,7 @@ public abstract class Decoder {
  * {@link #readArrayStart}.
  *
  * As an example, let's say you want to read a map of records, the record
- * consisting of an Long field and a Boolean field. Your code would look
+ * consisting of a Long field and a Boolean field. Your code would look
  * something like this:
  *
  * <pre>
@@ -265,7 +265,7 @@ public abstract class Decoder {
  * Processes the next block of map entries and returns the count of them.
  * Similar to {@link #arrayNext}. See {@link #readMapStart} for details.
  *
- * @throws AvroTypeException When called outside of a map context
+ * @throws AvroTypeException When called outside a map context
  */
  public abstract long mapNext() throws IOException;
 
@@ -273,7 +273,7 @@ public abstract class Decoder {
  * Support for quickly skipping through a map similar to {@link #skipArray}.
  *
  * As an example, let's say you want to skip a map of records, the record
- * consisting of an Long field and a Boolean field. Your code would look
+ * consisting of a Long field and a Boolean field. Your code would look
  * something like this:
  *
  * <pre>

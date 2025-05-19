@@ -44,12 +44,12 @@ public class ValidatingEncoder extends ParsingEncoder implements Parser.ActionHa
  protected Encoder out;
  protected final Parser parser;
 
- ValidatingEncoder(Symbol root, Encoder out) throws IOException {
+ ValidatingEncoder(Symbol root, Encoder out) {
  this.out = out;
  this.parser = new Parser(root, this);
  }
 
- ValidatingEncoder(Schema schema, Encoder in) throws IOException {
+ ValidatingEncoder(Schema schema, Encoder in) {
  this(new ValidatingGrammarGenerator().generate(schema), in);
  }
 
