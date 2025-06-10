@@ -34,10 +34,12 @@ concurrency:
 
 jobs:
  test:
- name: PHP ${{ matrix.php }} Test
- runs-on: ubuntu-latest
+ runs-on: ${{ matrix.os }}
  strategy:
  matrix:
+ os:
+ - ubuntu-latest
+ - ubuntu-24.04-arm
  php:
  - '7.3'
  - '7.4'
@@ -70,10 +72,12 @@ jobs:
  run: ./build.sh test
 
  interop:
- name: PHP ${{ matrix.php }} Interop
- runs-on: ubuntu-latest
+ runs-on: ${{ matrix.os }}
  strategy:
  matrix:
+ os:
+ - ubuntu-latest
+ - ubuntu-24.04-arm
  php:
  - '7.3'
  - '7.4'

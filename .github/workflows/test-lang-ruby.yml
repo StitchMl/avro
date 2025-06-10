@@ -34,10 +34,12 @@ concurrency:
 
 jobs:
  test:
- name: Ruby ${{ matrix.ruby }} Tests
- runs-on: ubuntu-latest
+ runs-on: ${{ matrix.os }}
  strategy:
  matrix:
+ os:
+ - ubuntu-latest
+ - ubuntu-24.04-arm
  ruby:
  - '2.7'
  - '3.0'
@@ -52,7 +54,7 @@ jobs:
  ruby-version: ${{ matrix.ruby }}
 
  - name: Install Dependencies
- run: sudo apt-get install -qqy libsnappy-dev
+ run: sudo apt-get update && sudo apt-get install -qqy libsnappy-dev
 
  - uses: actions/cache@v4
  with:
@@ -75,10 +77,12 @@ jobs:
  ./build.sh test
 
  interop:
- name: Ruby ${{ matrix.ruby }} Interop
- runs-on: ubuntu-latest
+ runs-on: ${{ matrix.os }}
  strategy:
  matrix:
+ os:
+ - ubuntu-latest
+ - ubuntu-24.04-arm
  ruby:
  - '2.7'
  - '3.0'
@@ -93,7 +97,7 @@ jobs:
  ruby-version: ${{ matrix.ruby }}
 
  - name: Install Dependencies
- run: sudo apt-get install -qqy libsnappy-dev
+ run: sudo apt-get update && sudo apt-get install -qqy libsnappy-dev
 
  - uses: actions/cache@v4
  with:
