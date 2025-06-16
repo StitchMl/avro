@@ -1,25 +1,27 @@
 name: SonarQube
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ] # Definisci su quali branch attivare il workflow (es. main, master)
   pull_request:
+    branches: [ main, master ] # Definisci su quali branch attivare il workflow per le pull request
     types: [opened, synchronize, reopened]
 jobs:
   build:
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 11
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           java-version: 11
-          distribution: 'zulu' # Alternative distribution options are available.
+          distribution: 'temurin' # Alternative distribution options are available.
+      - name: Build with Maven # Esegue la build del progetto Maven
+        run: mvn clean install -B # Il flag -B (batch mode) assicura un output più pulito
       - name: Cache SonarQube packages
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
