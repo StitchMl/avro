@@ -32,10 +32,16 @@ jobs:
         with:
           distribution: temurin
           java-version: |
+            1.8
             8
             11
             17
             21
+      - name: Set up Maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'maven'
+          maven-version: '3.9.6'
 
       # 4) Genera ~/.m2/toolchains.xml con i path auto-esposti
       - name: Write toolchains.xml
