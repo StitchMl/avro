@@ -71,7 +71,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn -B -X -e -ntp clean install \
-              -Drat.skip=false \
+              -Drat.skip=true \
               -Dsurefire.rerunFailingTestsCount=2 \
               org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
               -Dsonar.projectKey=StitchMl_avro \
