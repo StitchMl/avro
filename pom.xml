@@ -40,6 +40,8 @@
        Java artifacts are copied to the final build destination with a custom profile.
        -->
   <properties>
+    <sonar.organization>stitchml</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.release>11</maven.compiler.release>
     <main.basedir>${project.basedir}</main.basedir>
