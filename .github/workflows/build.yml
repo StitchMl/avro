@@ -71,12 +71,11 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -pl lang/java/maven-plugin \
-              -Dinvoker.streamLogs=true \
-              -Dinvoker.buildParallel=false \
-              -X verify -B -X -e -ntp clean install \
-              -Drat.skip=true \
-              -Dsurefire.rerunFailingTestsCount=2 \
-              org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-              -Dsonar.projectKey=StitchMl_avro \
-              -Dsonar.login=$SONAR_TOKEN
+              mvn -B -ntp clean install \
+                  -Pnocache \                   # oppure -Dmaven.build.cache.enabled=false
+                  -Dsurefire.rerunFailingTestsCount=2 \
+                  -Dinvoker.skip=true \
+                  -Drat.skip=true \
+                  org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                  -Dsonar.projectKey=StitchMl_avro \
+                  -Dsonar.login=$SONAR_TOKEN
