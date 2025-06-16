@@ -71,7 +71,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -pl lang/java/avro-maven-plugin \
+          mvn -pl lang/java/maven-plugin \
               -Dinvoker.streamLogs=true \
               -Dinvoker.buildParallel=false \
               -X verify -B -X -e -ntp clean install \
