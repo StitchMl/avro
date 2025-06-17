@@ -76,7 +76,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -B -e -X -ntp clean install \
+          mvn -B -ntp clean install \
               -Drat.skip=true \
               -Dmaven.build.cache.enabled=false \
               -Dsurefire.rerunFailingTestsCount=2 \
