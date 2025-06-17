@@ -14,13 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout sorgenti con history completa (serve a Sonar)
+      # Passo 0: Checkout
       - name: Checkout sources
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0          # SonarCloud necessita del blame completo
+        with: { fetch-depth: 0 }          # SonarCloud necessita del blame completo
 
-      # 2) Dipendenze di sistema C/C++, Python, Node, .NET, Ruby
+      # Passo 1: crea cartelle Avro in tutti i moduli
+      - name: Ensure Avro directories exist in every Java module
+        run: |
+          find lang/java -name pom.xml -exec dirname {} \; | while read m; do
+            mkdir -p "$m/src/main/avro" "$m/src/test/avro"
+            # Se vuoi tenerle vuote in Git, lascia un .gitignore come segue:
+            printf "# Ignore everything\n*\n!.gitignore\n" > "$m/src/main/avro/.gitignore"
+            printf "# Ignore everything\n*\n!.gitignore\n" > "$m/src/test/avro/.gitignore"
+          done
+
+      # Passo 2: installa dipendenze di sistema
       - name: Install system packages
         run: |
           sudo apt-get update
@@ -29,7 +38,7 @@ jobs:
             python3 python3-pip ruby-full nodejs npm \
             dotnet-sdk-8.0                               # .NET 8 per Avro C#
 
-      # 3) Setup dei JDK (8 facoltativo, 11-17-21 obbligatori; 24 nightly)
+      # Passo 3: setup JDK multipli
       - name: Setup JDK 8 11 17 21 24
         uses: actions/setup-java@v4
         with:
@@ -41,7 +50,7 @@ jobs:
             21
             24
 
-      # 4) Genera il file toolchains.xml per Maven (11-17-21)
+      # Passo 4: toolchains.xml
       - name: Write toolchains.xml
         run: |
           mkdir -p ~/.m2
@@ -62,7 +71,7 @@ jobs:
           </toolchains>
           EOF
 
-      # 5) Cache del repository Maven
+      # Passo 5: cache Maven
       - name: Cache Maven repo
         uses: actions/cache@v4
         with:
@@ -71,12 +80,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2
 
-      # 6) Build di tutti i moduli + analisi SonarCloud
-      - name: Build everything & run SonarCloud
+      # Passo 6: build + Sonar con log compatti
+      - name: Build all modules & run SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -B -ntp clean install \
+          mvn -B -q --fail-at-end -ntp clean verify \
               -Drat.skip=true \
               -Dmaven.build.cache.enabled=false \
               -Dsurefire.rerunFailingTestsCount=2 \
