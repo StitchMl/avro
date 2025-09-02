@@ -66,7 +66,7 @@ const size_t zlibBufGrowSize = 128 * 1024;
 } // namespace
 
 DataFileWriterBase::DataFileWriterBase(const char *filename, const ValidSchema &schema, size_t syncInterval,
- Codec codec) : filename_(filename),
+ Codec codec, const Metadata &metadata) : filename_(filename),
  schema_(schema),
  encoderPtr_(binaryEncoder()),
  syncInterval_(syncInterval),
@@ -75,12 +75,14 @@ DataFileWriterBase::DataFileWriterBase(const char *filename, const ValidSchema &
  buffer_(memoryOutputStream()),
  sync_(makeSync()),
  objectCount_(0),
+ metadata_(metadata),
  lastSync_(0) {
  init(schema, syncInterval, codec);
 }
 
 DataFileWriterBase::DataFileWriterBase(std::unique_ptr<OutputStream> outputStream,
- const ValidSchema &schema, size_t syncInterval, Codec codec) : filename_(),
+ const ValidSchema &schema, size_t syncInterval,
+ Codec codec, const Metadata &metadata) : filename_(),
  schema_(schema),
  encoderPtr_(binaryEncoder()),
  syncInterval_(syncInterval),
@@ -89,6 +91,7 @@ DataFileWriterBase::DataFileWriterBase(std::unique_ptr<OutputStream> outputStrea
  buffer_(memoryOutputStream()),
  sync_(makeSync()),
  objectCount_(0),
+ metadata_(metadata),
  lastSync_(0) {
  init(schema, syncInterval, codec);
 }
