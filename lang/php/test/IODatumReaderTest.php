@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -26,22 +27,70 @@ use Apache\Avro\Datum\AvroIODatumWriter;
 use Apache\Avro\Datum\Type\AvroDuration;
 use Apache\Avro\IO\AvroStringIO;
 use Apache\Avro\Schema\AvroSchema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class IODatumReaderTest extends TestCase
 {
- public function testSchemaMatching(): void
+ public static function schema_matching_data_provider(): array
  {
- $writers_schema = <<<JSON
+ return [
+ [
+ <<<JSON
  {
  "type": "map",
  "values": "bytes"
  }
- JSON;
- $readers_schema = $writers_schema;
+ JSON,
+ <<<JSON
+ {
+ "type": "map",
+ "values": "bytes"
+ }
+ JSON,
+ ],
+ [
+ <<<JSON
+ {
+ "type": "record",
+ "name": "Rec1",
+ "fields": [
+ {
+ "name": "field1",
+ "type": "int"
+ }
+ ]
+ }
+ JSON,
+ <<<JSON
+ {
+ "type": "record",
+ "name": "Rec2",
+ "aliases": [
+ "Rec1"
+ ],
+ "fields": [
+ {
+ "name": "field2",
+ "aliases": [
+ "field1"
+ ],
+ "type": "int"
+ }
+ ]
+ }
+ JSON,
+ ],
+ ];
+ }
+
+ #[DataProvider('schema_matching_data_provider')]
+ public function test_schema_matching(string $writersSchema, string $readersSchema): void
+ {
  $this->assertTrue(AvroIODatumReader::schemasMatch(
- AvroSchema::parse($writers_schema),
- AvroSchema::parse($readers_schema)));
+ AvroSchema::parse($writersSchema),
+ AvroSchema::parse($readersSchema)
+ ));
  }
 
  public function test_aliased(): void
@@ -81,7 +130,7 @@ class IODatumReaderTest extends TestCase
  $this->assertEquals(['field2' => 1], $record);
  }
 
- public function testRecordNullField(): void
+ public function test_record_null_field(): void
  {
  $schema_json = <<<JSON
  {
@@ -95,7 +144,7 @@ class IODatumReaderTest extends TestCase
  JSON;
 
  $schema = AvroSchema::parse($schema_json);
- $datum = array("one" => 1);
+ $datum = ["one" => 1];
 
  $io = new AvroStringIO();
  $writer = new AvroIODatumWriter($schema);
@@ -103,10 +152,10 @@ class IODatumReaderTest extends TestCase
  $writer->write($datum, $encoder);
  $bin = $io->string();
 
- $this->assertSame('0200', bin2hex($bin));
+ $this->assertSame('0200', bin2hex((string) $bin));
  }
 
- public function testRecordFieldWithDefault(): void
+ public function test_record_field_with_default(): void
  {
  $schema = AvroSchema::parse(
  <<<JSON
@@ -139,7 +188,7 @@ class IODatumReaderTest extends TestCase
  $this->assertEquals(['field1' => "foobar"], $record);
  }
 
- public function testRecordWithLogicalTypes(): void
+ public function test_record_with_logical_types(): void
  {
  $schema = AvroSchema::parse(
  <<<JSON

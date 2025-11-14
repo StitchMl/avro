@@ -18,36 +18,11 @@
  * limitations under the License.
  */
 
-namespace Apache\Avro;
+declare(strict_types=1);
 
-/**
- * Class for static utility methods used in Avro.
- */
-class AvroUtil
+namespace Apache\Avro\Schema;
+
+interface AvroAliasedSchema
 {
- /**
- * Determines whether the given array is an associative array
- * (what is termed a map, hash, or dictionary in other languages)
- * or a list (an array with monotonically increasing integer indicies
- * starting with zero).
- *
- * @param array $ary array to test
- * @returns true if the array is a list and false otherwise.
- */
- public static function isList($ary): bool
- {
- if (is_array($ary)) {
- $i = 0;
- foreach ($ary as $k => $v) {
- if ($i !== $k) {
- return false;
- }
- $i++;
- }
-
- return true;
- }
-
- return false;
- }
+ public function getAliases(): ?array;
 }
