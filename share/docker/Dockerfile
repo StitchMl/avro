@@ -189,15 +189,10 @@ RUN apt-get -qqy install --no-install-recommends mypy \
  python3.11 \
  python3.12 \
  python3.13 \
- python3.13-dev \
- python3-pip \
- python3-setuptools \
- python3-snappy \
- python3-venv \
- python3-wheel \
- python3-zstandard \
- tox \
- && apt-get -qqy clean
+ python3.14 \
+ python3.14-dev \
+ && apt-get -qqy clean \
+ && curl -LsSf https://astral.sh/uv/0.10.4/install.sh | sh
 
 # Install Ruby
 RUN apt-get -qqy install ruby-full \
@@ -211,7 +206,7 @@ RUN gem install bundler --no-document && \
 
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.73.0
-ENV PATH=$PATH:/root/.cargo/bin/
+ENV PATH=$PATH:/root/.cargo/bin/:/root/.local/bin
 
 # Install .NET SDK
 RUN cd /opt ; \
