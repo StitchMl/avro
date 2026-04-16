@@ -1,0 +1,61 @@
+﻿COMMAND: mvn -f C:\Users\matte\IdeaProjects\avro\lang\java\avro\pom.xml -Dtest=SchemaM3MutationTest test
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot
+TIMESTAMP: 2026-04-16T14:04:27.3751364+02:00
+
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< org.apache.avro:avro >------------------------
+[INFO] Building Apache Avro 1.5.4
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ avro ---
+[INFO] argLine set to -javaagent:C:\\Users\\matte\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\matte\\IdeaProjects\\avro\\lang\\java\\avro\\target\\jacoco.exec
+[INFO] 
+[INFO] --- remote-resources:1.1:process (default) @ avro ---
+[INFO] Setting property: classpath.resource.loader.class => 'org.codehaus.plexus.velocity.ContextClassLoaderResourceLoader'.
+[INFO] Setting property: velocimacro.messages.on => 'false'.
+[INFO] Setting property: resource.loader => 'classpath'.
+[INFO] Setting property: resource.manager.logwhenfound => 'false'.
+[INFO] 
+[INFO] --- resources:2.4:resources (default-resources) @ avro ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\main\resources
+[INFO] Copying 3 resources
+[INFO] 
+[INFO] --- compiler:2.3.2:compile (default-compile) @ avro ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:2.4:testResources (default-testResources) @ avro ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\test\resources
+[INFO] Copying 3 resources
+[INFO] 
+[INFO] --- compiler:2.3.2:testCompile (default-testCompile) @ avro ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- paranamer:2.3:generate (paranamer-test) @ avro ---
+[INFO] Generating parameter names from C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\test\java to C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\test-classes
+[INFO] 
+[INFO] --- surefire:2.7.2:test (default-test) @ avro ---
+[INFO] Surefire report directory: C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\surefire-reports
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running org.apache.avro.SchemaM3MutationTest
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.209 sec
+
+Results :
+
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
+
+[INFO] 
+[INFO] --- checkstyle:2.6:check (checkstyle-check) @ avro ---
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.704 s
+[INFO] Finished at: 2026-04-16T14:04:30+02:00
+[INFO] ------------------------------------------------------------------------
