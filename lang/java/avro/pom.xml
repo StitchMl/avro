@@ -30,6 +30,10 @@
   <url>http://avro.apache.org</url>
   <description>Avro core components</description>
 
+  <properties>
+    <argLine></argLine>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
@@ -64,6 +68,56 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <failIfNoTests>false</failIfNoTests>
+          <forkMode>once</forkMode>
+          <argLine>${argLine}</argLine>
+          <includes>
+            <include>**/*M3BBTest.java</include>
+            <include>**/*M3RandomTest.java</include>
+            <include>**/*M3LLMTest.java</include>
+            <include>**/*M3CFTest.java</include>
+            <include>**/*M3CoverageTest.java</include>
+            <include>**/*M3MutationTest.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.17.4</version>
+        <configuration>
+          <targetClasses>
+            <param>org.apache.avro.Schema*</param>
+          </targetClasses>
+          <targetTests>
+            <param>org.apache.avro.SchemaM3*Test</param>
+          </targetTests>
+          <outputFormats>
+            <param>HTML</param>
+            <param>XML</param>
+            <param>CSV</param>
+          </outputFormats>
+          <timestampedReports>false</timestampedReports>
+          <failWhenNoMutations>false</failWhenNoMutations>
+          <reportsDirectory>${project.build.directory}/pit-reports</reportsDirectory>
+        </configuration>
       </plugin>
     </plugins>
   </build>
