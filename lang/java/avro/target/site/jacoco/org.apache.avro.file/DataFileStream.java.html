@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DataFileStream.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.file</a> &gt; <span class="el_source">DataFileStream.java</span></div><h1>DataFileStream.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.file;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Closeable;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.Schema;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
+
+/** Streaming access to files written by {@link DataFileWriter}.  Use {@link
+ * DataFileReader} for file-based input.
+ * @see DataFileWriter
+ */
+public class DataFileStream&lt;D&gt; implements Iterator&lt;D&gt;, Iterable&lt;D&gt;, Closeable {
+
+  /**
+   * A handle that can be used to reopen a DataFile without re-reading the
+   * header of the stream.
+   */
+  public static final class Header {
+    Schema schema;
+<span class="nc" id="L54">    Map&lt;String,byte[]&gt; meta = new HashMap&lt;String,byte[]&gt;();</span>
+<span class="nc" id="L55">    private transient List&lt;String&gt; metaKeyList = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L56">    byte[] sync = new byte[DataFileConstants.SYNC_SIZE];</span>
+<span class="nc" id="L57">    private Header() {}</span>
+  }
+
+  private DatumReader&lt;D&gt; reader;
+  private long blockSize;
+<span class="nc" id="L62">  private boolean availableBlock = false;</span>
+  private Header header;
+
+  /** Decoder on raw input stream.  (Used for metadata.) */
+  BinaryDecoder vin;
+  /** Secondary decoder, for datums.
+   *  (Different than vin for block segments.) */
+<span class="nc" id="L69">  BinaryDecoder datumIn = null;</span>
+
+  ByteBuffer blockBuffer;
+  long blockCount;                              // # entries in block
+  long blockRemaining;                          // # entries remaining in block
+<span class="nc" id="L74">  byte[] syncBuffer = new byte[DataFileConstants.SYNC_SIZE];</span>
+  private Codec codec;
+
+  /** Construct a reader for an input stream.  For file-based input, use 
+   * {@link DataFileReader}.  This will buffer, wrapping with a 
+   * {@link java.io.BufferedInputStream}
+   * is not necessary. */
+  public DataFileStream(InputStream in, DatumReader&lt;D&gt; reader)
+<span class="nc" id="L82">    throws IOException {</span>
+<span class="nc" id="L83">    this.reader = reader;</span>
+<span class="nc" id="L84">    initialize(in);</span>
+<span class="nc" id="L85">  }</span>
+
+  /**
+   * create an unitialized DataFileStream
+   */
+<span class="nc" id="L90">  protected DataFileStream(DatumReader&lt;D&gt; reader) throws IOException {</span>
+<span class="nc" id="L91">    this.reader = reader;</span>
+<span class="nc" id="L92">  }</span>
+  
+  /** Initialize the stream by reading from its head. */
+  void initialize(InputStream in) throws IOException {
+<span class="nc" id="L96">    this.header = new Header();</span>
+<span class="nc" id="L97">    this.vin = DecoderFactory.get().binaryDecoder(in, vin);</span>
+<span class="nc" id="L98">    byte[] magic = new byte[DataFileConstants.MAGIC.length];</span>
+    try {
+<span class="nc" id="L100">      vin.readFixed(magic);                         // read magic</span>
+<span class="nc" id="L101">    } catch (IOException e) {</span>
+<span class="nc" id="L102">      throw new IOException(&quot;Not a data file.&quot;);</span>
+<span class="nc" id="L103">    }</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    if (!Arrays.equals(DataFileConstants.MAGIC, magic))</span>
+<span class="nc" id="L105">      throw new IOException(&quot;Not a data file.&quot;);</span>
+
+<span class="nc" id="L107">    long l = vin.readMapStart();                  // read meta data</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    if (l &gt; 0) {</span>
+      do {
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        for (long i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L111">          String key = vin.readString(null).toString();</span>
+<span class="nc" id="L112">          ByteBuffer value = vin.readBytes(null);</span>
+<span class="nc" id="L113">          byte[] bb = new byte[value.remaining()];</span>
+<span class="nc" id="L114">          value.get(bb);</span>
+<span class="nc" id="L115">          header.meta.put(key, bb);</span>
+<span class="nc" id="L116">          header.metaKeyList.add(key);</span>
+        }
+<span class="nc bnc" id="L118" title="All 2 branches missed.">      } while ((l = vin.mapNext()) != 0);</span>
+    }
+<span class="nc" id="L120">    vin.readFixed(header.sync);                          // read sync</span>
+    
+    // finalize the header
+<span class="nc" id="L123">    header.metaKeyList = Collections.unmodifiableList(header.metaKeyList);</span>
+<span class="nc" id="L124">    header.schema = Schema.parse(getMetaString(DataFileConstants.SCHEMA),false);</span>
+<span class="nc" id="L125">    this.codec = resolveCodec();</span>
+<span class="nc" id="L126">    reader.setSchema(header.schema);</span>
+<span class="nc" id="L127">  }</span>
+
+  /** Initialize the stream without reading from it. */
+  void initialize(InputStream in, Header header) throws IOException {
+<span class="nc" id="L131">    this.header = header;</span>
+<span class="nc" id="L132">    this.codec = resolveCodec();</span>
+<span class="nc" id="L133">    reader.setSchema(header.schema);</span>
+<span class="nc" id="L134">  }</span>
+
+  Codec resolveCodec() {
+<span class="nc" id="L137">    String codecStr = getMetaString(DataFileConstants.CODEC);</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">    if (codecStr != null) {</span>
+<span class="nc" id="L139">      return CodecFactory.fromString(codecStr).createInstance();</span>
+    } else {
+<span class="nc" id="L141">      return CodecFactory.nullCodec().createInstance();</span>
+    }
+  }
+
+  /** A handle that can be used to reopen this stream without rereading the
+   * head. */
+<span class="nc" id="L147">  public Header getHeader() { return header; }</span>
+
+  /** Return the schema used in this file. */
+<span class="nc" id="L150">  public Schema getSchema() { return header.schema; }</span>
+
+  /** Return the list of keys in the metadata */
+  public List&lt;String&gt; getMetaKeys() {
+<span class="nc" id="L154">    return header.metaKeyList;</span>
+  }
+
+  /** Return the value of a metadata property. */
+  public byte[] getMeta(String key) {
+<span class="nc" id="L159">    return header.meta.get(key);</span>
+  }
+  /** Return the value of a metadata property. */
+  public String getMetaString(String key) {
+<span class="nc" id="L163">    byte[] value = getMeta(key);</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">    if (value == null) {</span>
+<span class="nc" id="L165">      return null;</span>
+    }
+    try {
+<span class="nc" id="L168">      return new String(value, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L169">    } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L170">      throw new RuntimeException(e);</span>
+    }
+  }
+  /** Return the value of a metadata property. */
+  public long getMetaLong(String key) {
+<span class="nc" id="L175">    return Long.parseLong(getMetaString(key));</span>
+  }
+
+  /** Returns an iterator over entries in this file.  Note that this iterator
+   * is shared with other users of the file: it does not contain a separate
+   * pointer into the file. */
+  @Override
+<span class="nc" id="L182">  public Iterator&lt;D&gt; iterator() { return this; }</span>
+
+<span class="nc" id="L184">  private DataBlock block = null;</span>
+  /** True if more entries remain in this file. */
+  @Override
+  public boolean hasNext() {
+    try {
+<span class="nc bnc" id="L189" title="All 2 branches missed.">      if (blockRemaining == 0) {</span>
+        // check that the previous block was finished
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (null != datumIn) {</span>
+<span class="nc" id="L192">          boolean atEnd = datumIn.isEnd();</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">          if (!atEnd) {</span>
+<span class="nc" id="L194">            throw new IOException(&quot;Block read partially, the data may be corrupt&quot;);</span>
+          }
+        }
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (hasNextBlock()) {</span>
+<span class="nc" id="L198">          block = nextRawBlock(block);</span>
+<span class="nc" id="L199">          block.decompressUsing(codec);</span>
+<span class="nc" id="L200">          blockBuffer = block.getAsByteBuffer();</span>
+<span class="nc" id="L201">          datumIn = DecoderFactory.get().binaryDecoder(</span>
+<span class="nc" id="L202">              blockBuffer.array(), blockBuffer.arrayOffset() +</span>
+<span class="nc" id="L203">              blockBuffer.position(), blockBuffer.remaining(), datumIn);</span>
+        }
+      }
+<span class="nc bnc" id="L206" title="All 2 branches missed.">      return blockRemaining != 0;</span>
+<span class="nc" id="L207">    } catch (EOFException e) {                    // at EOF</span>
+<span class="nc" id="L208">      return false;</span>
+<span class="nc" id="L209">    } catch (IOException e) {</span>
+<span class="nc" id="L210">      throw new AvroRuntimeException(e);</span>
+    }
+  }
+
+  /** Read the next datum in the file.
+   * @throws NoSuchElementException if no more remain in the file.
+   */
+  @Override
+  public D next() {
+    try {
+<span class="nc" id="L220">      return next(null);</span>
+<span class="nc" id="L221">    } catch (IOException e) {</span>
+<span class="nc" id="L222">      throw new AvroRuntimeException(e);</span>
+    }
+  }
+
+  /** Read the next datum from the file.
+   * @param reuse an instance to reuse.
+   * @throws NoSuchElementException if no more remain in the file.
+   */
+  public D next(D reuse) throws IOException {
+<span class="nc bnc" id="L231" title="All 2 branches missed.">    if (!hasNext())</span>
+<span class="nc" id="L232">      throw new NoSuchElementException();</span>
+<span class="nc" id="L233">    D result = reader.read(reuse, datumIn);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">    if (0 == --blockRemaining) {</span>
+<span class="nc" id="L235">      blockFinished();</span>
+    }
+<span class="nc" id="L237">    return result;</span>
+  }
+
+  /** Expert: Return the next block in the file, as binary-encoded data. */
+  public ByteBuffer nextBlock() throws IOException {
+<span class="nc bnc" id="L242" title="All 2 branches missed.">    if (!hasNext())</span>
+<span class="nc" id="L243">      throw new NoSuchElementException();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">    if (blockRemaining != blockCount)</span>
+<span class="nc" id="L245">      throw new IllegalStateException(&quot;Not at block start.&quot;);</span>
+<span class="nc" id="L246">    blockRemaining = 0;</span>
+<span class="nc" id="L247">    datumIn = null;</span>
+<span class="nc" id="L248">    return blockBuffer;</span>
+  }
+
+  /** Expert: Return the count of items in the current block. */
+<span class="nc" id="L252">  public long getBlockCount() { return blockCount; }</span>
+
+  protected void blockFinished() throws IOException {
+    // nothing for the stream impl
+<span class="nc" id="L256">  }</span>
+
+  boolean hasNextBlock() {
+    try {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">      if (availableBlock) return true;</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">      if (vin.isEnd()) return false;</span>
+<span class="nc" id="L262">      blockRemaining = vin.readLong();      // read block count</span>
+<span class="nc" id="L263">      blockSize = vin.readLong();           // read block size</span>
+<span class="nc bnc" id="L264" title="All 4 branches missed.">      if (blockSize &gt; Integer.MAX_VALUE ||</span>
+          blockSize &lt; 0) {
+<span class="nc" id="L266">        throw new IOException(&quot;Block size invalid or too large for this &quot; +</span>
+          &quot;implementation: &quot; + blockSize);
+      }
+<span class="nc" id="L269">      blockCount = blockRemaining;</span>
+<span class="nc" id="L270">      availableBlock = true;</span>
+<span class="nc" id="L271">      return true;</span>
+<span class="nc" id="L272">    } catch (EOFException eof) {</span>
+<span class="nc" id="L273">      return false;</span>
+<span class="nc" id="L274">    } catch (IOException e) {</span>
+<span class="nc" id="L275">      throw new AvroRuntimeException(e);</span>
+    }
+  }
+
+  DataBlock nextRawBlock(DataBlock reuse) throws IOException {
+<span class="nc bnc" id="L280" title="All 2 branches missed.">    if (!hasNextBlock()) {</span>
+<span class="nc" id="L281">      throw new NoSuchElementException();</span>
+    }
+<span class="nc bnc" id="L283" title="All 4 branches missed.">    if (reuse == null || reuse.data.length &lt; (int) blockSize) {</span>
+<span class="nc" id="L284">      reuse = new DataBlock(blockRemaining, (int) blockSize);</span>
+    } else {
+<span class="nc" id="L286">      reuse.numEntries = blockRemaining;</span>
+<span class="nc" id="L287">      reuse.blockSize = (int)blockSize;</span>
+    }
+    // throws if it can't read the size requested
+<span class="nc" id="L290">    vin.readFixed(reuse.data, 0, reuse.blockSize);</span>
+<span class="nc" id="L291">    vin.readFixed(syncBuffer);</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">    if (!Arrays.equals(syncBuffer, header.sync))</span>
+<span class="nc" id="L293">      throw new IOException(&quot;Invalid sync!&quot;);</span>
+<span class="nc" id="L294">    availableBlock = false;</span>
+<span class="nc" id="L295">    return reuse;</span>
+  }
+
+  /** Not supported. */
+  @Override
+<span class="nc" id="L300">  public void remove() { throw new UnsupportedOperationException(); }</span>
+
+  /** Close this reader. */
+  @Override
+  public void close() throws IOException {
+<span class="nc" id="L305">    vin.inputStream().close();</span>
+<span class="nc" id="L306">  }</span>
+
+  static class DataBlock {
+    private byte[] data;
+    private long numEntries;
+    private int blockSize;
+<span class="nc" id="L312">    private int offset = 0;</span>
+<span class="nc" id="L313">    private DataBlock(long numEntries, int blockSize) {</span>
+<span class="nc" id="L314">      this.data = new byte[blockSize];</span>
+<span class="nc" id="L315">      this.numEntries = numEntries;</span>
+<span class="nc" id="L316">      this.blockSize = blockSize;</span>
+<span class="nc" id="L317">    }</span>
+    
+<span class="nc" id="L319">    DataBlock(ByteBuffer block, long numEntries) {</span>
+<span class="nc" id="L320">      this.data = block.array();</span>
+<span class="nc" id="L321">      this.blockSize = block.remaining();</span>
+<span class="nc" id="L322">      this.offset = block.arrayOffset() + block.position();</span>
+<span class="nc" id="L323">      this.numEntries = numEntries;</span>
+<span class="nc" id="L324">    }</span>
+    
+    byte[] getData() {
+<span class="nc" id="L327">      return data;</span>
+    }
+    
+    long getNumEntries() {
+<span class="nc" id="L331">      return numEntries;</span>
+    }
+    
+    int getBlockSize() {
+<span class="nc" id="L335">      return blockSize;</span>
+    }
+    
+    ByteBuffer getAsByteBuffer() {
+<span class="nc" id="L339">      return ByteBuffer.wrap(data, offset, blockSize);</span>
+    }
+    
+    void decompressUsing(Codec c) throws IOException {
+<span class="nc" id="L343">      ByteBuffer result = c.decompress(getAsByteBuffer());</span>
+<span class="nc" id="L344">      data = result.array();</span>
+<span class="nc" id="L345">      blockSize = result.remaining();</span>
+<span class="nc" id="L346">    }</span>
+    
+    void compressUsing(Codec c) throws IOException {
+<span class="nc" id="L349">      ByteBuffer result = c.compress(getAsByteBuffer());</span>
+<span class="nc" id="L350">      data = result.array();</span>
+<span class="nc" id="L351">      blockSize = result.remaining();</span>
+<span class="nc" id="L352">    }</span>
+    
+    void writeBlockTo(BinaryEncoder e, byte[] sync) throws IOException {
+<span class="nc" id="L355">      e.writeLong(this.numEntries);</span>
+<span class="nc" id="L356">      e.writeLong(this.blockSize);</span>
+<span class="nc" id="L357">      e.writeFixed(this.data, offset, this.blockSize);</span>
+<span class="nc" id="L358">      e.writeFixed(sync);</span>
+<span class="nc" id="L359">      e.flush();</span>
+<span class="nc" id="L360">    }   </span>
+    
+  }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

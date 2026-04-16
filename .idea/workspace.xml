@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9eb3dd02-62cd-4b8d-8ba0-78a690557f88" name="Changes" comment="Refactor assertions in SchemaM3BBTest to use contains method for clarity">
+      <change beforePath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3BBTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3BBTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3CFTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3CFTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3CoverageTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3CoverageTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3LLMTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3LLMTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3MutationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/lang/java/avro/src/test/java/org/apache/avro/SchemaM3MutationTest.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/matte/IdeaProjects/avro" value="3COMiFvrxKlL6VgpBjZLSAJuEKG" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;StitchMl&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/StitchMl/avro.git&quot;,
+    &quot;accountId&quot;: &quot;cbc56bc0-1ea7-46fb-a6e6-c3503f079877&quot;
+  }
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3COMiFvrxKlL6VgpBjZLSAJuEKG" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "m3-c0-schema",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/matte/IdeaProjects/bookkeeper",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="avro-parent" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="avro-parent" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9eb3dd02-62cd-4b8d-8ba0-78a690557f88" name="Changes" comment="" />
+      <created>1776252287800</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776252287800</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Refactor assertions in SchemaM3BBTest to use contains method for clarity">
+      <option name="closed" value="true" />
+      <created>1776267562618</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1776267562618</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Refactor assertions in SchemaM3BBTest to use contains method for clarity" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor assertions in SchemaM3BBTest to use contains method for clarity" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

@@ -1,0 +1,973 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinaryDecoder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.io</a> &gt; <span class="el_source">BinaryDecoder.java</span></div><h1>BinaryDecoder.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.io;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+
+import org.apache.avro.util.Utf8;
+
+/** An {@link Decoder} for binary-format data.
+ * &lt;p/&gt;
+ * Instances are created using {@link DecoderFactory}.
+ * &lt;p/&gt;
+ * This class may read-ahead and buffer bytes from the source beyond what is
+ * required to serve its read methods.
+ * The number of unused bytes in the buffer can be accessed by
+ * inputStream().remaining(), if the BinaryDecoder is not 'direct'.
+ * 
+ * @see Encoder
+ */
+
+public class BinaryDecoder extends Decoder {
+<span class="nc" id="L40">  private ByteSource source = null;</span>
+  // we keep the buffer and its state variables in this class and not in a
+  // container class for performance reasons. This improves performance
+  // over a container object by about 5% to 15%
+  // for example, we could have a FastBuffer class with these state variables
+  // and keep a private FastBuffer member here. This simplifies the
+  // &quot;detach source&quot; code and source access to the buffer, but
+  // hurts performance.
+<span class="nc" id="L48">  private byte[] buf = null;</span>
+<span class="nc" id="L49">  private int minPos = 0;</span>
+<span class="nc" id="L50">  private int pos = 0;</span>
+<span class="nc" id="L51">  private int limit = 0;</span>
+
+  BufferAccessor getBufferAccessor() {
+<span class="nc" id="L54">    return new BufferAccessor(this);</span>
+  }
+  
+  /** protected constructor for child classes */
+<span class="nc" id="L58">  protected BinaryDecoder() {</span>
+<span class="nc" id="L59">  }</span>
+
+  BinaryDecoder(InputStream in, int bufferSize) {
+<span class="nc" id="L62">    super();</span>
+<span class="nc" id="L63">    configure(in, bufferSize);</span>
+<span class="nc" id="L64">  }</span>
+
+  BinaryDecoder(byte[] data, int offset, int length) {
+<span class="nc" id="L67">    super();</span>
+<span class="nc" id="L68">    configure(data, offset, length);</span>
+<span class="nc" id="L69">  }</span>
+
+  BinaryDecoder configure(InputStream in, int bufferSize) {
+<span class="nc" id="L72">    configureSource(bufferSize, new InputStreamByteSource(in));</span>
+<span class="nc" id="L73">    return this;</span>
+  }
+
+  BinaryDecoder configure(byte[] data, int offset, int length) {
+<span class="nc" id="L77">    configureSource(DecoderFactory.DEFAULT_BUFFER_SIZE, new ByteArrayByteSource(</span>
+        data, offset, length));
+<span class="nc" id="L79">    return this;</span>
+  }
+
+  /**
+   * Initializes this decoder with a new ByteSource. Detaches the old source (if
+   * it exists) from this Decoder. The old source's state no longer depends on
+   * this Decoder and its InputStream interface will continue to drain the
+   * remaining buffer and source data.
+   * &lt;p/&gt;
+   * The decoder will read from the new source. The source will generally
+   * replace the buffer with its own. If the source allocates a new buffer, it
+   * will create it with size bufferSize.
+   */
+  private void configureSource(int bufferSize, ByteSource source) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (null != this.source) {</span>
+<span class="nc" id="L94">      this.source.detach();</span>
+    }
+<span class="nc" id="L96">    source.attach(bufferSize, this);</span>
+<span class="nc" id="L97">    this.source = source;</span>
+<span class="nc" id="L98">  }</span>
+
+  @Override
+  public void readNull() throws IOException {
+<span class="nc" id="L102">  }</span>
+
+  @Override
+  public boolean readBoolean() throws IOException {
+    // inlined, shorter version of ensureBounds
+<span class="nc bnc" id="L107" title="All 2 branches missed.">    if (limit == pos) {</span>
+<span class="nc" id="L108">      limit = source.tryReadRaw(buf, 0, buf.length);</span>
+<span class="nc" id="L109">      pos = 0;</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">      if (limit == 0) {</span>
+<span class="nc" id="L111">        throw new EOFException();</span>
+      }
+    }
+<span class="nc" id="L114">    int n = buf[pos++] &amp; 0xff;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">    return n == 1;</span>
+  }
+
+  @Override
+  public int readInt() throws IOException {
+<span class="nc" id="L120">    ensureBounds(5); // won't throw index out of bounds</span>
+<span class="nc" id="L121">    int len = 1;</span>
+<span class="nc" id="L122">    int b = buf[pos] &amp; 0xff;</span>
+<span class="nc" id="L123">    int n = b &amp; 0x7f;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">    if (b &gt; 0x7f) {</span>
+<span class="nc" id="L125">      b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L126">      n ^= (b &amp; 0x7f) &lt;&lt; 7;</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">      if (b &gt; 0x7f) {</span>
+<span class="nc" id="L128">        b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L129">        n ^= (b &amp; 0x7f) &lt;&lt; 14;</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (b &gt; 0x7f) {</span>
+<span class="nc" id="L131">          b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L132">          n ^= (b &amp; 0x7f) &lt;&lt; 21;</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">          if (b &gt; 0x7f) {</span>
+<span class="nc" id="L134">            b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L135">            n ^= (b &amp; 0x7f) &lt;&lt; 28;</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            if (b &gt; 0x7f) {</span>
+<span class="nc" id="L137">              throw new IOException(&quot;Invalid int encoding&quot;);</span>
+            }
+          }
+        }
+      }
+    }
+<span class="nc" id="L143">    pos += len;</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">    if (pos &gt; limit) {</span>
+<span class="nc" id="L145">      throw new EOFException();</span>
+    }
+<span class="nc" id="L147">    return (n &gt;&gt;&gt; 1) ^ -(n &amp; 1); // back to two's-complement</span>
+  }
+
+  @Override
+  public long readLong() throws IOException {
+<span class="nc" id="L152">    ensureBounds(10);</span>
+<span class="nc" id="L153">    int b = buf[pos++] &amp; 0xff;</span>
+<span class="nc" id="L154">    int n = b &amp; 0x7f;</span>
+    long l;
+<span class="nc bnc" id="L156" title="All 2 branches missed.">    if (b &gt; 0x7f) {</span>
+<span class="nc" id="L157">      b = buf[pos++] &amp; 0xff;</span>
+<span class="nc" id="L158">      n ^= (b &amp; 0x7f) &lt;&lt; 7;</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">      if (b &gt; 0x7f) {</span>
+<span class="nc" id="L160">        b = buf[pos++] &amp; 0xff;</span>
+<span class="nc" id="L161">        n ^= (b &amp; 0x7f) &lt;&lt; 14;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (b &gt; 0x7f) {</span>
+<span class="nc" id="L163">          b = buf[pos++] &amp; 0xff;</span>
+<span class="nc" id="L164">          n ^= (b &amp; 0x7f) &lt;&lt; 21;</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">          if (b &gt; 0x7f) {</span>
+            // only the low 28 bits can be set, so this won't carry
+            // the sign bit to the long
+<span class="nc" id="L168">            l = innerLongDecode((long)n);</span>
+          } else {
+<span class="nc" id="L170">            l = n;</span>
+          }
+        } else {
+<span class="nc" id="L173">          l = n;</span>
+        }
+      } else {
+<span class="nc" id="L176">        l = n;</span>
+      }
+    } else {
+<span class="nc" id="L179">      l = n;</span>
+    }
+<span class="nc bnc" id="L181" title="All 2 branches missed.">    if (pos &gt; limit) {</span>
+<span class="nc" id="L182">      throw new EOFException();</span>
+    }
+<span class="nc" id="L184">    return (l &gt;&gt;&gt; 1) ^ -(l &amp; 1); // back to two's-complement</span>
+  }
+  
+  // splitting readLong up makes it faster because of the JVM does more
+  // optimizations on small methods
+  private long innerLongDecode(long l) throws IOException {
+<span class="nc" id="L190">    int len = 1;</span>
+<span class="nc" id="L191">    int b = buf[pos] &amp; 0xff;</span>
+<span class="nc" id="L192">    l ^= (b &amp; 0x7fL) &lt;&lt; 28;</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">    if (b &gt; 0x7f) {</span>
+<span class="nc" id="L194">      b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L195">      l ^= (b &amp; 0x7fL) &lt;&lt; 35;</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">      if (b &gt; 0x7f) {</span>
+<span class="nc" id="L197">        b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L198">        l ^= (b &amp; 0x7fL) &lt;&lt; 42;</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (b &gt; 0x7f) {</span>
+<span class="nc" id="L200">          b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L201">          l ^= (b &amp; 0x7fL) &lt;&lt; 49;</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">          if (b &gt; 0x7f) {</span>
+<span class="nc" id="L203">            b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L204">            l ^= (b &amp; 0x7fL) &lt;&lt; 56;</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">            if (b &gt; 0x7f) {</span>
+<span class="nc" id="L206">              b = buf[pos + len++] &amp; 0xff;</span>
+<span class="nc" id="L207">              l ^= (b &amp; 0x7fL) &lt;&lt; 63;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">              if (b &gt; 0x7f) {</span>
+<span class="nc" id="L209">                throw new IOException(&quot;Invalid long encoding&quot;);</span>
+              }
+            }
+          }
+        }
+      }
+    }
+<span class="nc" id="L216">    pos += len;</span>
+<span class="nc" id="L217">    return l;</span>
+  }
+
+  @Override
+  public float readFloat() throws IOException {
+<span class="nc" id="L222">    ensureBounds(4);</span>
+<span class="nc" id="L223">    int len = 1;</span>
+<span class="nc" id="L224">    int n = (buf[pos] &amp; 0xff) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 8)</span>
+        | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 16) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 24);
+<span class="nc bnc" id="L226" title="All 2 branches missed.">    if ((pos + 4) &gt; limit) {</span>
+<span class="nc" id="L227">      throw new EOFException();</span>
+    }
+<span class="nc" id="L229">    pos += 4;</span>
+<span class="nc" id="L230">    return Float.intBitsToFloat(n);</span>
+  }
+
+  @Override
+  public double readDouble() throws IOException {
+<span class="nc" id="L235">    ensureBounds(8);</span>
+<span class="nc" id="L236">    int len = 1;</span>
+<span class="nc" id="L237">    int n1 = (buf[pos] &amp; 0xff) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 8)</span>
+        | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 16) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 24);
+<span class="nc" id="L239">    int n2 = (buf[pos + len++] &amp; 0xff) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 8)</span>
+        | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 16) | ((buf[pos + len++] &amp; 0xff) &lt;&lt; 24);
+<span class="nc bnc" id="L241" title="All 2 branches missed.">    if ((pos + 8) &gt; limit) {</span>
+<span class="nc" id="L242">      throw new EOFException();</span>
+    }
+<span class="nc" id="L244">    pos += 8;</span>
+<span class="nc" id="L245">    return Double.longBitsToDouble((((long) n1) &amp; 0xffffffffL)</span>
+        | (((long) n2) &lt;&lt; 32));
+  }
+
+  @Override
+  public Utf8 readString(Utf8 old) throws IOException {
+<span class="nc" id="L251">    int length = readInt();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">    Utf8 result = (old != null ? old : new Utf8());</span>
+<span class="nc" id="L253">    result.setByteLength(length);</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">    if (0 != length) {</span>
+<span class="nc" id="L255">      doReadBytes(result.getBytes(), 0, length);</span>
+    }
+<span class="nc" id="L257">    return result;</span>
+  }
+  
+  @Override
+  public void skipString() throws IOException {
+<span class="nc" id="L262">    doSkipBytes(readInt());</span>
+<span class="nc" id="L263">  }</span>
+
+  @Override
+  public ByteBuffer readBytes(ByteBuffer old) throws IOException {
+<span class="nc" id="L267">    int length = readInt();</span>
+    ByteBuffer result;
+<span class="nc bnc" id="L269" title="All 4 branches missed.">    if (old != null &amp;&amp; length &lt;= old.capacity()) {</span>
+<span class="nc" id="L270">      result = old;</span>
+<span class="nc" id="L271">      result.clear();</span>
+    } else {
+<span class="nc" id="L273">      result = ByteBuffer.allocate(length);</span>
+    }
+<span class="nc" id="L275">    doReadBytes(result.array(), result.position(), length);</span>
+<span class="nc" id="L276">    result.limit(length);</span>
+<span class="nc" id="L277">    return result;</span>
+  }
+
+  @Override
+  public void skipBytes() throws IOException {
+<span class="nc" id="L282">    doSkipBytes(readInt());</span>
+<span class="nc" id="L283">  }</span>
+
+  @Override
+  public void readFixed(byte[] bytes, int start, int length) throws IOException {
+<span class="nc" id="L287">    doReadBytes(bytes, start, length);</span>
+<span class="nc" id="L288">  }</span>
+
+  @Override
+  public void skipFixed(int length) throws IOException {
+<span class="nc" id="L292">    doSkipBytes(length);</span>
+<span class="nc" id="L293">  }</span>
+
+  @Override
+  public int readEnum() throws IOException {
+<span class="nc" id="L297">    return readInt();</span>
+  }
+
+  protected void doSkipBytes(long length) throws IOException {
+<span class="nc" id="L301">    int remaining = limit - pos;</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">    if (length &lt;= remaining) {</span>
+<span class="nc" id="L303">      pos += length;</span>
+    } else {
+<span class="nc" id="L305">      limit = pos = 0;</span>
+<span class="nc" id="L306">      length -= remaining;</span>
+<span class="nc" id="L307">      source.skipSourceBytes(length);</span>
+    }
+<span class="nc" id="L309">  }</span>
+
+  /**
+   * Reads &lt;tt&gt;length&lt;/tt&gt; bytes into &lt;tt&gt;bytes&lt;/tt&gt; starting at &lt;tt&gt;start&lt;/tt&gt;.
+   * 
+   * @throws EOFException
+   *           If there are not enough number of bytes in the source.
+   * @throws IOException
+   */
+  protected void doReadBytes(byte[] bytes, int start, int length)
+      throws IOException {
+<span class="nc" id="L320">    int remaining = limit - pos;</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">    if (length &lt;= remaining) {</span>
+<span class="nc" id="L322">      System.arraycopy(buf, pos, bytes, start, length);</span>
+<span class="nc" id="L323">      pos += length;</span>
+    } else {
+      // read the rest of the buffer
+<span class="nc" id="L326">      System.arraycopy(buf, pos, bytes, start, remaining);</span>
+<span class="nc" id="L327">      start += remaining;</span>
+<span class="nc" id="L328">      length -= remaining;</span>
+<span class="nc" id="L329">      pos = limit;</span>
+      // finish from the byte source
+<span class="nc" id="L331">      source.readRaw(bytes, start, length);</span>
+    }
+<span class="nc" id="L333">  }</span>
+
+  /**
+   * Returns the number of items to follow in the current array or map. Returns
+   * 0 if there are no more items in the current array and the array/map has
+   * ended.
+   * 
+   * @throws IOException
+   */
+  protected long doReadItemCount() throws IOException {
+<span class="nc" id="L343">    long result = readLong();</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">    if (result &lt; 0) {</span>
+<span class="nc" id="L345">      readLong(); // Consume byte-count if present</span>
+<span class="nc" id="L346">      result = -result;</span>
+    }
+<span class="nc" id="L348">    return result;</span>
+  }
+
+  /**
+   * Reads the count of items in the current array or map and skip those items,
+   * if possible. If it could skip the items, keep repeating until there are no
+   * more items left in the array or map. If items cannot be skipped (because
+   * byte count to skip is not found in the stream) return the count of the
+   * items found. The client needs to skip the items individually.
+   * 
+   * @return Zero if there are no more items to skip and end of array/map is
+   *         reached. Positive number if some items are found that cannot be
+   *         skipped and the client needs to skip them individually.
+   * @throws IOException
+   */
+  private long doSkipItems() throws IOException {
+<span class="nc" id="L364">    long result = readInt();</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">    while (result &lt; 0) {</span>
+<span class="nc" id="L366">      long bytecount = readLong();</span>
+<span class="nc" id="L367">      doSkipBytes(bytecount);</span>
+<span class="nc" id="L368">      result = readInt();</span>
+<span class="nc" id="L369">    }</span>
+<span class="nc" id="L370">    return result;</span>
+  }
+
+  @Override
+  public long readArrayStart() throws IOException {
+<span class="nc" id="L375">    return doReadItemCount();</span>
+  }
+
+  @Override
+  public long arrayNext() throws IOException {
+<span class="nc" id="L380">    return doReadItemCount();</span>
+  }
+
+  @Override
+  public long skipArray() throws IOException {
+<span class="nc" id="L385">    return doSkipItems();</span>
+  }
+
+  @Override
+  public long readMapStart() throws IOException {
+<span class="nc" id="L390">    return doReadItemCount();</span>
+  }
+
+  @Override
+  public long mapNext() throws IOException {
+<span class="nc" id="L395">    return doReadItemCount();</span>
+  }
+
+  @Override
+  public long skipMap() throws IOException {
+<span class="nc" id="L400">    return doSkipItems();</span>
+  }
+
+  @Override
+  public int readIndex() throws IOException {
+<span class="nc" id="L405">    return readInt();</span>
+  }
+
+  /**
+   * Returns true if the current BinaryDecoder is at the end of its source data and
+   * cannot read any further without throwing an EOFException or other
+   * IOException.
+   * &lt;p/&gt;
+   * Not all implementations of BinaryDecoder support isEnd(). Implementations that do
+   * not support isEnd() will throw a
+   * {@link java.lang.UnsupportedOperationException}.
+   */
+  public boolean isEnd() throws IOException {
+<span class="nc bnc" id="L418" title="All 2 branches missed.">    if (limit - pos &gt; 0) {</span>
+      // buffer not empty, not at end.
+<span class="nc" id="L420">      return false;</span>
+    } else {
+<span class="nc bnc" id="L422" title="All 2 branches missed.">      if (source.isEof()) {</span>
+<span class="nc" id="L423">        return true;</span>
+      }
+      // read from source.
+<span class="nc" id="L426">      int read = source.tryReadRaw(buf, 0, buf.length);</span>
+<span class="nc" id="L427">      pos = 0;</span>
+<span class="nc" id="L428">      limit = read;</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">      if (0 == read) {</span>
+        // nothing left
+<span class="nc" id="L431">        return true;</span>
+      }
+<span class="nc" id="L433">      return false;</span>
+    }
+  }
+
+  /**
+   * Ensures that buf[pos + num - 1] is not out of the buffer array bounds.
+   * However, buf[pos + num -1] may be &gt;= limit if there is not enough data left
+   * in the source to fill the array with num bytes.
+   * &lt;p/&gt;
+   * This method allows readers to read ahead by num bytes safely without
+   * checking for EOF at each byte. However, readers must ensure that their
+   * reads are valid by checking that their read did not advance past the limit
+   * before adjusting pos.
+   * &lt;p/&gt;
+   * num must be less than the buffer size and greater than 0
+   */
+  private void ensureBounds(int num) throws IOException {
+<span class="nc" id="L450">    int remaining = limit - pos;</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">    if (remaining &lt; num) {</span>
+      // move remaining to front
+<span class="nc" id="L453">      source.compactAndFill(buf, pos, minPos, remaining);</span>
+    }
+<span class="nc" id="L455">  }</span>
+
+  /**
+   * Returns an {@link java.io.InputStream} that is aware of any buffering that
+   * may occur in this BinaryDecoder. Readers that need to interleave decoding 
+   * Avro data with other reads must access this InputStream to do so unless
+   * the implementation is 'direct' and does not read beyond the minimum bytes
+   * necessary from the source.  
+   */
+  public InputStream inputStream() {
+<span class="nc" id="L465">    return source;</span>
+  }
+
+  /**
+   * BufferAccessor is used by BinaryEncoder to enable {@link ByteSource}s and
+   * the InputStream returned by {@link BinaryDecoder.inputStream} to access the
+   * BinaryEncoder's buffer. When a BufferAccessor is created, it is attached to
+   * a BinaryDecoder and its buffer. Its accessors directly reference the
+   * BinaryDecoder's buffer. When detach() is called, it stores references to
+   * the BinaryDecoder's buffer directly. The BinaryDecoder only detaches a
+   * BufferAccessor when it is initializing to a new ByteSource. Therefore, a
+   * client that is using the InputStream returned by BinaryDecoder.inputStream
+   * can continue to use that stream after a BinaryDecoder has been
+   * reinitialized to read from new data.
+   */
+  static class BufferAccessor {
+    private final BinaryDecoder decoder;
+    private byte[] buf;
+    private int pos;
+    private int limit;
+<span class="nc" id="L485">    boolean detached = false;</span>
+
+<span class="nc" id="L487">    private BufferAccessor(BinaryDecoder decoder) {</span>
+<span class="nc" id="L488">      this.decoder = decoder;</span>
+<span class="nc" id="L489">    }</span>
+
+    void detach() {
+<span class="nc" id="L492">      this.buf = decoder.buf;</span>
+<span class="nc" id="L493">      this.pos = decoder.pos;</span>
+<span class="nc" id="L494">      this.limit = decoder.limit;</span>
+<span class="nc" id="L495">      detached = true;</span>
+<span class="nc" id="L496">    }</span>
+
+    int getPos() {
+<span class="nc bnc" id="L499" title="All 2 branches missed.">      if (detached)</span>
+<span class="nc" id="L500">        return this.pos;</span>
+      else
+<span class="nc" id="L502">        return decoder.pos;</span>
+    }
+
+    int getLim() {
+<span class="nc bnc" id="L506" title="All 2 branches missed.">      if (detached)</span>
+<span class="nc" id="L507">        return this.limit;</span>
+      else
+<span class="nc" id="L509">        return decoder.limit;</span>
+    }
+
+    byte[] getBuf() {
+<span class="nc bnc" id="L513" title="All 2 branches missed.">      if (detached)</span>
+<span class="nc" id="L514">        return this.buf;</span>
+      else
+<span class="nc" id="L516">        return decoder.buf;</span>
+    }
+
+    void setPos(int pos) {
+<span class="nc bnc" id="L520" title="All 2 branches missed.">      if (detached)</span>
+<span class="nc" id="L521">        this.pos = pos;</span>
+      else
+<span class="nc" id="L523">        decoder.pos = pos;</span>
+<span class="nc" id="L524">    }</span>
+
+    void setLimit(int limit) {
+<span class="nc bnc" id="L527" title="All 2 branches missed.">      if (detached)</span>
+<span class="nc" id="L528">        this.limit = limit;</span>
+      else
+<span class="nc" id="L530">        decoder.limit = limit;</span>
+<span class="nc" id="L531">    }</span>
+
+    void setBuf(byte[] buf, int offset, int length) {
+<span class="nc bnc" id="L534" title="All 2 branches missed.">      if (detached) {</span>
+<span class="nc" id="L535">        this.buf = buf;</span>
+<span class="nc" id="L536">        this.limit = offset + length;</span>
+<span class="nc" id="L537">        this.pos = offset;</span>
+      } else {
+<span class="nc" id="L539">        decoder.buf = buf;</span>
+<span class="nc" id="L540">        decoder.limit = offset + length;</span>
+<span class="nc" id="L541">        decoder.pos = offset;</span>
+<span class="nc" id="L542">        decoder.minPos = offset;</span>
+      }
+<span class="nc" id="L544">    }</span>
+  }
+
+  /**
+   * ByteSource abstracts the source of data from the core workings of
+   * BinaryDecoder. This is very important for performance reasons because
+   * InputStream's API is a barrier to performance due to several quirks:
+   * InputStream does not in general require that as many bytes as possible have
+   * been read when filling a buffer.
+   * &lt;p/&gt;
+   * InputStream's terminating conditions for a read are two-fold: EOFException
+   * and '-1' on the return from read(). Implementations are supposed to return
+   * '-1' on EOF but often do not. The extra terminating conditions cause extra
+   * conditionals on both sides of the API, and slow performance significantly.
+   * &lt;p/&gt;
+   * ByteSource implementations provide read() and skip() variants that have
+   * stronger guarantees than InputStream, freeing client code to be simplified
+   * and faster.
+   * &lt;p/&gt;
+   * {@link skipSourceBytes} and {@link readRaw} are guaranteed to have read or
+   * skipped as many bytes as possible, or throw EOFException.
+   * {@link trySkipBytes} and {@link tryRead} are guaranteed to attempt to read
+   * or skip as many bytes as possible and never throw EOFException, while
+   * returning the exact number of bytes skipped or read. {@link isEof} returns
+   * true if all the source bytes have been read or skipped. This condition can
+   * also be detected by a client if an EOFException is thrown from
+   * {@link skipSourceBytes} or {@link readRaw}, or if {@link trySkipBytes} or
+   * {@link tryRead} return 0;
+   * &lt;p/&gt;
+   * A ByteSource also implements the InputStream contract for use by APIs that
+   * require it. The InputStream interface must take into account buffering in
+   * any decoder that this ByteSource is attached to. The other methods do not
+   * account for buffering.
+   */
+
+  abstract static class ByteSource extends InputStream {
+    // maintain a reference to the buffer, so that if this
+    // source is detached from the Decoder, and a client still
+    // has a reference to it via inputStream(), bytes are not
+    // lost
+    protected BufferAccessor ba;
+
+<span class="nc" id="L586">    protected ByteSource() {</span>
+<span class="nc" id="L587">    }</span>
+
+    abstract boolean isEof();
+
+    protected void attach(int bufferSize, BinaryDecoder decoder) {
+<span class="nc" id="L592">      decoder.buf = new byte[bufferSize];</span>
+<span class="nc" id="L593">      decoder.pos = 0;</span>
+<span class="nc" id="L594">      decoder.minPos = 0;</span>
+<span class="nc" id="L595">      decoder.limit = 0;</span>
+<span class="nc" id="L596">      this.ba = new BufferAccessor(decoder);</span>
+<span class="nc" id="L597">      return;</span>
+    }
+
+    protected void detach() {
+<span class="nc" id="L601">      ba.detach();</span>
+<span class="nc" id="L602">    }</span>
+
+    /**
+     * Skips length bytes from the source. If length bytes cannot be skipped due
+     * to end of file/stream/channel/etc an EOFException is thrown
+     * 
+     * @param length
+     *          the number of bytes to attempt to skip
+     * @throws IOException
+     *           if an error occurs
+     * @throws EOFException
+     *           if length bytes cannot be skipped
+     */
+    protected abstract void skipSourceBytes(long length) throws IOException;
+
+    /**
+     * Attempts to skip &lt;i&gt;skipLength&lt;/i&gt; bytes from the source. Returns the
+     * actual number of bytes skipped. This method must attempt to skip as many
+     * bytes as possible up to &lt;i&gt;skipLength&lt;/i&gt; bytes. Skipping 0 bytes signals
+     * end of stream/channel/file/etc
+     * 
+     * @param skipLength
+     *          the number of bytes to attempt to skip
+     * @return the count of actual bytes skipped.
+     */
+    protected abstract long trySkipBytes(long skipLength) throws IOException;
+
+    /**
+     * Reads raw from the source, into a byte[]. Used for reads that are larger
+     * than the buffer, or otherwise unbuffered. This is a mandatory read -- if
+     * there is not enough bytes in the source, EOFException is thrown.
+     * 
+     * @throws IOException
+     *           if an error occurs
+     * @throws EOFException
+     *           if len bytes cannot be read
+     * */
+    protected abstract void readRaw(byte[] data, int off, int len)
+        throws IOException;
+
+    /**
+     * Attempts to copy up to &lt;i&gt;len&lt;/i&gt; bytes from the source into data,
+     * starting at index &lt;i&gt;off&lt;/i&gt;. Returns the actual number of bytes copied
+     * which may be between 0 and &lt;i&gt;len&lt;/i&gt;.
+     * &lt;p/&gt;
+     * This method must attempt to read as much as possible from the source.
+     * Returns 0 when at the end of stream/channel/file/etc.
+     * 
+     * @throws IOException
+     *           if an error occurs reading
+     **/
+    protected abstract int tryReadRaw(byte[] data, int off, int len)
+        throws IOException;
+
+    /**
+     * If this source buffers, compacts the buffer by placing the
+     * &lt;i&gt;remaining&lt;/i&gt; bytes starting at &lt;i&gt;pos&lt;/i&gt; at &lt;i&gt;minPos&lt;/i&gt;. This may
+     * be done in the current buffer, or may replace the buffer with a new one.
+     * 
+     * The end result must be a buffer with at least 16 bytes of remaining space.
+     * 
+     * @param pos
+     * @param minPos
+     * @param remaining
+     * @throws IOException
+     */
+    protected void compactAndFill(byte[] buf, int pos, int minPos, int remaining)
+        throws IOException {
+<span class="nc" id="L670">      System.arraycopy(buf, pos, buf, minPos, remaining);</span>
+<span class="nc" id="L671">      ba.setPos(minPos);</span>
+<span class="nc" id="L672">      int newLimit = remaining</span>
+<span class="nc" id="L673">          + tryReadRaw(buf, minPos + remaining, buf.length - remaining);</span>
+<span class="nc" id="L674">      ba.setLimit(newLimit);</span>
+<span class="nc" id="L675">    }</span>
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+<span class="nc" id="L679">      int lim = ba.getLim();</span>
+<span class="nc" id="L680">      int pos = ba.getPos();</span>
+<span class="nc" id="L681">      byte[] buf = ba.getBuf();</span>
+<span class="nc" id="L682">      int remaining = (lim - pos);</span>
+<span class="nc bnc" id="L683" title="All 2 branches missed.">      if (remaining &gt;= len) {</span>
+<span class="nc" id="L684">        System.arraycopy(buf, pos, b, off, len);</span>
+<span class="nc" id="L685">        pos = pos + len;</span>
+<span class="nc" id="L686">        ba.setPos(pos);</span>
+<span class="nc" id="L687">        return len;</span>
+      } else {
+        // flush buffer to array
+<span class="nc" id="L690">        System.arraycopy(buf, pos, b, off, remaining);</span>
+<span class="nc" id="L691">        pos = pos + remaining;</span>
+<span class="nc" id="L692">        ba.setPos(pos);</span>
+        // get the rest from the stream (skip array)
+<span class="nc" id="L694">        int inputRead = remaining</span>
+<span class="nc" id="L695">            + tryReadRaw(b, off + remaining, len - remaining);</span>
+<span class="nc bnc" id="L696" title="All 2 branches missed.">        if (inputRead == 0) {</span>
+<span class="nc" id="L697">          return -1;</span>
+        } else {
+<span class="nc" id="L699">          return inputRead;</span>
+        }
+      }
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+<span class="nc" id="L706">      int lim = ba.getLim();</span>
+<span class="nc" id="L707">      int pos = ba.getPos();</span>
+<span class="nc" id="L708">      int remaining = lim - pos;</span>
+<span class="nc bnc" id="L709" title="All 2 branches missed.">      if (remaining &gt; n) {</span>
+<span class="nc" id="L710">        pos += n;</span>
+<span class="nc" id="L711">        ba.setPos(pos);</span>
+<span class="nc" id="L712">        return n;</span>
+      } else {
+<span class="nc" id="L714">        pos = lim;</span>
+<span class="nc" id="L715">        ba.setPos(pos);</span>
+<span class="nc" id="L716">        long isSkipCount = trySkipBytes(n - remaining);</span>
+<span class="nc" id="L717">        return isSkipCount + remaining;</span>
+      }
+    }
+
+    /**
+     * returns the number of bytes remaining that this BinaryDecoder has
+     * buffered from its source
+     */
+    @Override
+    public int available() throws IOException {
+<span class="nc" id="L727">      return (ba.getLim() - ba.getPos());</span>
+    }
+  }
+
+  private static class InputStreamByteSource extends ByteSource {
+    private InputStream in;
+<span class="nc" id="L733">    protected boolean isEof = false;</span>
+
+    private InputStreamByteSource(InputStream in) {
+<span class="nc" id="L736">      super();</span>
+<span class="nc" id="L737">      this.in = in;</span>
+<span class="nc" id="L738">    }</span>
+
+    @Override
+    protected void skipSourceBytes(long length) throws IOException {
+<span class="nc" id="L742">      boolean readZero = false;</span>
+<span class="nc bnc" id="L743" title="All 2 branches missed.">      while (length &gt; 0) {</span>
+<span class="nc" id="L744">        long n = in.skip(length);</span>
+<span class="nc bnc" id="L745" title="All 2 branches missed.">        if (n &gt; 0) {</span>
+<span class="nc" id="L746">          length -= n;</span>
+<span class="nc" id="L747">          continue;</span>
+        }
+        // The inputStream contract is evil.
+        // zero &quot;might&quot; mean EOF. So check for 2 in a row, we will
+        // infinite loop waiting for -1 with some classes others
+        // spuriously will return 0 on occasion without EOF
+<span class="nc bnc" id="L753" title="All 2 branches missed.">        if (n == 0) {</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">          if (readZero) {</span>
+<span class="nc" id="L755">            isEof = true;</span>
+<span class="nc" id="L756">            throw new EOFException();</span>
+          }
+<span class="nc" id="L758">          readZero = true;</span>
+<span class="nc" id="L759">          continue;</span>
+        }
+        // read negative
+<span class="nc" id="L762">        isEof = true;</span>
+<span class="nc" id="L763">        throw new EOFException();</span>
+      }
+<span class="nc" id="L765">    }</span>
+
+    @Override
+    protected long trySkipBytes(long length) throws IOException {
+<span class="nc" id="L769">      long leftToSkip = length;</span>
+      try {
+<span class="nc" id="L771">        boolean readZero = false;</span>
+<span class="nc bnc" id="L772" title="All 2 branches missed.">        while (leftToSkip &gt; 0) {</span>
+<span class="nc" id="L773">          long n = in.skip(length);</span>
+<span class="nc bnc" id="L774" title="All 2 branches missed.">          if (n &gt; 0) {</span>
+<span class="nc" id="L775">            leftToSkip -= n;</span>
+<span class="nc" id="L776">            continue;</span>
+          }
+          // The inputStream contract is evil.
+          // zero &quot;might&quot; mean EOF. So check for 2 in a row, we will
+          // infinite loop waiting for -1 with some classes others
+          // spuriously will return 0 on occasion without EOF
+<span class="nc bnc" id="L782" title="All 2 branches missed.">          if (n == 0) {</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">            if (readZero) {</span>
+<span class="nc" id="L784">              isEof = true;</span>
+<span class="nc" id="L785">              break;</span>
+            }
+<span class="nc" id="L787">            readZero = true;</span>
+<span class="nc" id="L788">            continue;</span>
+          }
+          // read negative
+<span class="nc" id="L791">          isEof = true;</span>
+<span class="nc" id="L792">          break;</span>
+
+        }
+<span class="nc" id="L795">      } catch (EOFException eof) {</span>
+<span class="nc" id="L796">        isEof = true;</span>
+<span class="nc" id="L797">      }</span>
+<span class="nc" id="L798">      return length - leftToSkip;</span>
+    }
+
+    @Override
+    protected void readRaw(byte[] data, int off, int len) throws IOException {
+<span class="nc bnc" id="L803" title="All 2 branches missed.">      while (len &gt; 0) {</span>
+<span class="nc" id="L804">        int read = in.read(data, off, len);</span>
+<span class="nc bnc" id="L805" title="All 2 branches missed.">        if (read &lt; 0) {</span>
+<span class="nc" id="L806">          isEof = true;</span>
+<span class="nc" id="L807">          throw new EOFException();</span>
+        }
+<span class="nc" id="L809">        len -= read;</span>
+<span class="nc" id="L810">        off += read;</span>
+<span class="nc" id="L811">      }</span>
+<span class="nc" id="L812">    }</span>
+
+    @Override
+    protected int tryReadRaw(byte[] data, int off, int len) throws IOException {
+<span class="nc" id="L816">      int leftToCopy = len;</span>
+      try {
+<span class="nc bnc" id="L818" title="All 2 branches missed.">        while (leftToCopy &gt; 0) {</span>
+<span class="nc" id="L819">          int read = in.read(data, off, leftToCopy);</span>
+<span class="nc bnc" id="L820" title="All 2 branches missed.">          if (read &lt; 0) {</span>
+<span class="nc" id="L821">            isEof = true;</span>
+<span class="nc" id="L822">            break;</span>
+          }
+<span class="nc" id="L824">          leftToCopy -= read;</span>
+<span class="nc" id="L825">          off += read;</span>
+<span class="nc" id="L826">        }</span>
+<span class="nc" id="L827">      } catch (EOFException eof) {</span>
+<span class="nc" id="L828">        isEof = true;</span>
+<span class="nc" id="L829">      }</span>
+<span class="nc" id="L830">      return len - leftToCopy;</span>
+    }
+
+    @Override
+    public int read() throws IOException {
+<span class="nc bnc" id="L835" title="All 2 branches missed.">      if (ba.getLim() - ba.getPos() == 0) {</span>
+<span class="nc" id="L836">        return in.read();</span>
+      } else {
+<span class="nc" id="L838">        int position = ba.getPos();</span>
+<span class="nc" id="L839">        int result = ba.getBuf()[position] &amp; 0xff;</span>
+<span class="nc" id="L840">        ba.setPos(position + 1);</span>
+<span class="nc" id="L841">        return result;</span>
+      }
+    }
+
+    @Override
+    public boolean isEof() {
+<span class="nc" id="L847">      return isEof;</span>
+    }
+
+    @Override
+    public void close() throws IOException {
+<span class="nc" id="L852">      in.close();</span>
+<span class="nc" id="L853">    }</span>
+  }
+
+  /**
+   * This byte source is special. It will avoid copying data by using the
+   * source's byte[] as a buffer in the decoder.
+   * 
+   */
+  private static class ByteArrayByteSource extends ByteSource {
+    private byte[] data;
+    private int position;
+    private int max;
+<span class="nc" id="L865">    private boolean compacted = false;</span>
+
+    private ByteArrayByteSource(byte[] data, int start, int len) {
+<span class="nc" id="L868">      super();</span>
+      // make sure data is not too small, otherwise getLong may try and
+      // read 10 bytes and get index out of bounds.
+<span class="nc bnc" id="L871" title="All 4 branches missed.">      if (data.length &lt; 16 || len &lt; 16) {</span>
+<span class="nc" id="L872">        this.data = new byte[16];</span>
+<span class="nc" id="L873">        System.arraycopy(data, start, this.data, 0, len);</span>
+<span class="nc" id="L874">        this.position = 0;</span>
+<span class="nc" id="L875">        this.max = len;</span>
+      } else {
+        // use the array passed in
+<span class="nc" id="L878">        this.data = data;</span>
+<span class="nc" id="L879">        this.position = start;</span>
+<span class="nc" id="L880">        this.max = start + len;</span>
+      }
+<span class="nc" id="L882">    }</span>
+
+    @Override
+    protected void attach(int bufferSize, BinaryDecoder decoder) {
+      // buffer size is not used here, the byte[] source is the buffer.
+<span class="nc" id="L887">      decoder.buf = this.data;</span>
+<span class="nc" id="L888">      decoder.pos = this.position;</span>
+<span class="nc" id="L889">      decoder.minPos = this.position;</span>
+<span class="nc" id="L890">      decoder.limit = this.max;</span>
+<span class="nc" id="L891">      this.ba = new BufferAccessor(decoder);</span>
+<span class="nc" id="L892">      return;</span>
+    }
+
+    @Override
+    protected void skipSourceBytes(long length) throws IOException {
+<span class="nc" id="L897">      long skipped = trySkipBytes(length);</span>
+<span class="nc bnc" id="L898" title="All 2 branches missed.">      if (skipped &lt; length) {</span>
+<span class="nc" id="L899">        throw new EOFException();</span>
+      }
+<span class="nc" id="L901">    }</span>
+
+    @Override
+    protected long trySkipBytes(long length) throws IOException {
+      // the buffer is shared, so this should return 0
+<span class="nc" id="L906">      max = ba.getLim();</span>
+<span class="nc" id="L907">      position = ba.getPos();</span>
+<span class="nc" id="L908">      long remaining = max - position;</span>
+<span class="nc bnc" id="L909" title="All 2 branches missed.">      if (remaining &gt;= length) {</span>
+<span class="nc" id="L910">        position += length;</span>
+<span class="nc" id="L911">        ba.setPos(position);</span>
+<span class="nc" id="L912">        return length;</span>
+      } else {
+<span class="nc" id="L914">        position += remaining;</span>
+<span class="nc" id="L915">        ba.setPos(position);</span>
+<span class="nc" id="L916">        return remaining;</span>
+      }
+    }
+
+    @Override
+    protected void readRaw(byte[] data, int off, int len) throws IOException {
+<span class="nc" id="L922">      int read = tryReadRaw(data, off, len);</span>
+<span class="nc bnc" id="L923" title="All 2 branches missed.">      if (read &lt; len) {</span>
+<span class="nc" id="L924">        throw new EOFException();</span>
+      }
+<span class="nc" id="L926">    }</span>
+
+    @Override
+    protected int tryReadRaw(byte[] data, int off, int len) throws IOException {
+      // the buffer is shared, nothing to read
+<span class="nc" id="L931">      return 0;</span>
+    }
+
+    @Override
+    protected void compactAndFill(byte[] buf, int pos, int minPos, int remaining)
+        throws IOException {
+      // this implementation does not want to mutate the array passed in,
+      // so it makes a new tiny buffer unless it has been compacted once before
+<span class="nc bnc" id="L939" title="All 2 branches missed.">      if (!compacted) {</span>
+        // assumes ensureCapacity is never called with a size more than 16
+<span class="nc" id="L941">        byte[] tinybuf = new byte[remaining + 16];</span>
+<span class="nc" id="L942">        System.arraycopy(buf, pos, tinybuf, 0, remaining);</span>
+<span class="nc" id="L943">        ba.setBuf(tinybuf, 0, remaining);</span>
+<span class="nc" id="L944">        compacted = true;</span>
+      }
+<span class="nc" id="L946">    }</span>
+
+    @Override
+    public int read() throws IOException {
+<span class="nc" id="L950">      max = ba.getLim();</span>
+<span class="nc" id="L951">      position = ba.getPos();</span>
+<span class="nc bnc" id="L952" title="All 2 branches missed.">      if (position &gt;= max) {</span>
+<span class="nc" id="L953">        return -1;</span>
+      } else {
+<span class="nc" id="L955">        int result = ba.getBuf()[position++] &amp; 0xff;</span>
+<span class="nc" id="L956">        ba.setPos(position);</span>
+<span class="nc" id="L957">        return result;</span>
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+<span class="nc" id="L963">      ba.setPos(ba.getLim()); // effectively set isEof to false</span>
+<span class="nc" id="L964">    }</span>
+
+    @Override
+    public boolean isEof() {
+<span class="nc" id="L968">      int remaining = ba.getLim() - ba.getPos();</span>
+<span class="nc bnc" id="L969" title="All 2 branches missed.">      return (remaining == 0);</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

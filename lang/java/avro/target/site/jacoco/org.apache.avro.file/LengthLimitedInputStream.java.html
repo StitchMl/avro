@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LengthLimitedInputStream.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.file</a> &gt; <span class="el_source">LengthLimitedInputStream.java</span></div><h1>LengthLimitedInputStream.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.file;
+
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+/** Represents a substream of certain length. */
+class LengthLimitedInputStream extends FilterInputStream {
+
+  /** Bytes remaining. */
+  private long remaining;
+
+  protected LengthLimitedInputStream(InputStream in, long maxLength) {
+<span class="nc" id="L31">    super(in);</span>
+<span class="nc" id="L32">    remaining = maxLength;</span>
+<span class="nc" id="L33">  }</span>
+
+  @Override
+  public int read() throws IOException {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    if (remaining &gt; 0) {</span>
+<span class="nc" id="L38">      int v = super.read();</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">      if (v != -1) {</span>
+<span class="nc" id="L40">        remaining--;</span>
+      }
+<span class="nc" id="L42">      return v;</span>
+    }
+<span class="nc" id="L44">    return -1;</span>
+  }
+
+  @Override
+  public int read(byte[] b) throws IOException {
+<span class="nc" id="L49">    return read(b, 0, b.length);</span>
+  }
+
+  /**
+   * Returns at most Integer.MAX_VALUE.
+   */
+  private int remainingInt() {
+<span class="nc" id="L56">    return (int)Math.min(remaining, Integer.MAX_VALUE);</span>
+  }
+
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">    if (remaining == 0) {</span>
+<span class="nc" id="L62">      return -1;</span>
+    }
+<span class="nc bnc" id="L64" title="All 2 branches missed.">    if (len &gt; remaining) {</span>
+<span class="nc" id="L65">      len = remainingInt();</span>
+    }
+<span class="nc" id="L67">    int v = super.read(b, off, len);</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">    if (v != -1) {</span>
+<span class="nc" id="L69">      remaining -= v;</span>
+    }
+<span class="nc" id="L71">    return v;</span>
+  }
+
+  @Override
+  public int available() throws IOException {
+<span class="nc" id="L76">    return Math.min(super.available(), remainingInt());</span>
+  }
+
+  @Override
+  public long skip(long n) throws IOException {
+<span class="nc" id="L81">    long v = super.skip(Math.min(remaining, n));</span>
+<span class="nc" id="L82">    remaining -= v;</span>
+<span class="nc" id="L83">    return v;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

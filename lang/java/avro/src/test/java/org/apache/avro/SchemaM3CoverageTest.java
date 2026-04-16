@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 /**
@@ -21,12 +20,11 @@ public class SchemaM3CoverageTest {
   /**
    * Creates a minimal field fixture used by record-oriented coverage tests.
    *
-   * @param name field name to expose through the record API
    * @param schema schema assigned to the field
    * @return a field instance with no optional metadata
    */
-  private static Schema.Field field(String name, Schema schema) {
-    return new Schema.Field(name, schema, null, (JsonNode) null);
+  private static Schema.Field field(Schema schema) {
+    return new Schema.Field("id", schema, null, null);
   }
 
   /**
@@ -36,7 +34,7 @@ public class SchemaM3CoverageTest {
   @Test
   public void createRecord_withNamedSchema_exposesDocNamespaceAndErrorFlag() {
     Schema record = Schema.createRecord("AuditEvent", "doc", "org.example", true);
-    record.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
+    record.setFields(Collections.singletonList(field(Schema.create(Schema.Type.INT))));
 
     assertEquals("AuditEvent", record.getName());
     assertEquals("doc", record.getDoc());

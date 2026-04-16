@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 /**
@@ -24,12 +23,11 @@ public class SchemaM3LLMTest {
    * Builds a field with minimal metadata so that parser and record tests can
    * focus on structural behavior rather than field decoration.
    *
-   * @param name field name to associate with the schema
    * @param schema schema used as the field type
    * @return a field instance suitable for record assembly
    */
-  private static Schema.Field field(String name, Schema schema) {
-    return new Schema.Field(name, schema, null, (JsonNode) null);
+  private static Schema.Field field(Schema schema) {
+    return new Schema.Field("id", schema, null, null);
   }
 
   /**
@@ -48,7 +46,7 @@ public class SchemaM3LLMTest {
    */
   @Test(expected = AvroRuntimeException.class)
   public void setFields_reusingFieldInstanceAcrossRecords_throwsAvroRuntimeException() {
-    Schema.Field sharedField = field("id", Schema.create(Schema.Type.INT));
+    Schema.Field sharedField = field(Schema.create(Schema.Type.INT));
 
     Schema first = Schema.createRecord("First", null, "org.example", false);
     first.setFields(Collections.singletonList(sharedField));

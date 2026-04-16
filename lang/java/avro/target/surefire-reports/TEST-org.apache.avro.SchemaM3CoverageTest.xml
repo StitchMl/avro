@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="11" failures="0" name="org.apache.avro.SchemaM3CoverageTest" time="0.003" errors="0" skipped="0">
+  <properties>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\bin"/>
+    <property name="java.vm.version" value="25.482-b08"/>
+    <property name="java.vm.vendor" value="Temurin"/>
+    <property name="java.vendor.url" value="https://adoptium.net/"/>
+    <property name="path.separator" value=";"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.script" value=""/>
+    <property name="user.country" value="IT"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="C:\Users\matte\IdeaProjects\avro\lang\java\avro"/>
+    <property name="java.runtime.version" value="1.8.0_482-b08"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.Win32GraphicsEnvironment"/>
+    <property name="basedir" value="C:\Users\matte\IdeaProjects\avro\lang\java\avro"/>
+    <property name="java.endorsed.dirs" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\endorsed"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.io.tmpdir" value="C:\Users\matte\AppData\Local\Temp\"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.variant" value=""/>
+    <property name="os.name" value="Windows 11"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.library.path" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\bin;C:\Windows;C:\Windows\system32;C:\Windows\System32\Wbem;C:\Windows\System32\OpenSSH\;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Zero Install;C:\ProgramData\chocolatey\bin;C:\Users\matte\AppData\Local\Microsoft\WindowsApps\;C:\Users\matte\AppData\Roaming\Python\Python313\site-packages;C:\Users\matte\AppData\Roaming\Python\Python313\Scripts;C:\maven-mvnd-1.0.2-windows-amd64\mvn\bin;c:\users\matte\appdata\roaming\python\python313\site-packages;C:\Bento4-SDK-1-6-0-641.x86_64-microsoft-win32\Bento4-SDK-1-6-0-641.x86_64-microsoft-win32\bin;C:\Program Files\Git\cmd;C:\Windows\System32\Handle;C:\Program Files\dotnet\;C:\Program Files\nodejs\;C:\Tools\apache-maven-3.9.13\bin;C:\Windows;C:\Windows\system32;C:\Windows\System32\Wbem;C:\Windows\System32\OpenSSH\;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Zero Install;C:\metasploit-framework\bin;C:\ProgramData\chocolatey\bin;C:\Users\matte\AppData\Local\Microsoft\WindowsApps\;C:\Users\matte\AppData\Roaming\Python\Python313\site-packages;C:\Users\matte\AppData\Roaming\Python\Python313\Scripts;C:\maven-mvnd-1.0.2-windows-amd64\mvn\bin;c:\users\matte\appdata\roaming\python\python313\site-packages;C:\Bento4-SDK-1-6-0-641.x86_64-microsoft-win32\Bento4-SDK-1-6-0-641.x86_64-microsoft-win32\bin;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\PowerShell\7\;C:\ffmpeg-master-la;C:\ffmpeg\bin;C:\Windows\System32\Handle;C:\Users\matte\AppData\Local\PowerToys\DSCModules\;C:\Users\matte\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files (x86)\Nmap;C:\Users\matte\AppData\Roaming\npm;."/>
+    <property name="surefire.test.class.path" value="C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\test-classes;C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\classes;C:\Users\matte\.m2\repository\org\codehaus\jackson\jackson-mapper-asl\1.7.3\jackson-mapper-asl-1.7.3.jar;C:\Users\matte\.m2\repository\org\codehaus\jackson\jackson-core-asl\1.7.3\jackson-core-asl-1.7.3.jar;C:\Users\matte\.m2\repository\com\thoughtworks\paranamer\paranamer\2.3\paranamer-2.3.jar;C:\Users\matte\.m2\repository\org\xerial\snappy\snappy-java\1.0.3.2\snappy-java-1.0.3.2.jar;C:\Users\matte\.m2\repository\junit\junit\4.8.2\junit-4.8.2.jar;C:\Users\matte\.m2\repository\org\slf4j\slf4j-api\1.6.1\slf4j-api-1.6.1.jar;C:\Users\matte\.m2\repository\org\slf4j\slf4j-simple\1.6.1\slf4j-simple-1.6.1.jar;"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="10.0"/>
+    <property name="user.home" value="C:\Users\matte"/>
+    <property name="user.timezone" value="Europe/Berlin"/>
+    <property name="java.awt.printerjob" value="sun.awt.windows.WPrinterJob"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="file.encoding" value="Cp1252"/>
+    <property name="user.name" value="matte"/>
+    <property name="java.class.path" value="C:\Users\matte\.m2\repository\org\apache\maven\surefire\surefire-booter\2.7.2\surefire-booter-2.7.2.jar;C:\Users\matte\.m2\repository\org\apache\maven\surefire\surefire-api\2.7.2\surefire-api-2.7.2.jar;C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\test-classes;C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\classes;C:\Users\matte\.m2\repository\org\codehaus\jackson\jackson-mapper-asl\1.7.3\jackson-mapper-asl-1.7.3.jar;C:\Users\matte\.m2\repository\org\codehaus\jackson\jackson-core-asl\1.7.3\jackson-core-asl-1.7.3.jar;C:\Users\matte\.m2\repository\com\thoughtworks\paranamer\paranamer\2.3\paranamer-2.3.jar;C:\Users\matte\.m2\repository\org\xerial\snappy\snappy-java\1.0.3.2\snappy-java-1.0.3.2.jar;C:\Users\matte\.m2\repository\junit\junit\4.8.2\junit-4.8.2.jar;C:\Users\matte\.m2\repository\org\slf4j\slf4j-api\1.6.1\slf4j-api-1.6.1.jar;C:\Users\matte\.m2\repository\org\slf4j\slf4j-simple\1.6.1\slf4j-simple-1.6.1.jar;C:\\Users\\matte\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre"/>
+    <property name="sun.java.command" value="org.apache.maven.surefire.booter.ForkedBooter C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\surefire\surefire3442549352021359340tmp C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\surefire\surefire4520131186346299682tmp"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="it"/>
+    <property name="awt.toolkit" value="sun.awt.windows.WToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="test.dir" value="target/"/>
+    <property name="java.version" value="1.8.0_482"/>
+    <property name="java.ext.dirs" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\ext;C:\WINDOWS\Sun\Java\lib\ext"/>
+    <property name="sun.boot.class.path" value="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\resources.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\rt.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\sunrsasign.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\jsse.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\jce.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\charsets.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\lib\jfr.jar;C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot\jre\classes"/>
+    <property name="java.vendor" value="Temurin"/>
+    <property name="java.specification.maintenance.version" value="6"/>
+    <property name="localRepository" value="C:\Users\matte\.m2\repository"/>
+    <property name="file.separator" value="\"/>
+    <property name="java.vendor.url.bug" value="https://github.com/adoptium/adoptium-support/issues"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="sun.desktop" value="windows"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+  </properties>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="parse_mapSchemaWithoutValues_throwsSchemaParseException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="createUnion_withDuplicateNamedTypes_throwsAvroRuntimeException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="parse_fixedSchemaWithoutSize_throwsSchemaParseException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="parse_arraySchemaWithoutItems_throwsSchemaParseException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="getValueType_onArraySchema_throwsAvroRuntimeException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="createRecord_withNamedSchema_exposesDocNamespaceAndErrorFlag" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="getElementType_onPrimitiveSchema_throwsAvroRuntimeException" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="parse_withValidationDisabledDeprecatedOverload_acceptsInvalidName" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="applyAliases_withEnumAlias_rewritesEnumName" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="applyAliases_withFixedAlias_rewritesFixedName" time="0"/>
+  <testcase classname="org.apache.avro.SchemaM3CoverageTest" name="parser_getTypes_containsNamedSchemasParsedSoFar" time="0"/>
+</testsuite>

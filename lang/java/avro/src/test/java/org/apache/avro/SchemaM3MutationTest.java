@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 /**
@@ -17,6 +16,7 @@ import org.junit.Test;
  * behavior, and validation or named-type parsing branches that would otherwise
  * admit plausible mutants.</p>
  */
+@SuppressWarnings("ALL")
 public class SchemaM3MutationTest {
 
   /**
@@ -28,7 +28,7 @@ public class SchemaM3MutationTest {
    * @return a field without optional metadata
    */
   private static Schema.Field field(String name, Schema schema) {
-    return new Schema.Field(name, schema, null, (JsonNode) null);
+    return new Schema.Field(name, schema, null, null);
   }
 
   /**
@@ -41,7 +41,8 @@ public class SchemaM3MutationTest {
     Schema right = Schema.create(Schema.Type.INT);
     left.addProp("source", "bb");
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentFields = left.equals(right);
+    assertFalse(equalsDifferentFields);
   }
 
   /**
@@ -144,7 +145,8 @@ public class SchemaM3MutationTest {
     left.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
     right.setFields(Collections.singletonList(field("name", Schema.create(Schema.Type.STRING))));
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentFields = left.equals(right);
+    assertFalse(equalsDifferentFields);
   }
 
   /**
@@ -156,7 +158,9 @@ public class SchemaM3MutationTest {
     Schema record = Schema.createRecord("User", null, "org.example", false);
     record.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
 
-    assertFalse(record.equals("record"));
+    Object nonSchema = new Object();
+    boolean equalsNonSchema = record.equals(nonSchema);
+    assertFalse(equalsNonSchema);
   }
 
   /**
@@ -178,7 +182,9 @@ public class SchemaM3MutationTest {
   public void equals_onArraySchemaAndNonSchemaObject_returnsFalse() {
     Schema array = Schema.createArray(Schema.create(Schema.Type.INT));
 
-    assertFalse(array.equals("array"));
+    Object nonSchema = new Object();
+    boolean equalsNonSchema = array.equals(nonSchema);
+    assertFalse(equalsNonSchema);
   }
 
   /**
@@ -190,7 +196,8 @@ public class SchemaM3MutationTest {
     Schema right = Schema.createArray(Schema.create(Schema.Type.INT));
     left.addProp("origin", "mutation");
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentProps = left.equals(right);
+    assertFalse(equalsDifferentProps);
   }
 
   /**
@@ -233,6 +240,7 @@ public class SchemaM3MutationTest {
     Schema.Field left = field("id", Schema.create(Schema.Type.INT));
     Schema.Field right = field("name", Schema.create(Schema.Type.INT));
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentNames = left.equals(right);
+    assertFalse(equalsDifferentNames);
   }
 }

@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReflectData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.reflect</a> &gt; <span class="el_source">ReflectData.java</span></div><h1>ReflectData.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.reflect;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.GenericArrayType;
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.apache.avro.AvroRemoteException;
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Protocol;
+import org.apache.avro.Schema;
+import org.apache.avro.Protocol.Message;
+import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.generic.GenericFixed;
+import org.apache.avro.generic.GenericContainer;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.FixedSize;
+import org.apache.avro.io.BinaryData;
+
+import com.thoughtworks.paranamer.CachingParanamer;
+import com.thoughtworks.paranamer.Paranamer;
+
+/** Utilities to use existing Java classes and interfaces via reflection. */
+public class ReflectData extends SpecificData {
+  
+  /** {@link ReflectData} implementation that permits null field values.  The
+   * schema generated for each field is a union of its declared type and
+   * null. */
+<span class="nc" id="L58">  public static class AllowNull extends ReflectData {</span>
+
+<span class="nc" id="L60">    private static final AllowNull INSTANCE = new AllowNull();</span>
+
+    /** Return the singleton instance. */
+<span class="nc" id="L63">    public static AllowNull get() { return INSTANCE; }</span>
+
+    protected Schema createFieldSchema(Field field, Map&lt;String, Schema&gt; names) {
+<span class="nc" id="L66">      Schema schema = super.createFieldSchema(field, names);</span>
+<span class="nc" id="L67">      return makeNullable(schema);</span>
+    }
+  }
+  
+<span class="nc" id="L71">  private static final ReflectData INSTANCE = new ReflectData();</span>
+
+<span class="nc" id="L73">  protected ReflectData() {}</span>
+  
+  /** Return the singleton instance. */
+<span class="nc" id="L76">  public static ReflectData get() { return INSTANCE; }</span>
+
+  @Override
+  public void setField(Object record, String name, int position, Object o) {
+<span class="nc bnc" id="L80" title="All 2 branches missed.">    if (record instanceof IndexedRecord) {</span>
+<span class="nc" id="L81">      super.setField(record, name, position, o);</span>
+<span class="nc" id="L82">      return;</span>
+    }
+    try {
+<span class="nc" id="L85">      getField(record.getClass(), name).set(record, o);</span>
+<span class="nc" id="L86">    } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L87">      throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L88">    }</span>
+<span class="nc" id="L89">  }</span>
+
+  @Override
+  public Object getField(Object record, String name, int position) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (record instanceof IndexedRecord)</span>
+<span class="nc" id="L94">      return super.getField(record, name, position);</span>
+    try {
+<span class="nc" id="L96">      return getField(record.getClass(), name).get(record);</span>
+<span class="nc" id="L97">    } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L98">      throw new AvroRuntimeException(e);</span>
+    }
+  }
+
+  @Override
+  protected boolean isRecord(Object datum) {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    if (datum == null) return false;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">    if (super.isRecord(datum)) return true;</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">    return getSchema(datum.getClass()).getType() == Schema.Type.RECORD;</span>
+  }
+
+  @Override
+  protected boolean isArray(Object datum) {
+<span class="nc bnc" id="L111" title="All 2 branches missed.">    if (datum == null) return false;</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">    return (datum instanceof Collection) || datum.getClass().isArray();</span>
+  }
+
+  @Override
+  protected boolean isBytes(Object datum) {
+<span class="nc bnc" id="L117" title="All 2 branches missed.">    if (datum == null) return false;</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">    if (super.isBytes(datum)) return true;</span>
+<span class="nc" id="L119">    Class c = datum.getClass();</span>
+<span class="nc bnc" id="L120" title="All 4 branches missed.">    return c.isArray() &amp;&amp; c.getComponentType() == Byte.TYPE;</span>
+  }
+
+  @Override
+  protected Schema getRecordSchema(Object record) {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">    if (record instanceof GenericContainer)</span>
+<span class="nc" id="L126">      return super.getRecordSchema(record);</span>
+<span class="nc" id="L127">    return getSchema(record.getClass());</span>
+  }
+
+  @Override
+  public boolean validate(Schema schema, Object datum) {
+<span class="nc bnc" id="L132" title="All 3 branches missed.">    switch (schema.getType()) {</span>
+    case RECORD:
+<span class="nc bnc" id="L134" title="All 2 branches missed.">      if (datum == null) return false;</span>
+<span class="nc" id="L135">      Class c = datum.getClass(); </span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">      for (Schema.Field f : schema.getFields()) {</span>
+        try {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">          if (!validate(f.schema(),</span>
+<span class="nc" id="L139">                        getField(c, f.name()).get(datum)))</span>
+<span class="nc" id="L140">          return false;</span>
+<span class="nc" id="L141">        } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L142">          throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L143">        }</span>
+<span class="nc" id="L144">      }</span>
+<span class="nc" id="L145">      return true;</span>
+    case ARRAY:
+<span class="nc bnc" id="L147" title="All 2 branches missed.">      if (datum instanceof Collection) {          // collection</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        for (Object element : (Collection)datum)</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">          if (!validate(schema.getElementType(), element))</span>
+<span class="nc" id="L150">            return false;</span>
+<span class="nc" id="L151">        return true;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">      } else if (datum.getClass().isArray()) {    // array</span>
+<span class="nc" id="L153">        int length = java.lang.reflect.Array.getLength(datum);</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        for (int i = 0; i &lt; length; i++)</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">          if (!validate(schema.getElementType(),</span>
+<span class="nc" id="L156">                        java.lang.reflect.Array.get(datum, i)))</span>
+<span class="nc" id="L157">            return false;</span>
+<span class="nc" id="L158">        return true;</span>
+      }
+<span class="nc" id="L160">      return false;</span>
+    default:
+<span class="nc" id="L162">      return super.validate(schema, datum);</span>
+    }
+  }
+
+<span class="nc" id="L166">  private static final Map&lt;Class,Map&lt;String,Field&gt;&gt; FIELD_CACHE =</span>
+    new ConcurrentHashMap&lt;Class,Map&lt;String,Field&gt;&gt;();
+
+  /** Return the named field of the provided class.  Implementation caches
+   * values, since this is used at runtime to get and set fields. */
+  private static Field getField(Class c, String name) {
+<span class="nc" id="L172">    Map&lt;String,Field&gt; fields = FIELD_CACHE.get(c);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">    if (fields == null) {</span>
+<span class="nc" id="L174">      fields = new ConcurrentHashMap&lt;String,Field&gt;();</span>
+<span class="nc" id="L175">      FIELD_CACHE.put(c, fields);</span>
+    }
+<span class="nc" id="L177">    Field f = fields.get(name);</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">    if (f == null) {</span>
+<span class="nc" id="L179">      f = findField(c, name);</span>
+<span class="nc" id="L180">      fields.put(name, f);</span>
+    }
+<span class="nc" id="L182">    return f;</span>
+  }
+
+  private static Field findField(Class c, String name) {
+    do {
+      try {
+<span class="nc" id="L188">        Field f = c.getDeclaredField(name);</span>
+<span class="nc" id="L189">        f.setAccessible(true);</span>
+<span class="nc" id="L190">        return f;</span>
+<span class="nc" id="L191">      } catch (NoSuchFieldException e) {}</span>
+<span class="nc" id="L192">      c = c.getSuperclass();</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">    } while (c != null);</span>
+<span class="nc" id="L194">    throw new AvroRuntimeException(&quot;No field named &quot;+name+&quot; in: &quot;+c);</span>
+  }
+
+  static final String CLASS_PROP = &quot;java-class&quot;;
+  static final String ELEMENT_PROP = &quot;java-element-class&quot;;
+
+  static Class getClassProp(Schema schema, String prop) {
+<span class="nc" id="L201">    String name = schema.getProp(prop);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">    if (name == null) return null;</span>
+    try {
+<span class="nc" id="L204">      return Class.forName(name);</span>
+<span class="nc" id="L205">    } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L206">      throw new AvroRuntimeException(e);</span>
+    }
+  }
+
+<span class="nc" id="L210">  private static final Class BYTES_CLASS = new byte[0].getClass();</span>
+
+  @Override
+  public Class getClass(Schema schema) {
+<span class="nc bnc" id="L214" title="All 5 branches missed.">    switch (schema.getType()) {</span>
+    case ARRAY:
+<span class="nc" id="L216">      Class collectionClass = getClassProp(schema, CLASS_PROP);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">      if (collectionClass != null)</span>
+<span class="nc" id="L218">        return collectionClass;</span>
+<span class="nc" id="L219">      return java.lang.reflect.Array.newInstance(getClass(schema.getElementType()),0).getClass();</span>
+<span class="nc" id="L220">    case STRING:  return String.class;</span>
+<span class="nc" id="L221">    case BYTES:   return BYTES_CLASS;</span>
+    case INT:
+<span class="nc bnc" id="L223" title="All 2 branches missed.">      if (Short.class.getName().equals(schema.getProp(CLASS_PROP)))</span>
+<span class="nc" id="L224">        return Short.TYPE;</span>
+    default:
+<span class="nc" id="L226">      return super.getClass(schema);</span>
+    }
+  }
+
+  @Override
+  @SuppressWarnings(value=&quot;unchecked&quot;)
+  protected Schema createSchema(Type type, Map&lt;String,Schema&gt; names) {
+<span class="nc bnc" id="L233" title="All 2 branches missed.">    if (type instanceof GenericArrayType) {                  // generic array</span>
+<span class="nc" id="L234">      Type component = ((GenericArrayType)type).getGenericComponentType();</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">      if (component == Byte.TYPE)                            // byte array</span>
+<span class="nc" id="L236">        return Schema.create(Schema.Type.BYTES);           </span>
+<span class="nc" id="L237">      Schema result = Schema.createArray(createSchema(component, names));</span>
+<span class="nc" id="L238">      setElement(result, component);</span>
+<span class="nc" id="L239">      return result;</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">    } else if (type instanceof ParameterizedType) {</span>
+<span class="nc" id="L241">      ParameterizedType ptype = (ParameterizedType)type;</span>
+<span class="nc" id="L242">      Class raw = (Class)ptype.getRawType();</span>
+<span class="nc" id="L243">      Type[] params = ptype.getActualTypeArguments();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">      if (Map.class.isAssignableFrom(raw)) {                 // Map</span>
+<span class="nc" id="L245">        Type key = params[0];</span>
+<span class="nc" id="L246">        Type value = params[1];</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        if (!(key == String.class))</span>
+<span class="nc" id="L248">          throw new AvroTypeException(&quot;Map key class not String: &quot;+key);</span>
+<span class="nc" id="L249">        return Schema.createMap(createSchema(value, names));</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">      } else if (Collection.class.isAssignableFrom(raw)) {   // Collection</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">        if (params.length != 1)</span>
+<span class="nc" id="L252">          throw new AvroTypeException(&quot;No array type specified.&quot;);</span>
+<span class="nc" id="L253">        Schema schema = Schema.createArray(createSchema(params[0], names));</span>
+<span class="nc" id="L254">        schema.addProp(CLASS_PROP, raw.getName());</span>
+<span class="nc" id="L255">        return schema;</span>
+      }
+<span class="nc bnc" id="L257" title="All 4 branches missed.">    } else if ((type == Short.class) || (type == Short.TYPE)) {</span>
+<span class="nc" id="L258">      Schema result = Schema.create(Schema.Type.INT);</span>
+<span class="nc" id="L259">      result.addProp(CLASS_PROP, Short.class.getName());</span>
+<span class="nc" id="L260">      return result;</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">    } else if (type instanceof Class) {                      // Class</span>
+<span class="nc" id="L262">      Class&lt;?&gt; c = (Class&lt;?&gt;)type;</span>
+<span class="nc bnc" id="L263" title="All 8 branches missed.">      if (c.isPrimitive() || Number.class.isAssignableFrom(c)</span>
+          || c == Void.class || c == Boolean.class)          // primitive
+<span class="nc" id="L265">        return super.createSchema(type, names);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">      if (c.isArray()) {                                     // array</span>
+<span class="nc" id="L267">        Class component = c.getComponentType();</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (component == Byte.TYPE)                          // byte array</span>
+<span class="nc" id="L269">          return Schema.create(Schema.Type.BYTES);</span>
+<span class="nc" id="L270">        Schema result = Schema.createArray(createSchema(component, names));</span>
+<span class="nc" id="L271">        setElement(result, component);</span>
+<span class="nc" id="L272">        return result;</span>
+      }
+<span class="nc bnc" id="L274" title="All 2 branches missed.">      if (CharSequence.class.isAssignableFrom(c))            // String</span>
+<span class="nc" id="L275">        return Schema.create(Schema.Type.STRING);</span>
+<span class="nc" id="L276">      String fullName = c.getName();</span>
+<span class="nc" id="L277">      Schema schema = names.get(fullName);</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">      if (schema == null) {</span>
+<span class="nc" id="L279">        String name = c.getSimpleName();</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        String space = c.getPackage() == null ? &quot;&quot; : c.getPackage().getName();</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (c.getEnclosingClass() != null)                   // nested class</span>
+<span class="nc" id="L282">          space = c.getEnclosingClass().getName() + &quot;$&quot;;</span>
+<span class="nc" id="L283">        Union union = c.getAnnotation(Union.class);</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (union != null) {                                 // union annotated</span>
+<span class="nc" id="L285">          return getAnnotatedUnion(union, names);</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        } else if (c.isAnnotationPresent(Stringable.class)){ // Stringable</span>
+<span class="nc" id="L287">          Schema result = Schema.create(Schema.Type.STRING);</span>
+<span class="nc" id="L288">          result.addProp(CLASS_PROP, c.getName());</span>
+<span class="nc" id="L289">          return result;</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        } else if (c.isEnum()) {                             // Enum</span>
+<span class="nc" id="L291">          List&lt;String&gt; symbols = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L292">          Enum[] constants = (Enum[])c.getEnumConstants();</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">          for (int i = 0; i &lt; constants.length; i++)</span>
+<span class="nc" id="L294">            symbols.add(constants[i].name());</span>
+<span class="nc" id="L295">          schema = Schema.createEnum(name, null /* doc */, space, symbols);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">        } else if (GenericFixed.class.isAssignableFrom(c)) { // fixed</span>
+<span class="nc" id="L297">          int size = c.getAnnotation(FixedSize.class).value();</span>
+<span class="nc" id="L298">          schema = Schema.createFixed(name, null /* doc */, space, size);</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        } else if (IndexedRecord.class.isAssignableFrom(c)) { // specific</span>
+<span class="nc" id="L300">          return super.createSchema(type, names);</span>
+        } else {                                             // record
+<span class="nc" id="L302">          List&lt;Schema.Field&gt; fields = new ArrayList&lt;Schema.Field&gt;();</span>
+<span class="nc" id="L303">          boolean error = Throwable.class.isAssignableFrom(c);</span>
+<span class="nc" id="L304">          schema = Schema.createRecord(name, null /* doc */, space, error);</span>
+<span class="nc" id="L305">          names.put(c.getName(), schema);</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">          for (Field field : getFields(c))</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">            if ((field.getModifiers()&amp;(Modifier.TRANSIENT|Modifier.STATIC))==0){</span>
+<span class="nc" id="L308">              Schema fieldSchema = createFieldSchema(field, names);</span>
+<span class="nc" id="L309">              fields.add(new Schema.Field(field.getName(),</span>
+                  fieldSchema, null /* doc */, null));
+            }
+<span class="nc bnc" id="L312" title="All 2 branches missed.">          if (error)                              // add Throwable message</span>
+<span class="nc" id="L313">            fields.add(new Schema.Field(&quot;detailMessage&quot;, THROWABLE_MESSAGE,</span>
+                                        null, null));
+<span class="nc" id="L315">          schema.setFields(fields);</span>
+        }
+<span class="nc" id="L317">        names.put(fullName, schema);</span>
+      }
+<span class="nc" id="L319">      return schema;</span>
+    }
+<span class="nc" id="L321">    return super.createSchema(type, names);</span>
+  }
+
+<span class="nc" id="L324">  private static final Schema THROWABLE_MESSAGE =</span>
+<span class="nc" id="L325">    makeNullable(Schema.create(Schema.Type.STRING));</span>
+
+  // if array element type is a class with a union annotation, note it
+  // this is required because we cannot set a property on the union itself 
+  @SuppressWarnings(value=&quot;unchecked&quot;)
+  private void setElement(Schema schema, Type element) {
+<span class="nc bnc" id="L331" title="All 2 branches missed.">    if (!(element instanceof Class)) return;</span>
+<span class="nc" id="L332">    Class&lt;?&gt; c = (Class&lt;?&gt;)element;</span>
+<span class="nc" id="L333">    Union union = c.getAnnotation(Union.class);</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">    if (union != null)                          // element is annotated union</span>
+<span class="nc" id="L335">      schema.addProp(ELEMENT_PROP, c.getName());</span>
+<span class="nc" id="L336">  }</span>
+
+  // construct a schema from a union annotation
+  private Schema getAnnotatedUnion(Union union, Map&lt;String,Schema&gt; names) {
+<span class="nc" id="L340">    List&lt;Schema&gt; branches = new ArrayList&lt;Schema&gt;();</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">    for (Class branch : union.value())</span>
+<span class="nc" id="L342">      branches.add(createSchema(branch, names));</span>
+<span class="nc" id="L343">    return Schema.createUnion(branches);</span>
+  }
+
+  /** Create and return a union of the null schema and the provided schema. */
+  public static Schema makeNullable(Schema schema) {
+<span class="nc" id="L348">    return Schema.createUnion(Arrays.asList(Schema.create(Schema.Type.NULL),</span>
+                                            schema));
+  }
+
+  // Return of this class and its superclasses to serialize.
+  // Not cached, since this is only used to create schemas, which are cached.
+  private Collection&lt;Field&gt; getFields(Class recordClass) {
+<span class="nc" id="L355">    Map&lt;String,Field&gt; fields = new LinkedHashMap&lt;String,Field&gt;();</span>
+<span class="nc" id="L356">    Class c = recordClass;</span>
+    do {
+<span class="nc bnc" id="L358" title="All 2 branches missed.">      if (c.getPackage() != null</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">          &amp;&amp; c.getPackage().getName().startsWith(&quot;java.&quot;))</span>
+<span class="nc" id="L360">        break;                                    // skip java built-in classes</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">      for (Field field : c.getDeclaredFields())</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">        if ((field.getModifiers() &amp; (Modifier.TRANSIENT|Modifier.STATIC)) == 0)</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">          if (fields.put(field.getName(), field) != null)</span>
+<span class="nc" id="L364">            throw new AvroTypeException(c+&quot; contains two fields named: &quot;+field);</span>
+<span class="nc" id="L365">      c = c.getSuperclass();</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">    } while (c != null);</span>
+<span class="nc" id="L367">    return fields.values();</span>
+  }
+
+  /** Create a schema for a field. */
+  protected Schema createFieldSchema(Field field, Map&lt;String, Schema&gt; names) {
+<span class="nc" id="L372">    Schema schema = createSchema(field.getGenericType(), names);</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">    if (field.isAnnotationPresent(Nullable.class))           // nullable</span>
+<span class="nc" id="L374">      schema = makeNullable(schema);</span>
+<span class="nc" id="L375">    return schema;</span>
+  }
+
+  /** Return the protocol for a Java interface.
+   * &lt;p&gt;Note that this requires that &lt;a
+   * href=&quot;http://paranamer.codehaus.org/&quot;&gt;Paranamer&lt;/a&gt; is run over compiled
+   * interface declarations, since Java 6 reflection does not provide access to
+   * method parameter names.  See Avro's build.xml for an example. */
+  @Override
+  public Protocol getProtocol(Class iface) {
+<span class="nc" id="L385">    Protocol protocol =</span>
+<span class="nc" id="L386">      new Protocol(iface.getSimpleName(),</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">                   iface.getPackage()==null?&quot;&quot;:iface.getPackage().getName());</span>
+<span class="nc" id="L388">    Map&lt;String,Schema&gt; names = new LinkedHashMap&lt;String,Schema&gt;();</span>
+<span class="nc" id="L389">    Map&lt;String,Message&gt; messages = protocol.getMessages();</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">    for (Method method : iface.getMethods())</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">      if ((method.getModifiers() &amp; Modifier.STATIC) == 0) {</span>
+<span class="nc" id="L392">        String name = method.getName();</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">        if (messages.containsKey(name))</span>
+<span class="nc" id="L394">          throw new AvroTypeException(&quot;Two methods with same name: &quot;+name);</span>
+<span class="nc" id="L395">        messages.put(name, getMessage(method, protocol, names));</span>
+      }
+
+    // reverse types, since they were defined in reference order
+<span class="nc" id="L399">    List&lt;Schema&gt; types = new ArrayList&lt;Schema&gt;();</span>
+<span class="nc" id="L400">    types.addAll(names.values());</span>
+<span class="nc" id="L401">    Collections.reverse(types);</span>
+<span class="nc" id="L402">    protocol.setTypes(types);</span>
+
+<span class="nc" id="L404">    return protocol;</span>
+  }
+
+<span class="nc" id="L407">  private final Paranamer paranamer = new CachingParanamer();</span>
+
+  private Message getMessage(Method method, Protocol protocol,
+                             Map&lt;String,Schema&gt; names) {
+<span class="nc" id="L411">    List&lt;Schema.Field&gt; fields = new ArrayList&lt;Schema.Field&gt;();</span>
+<span class="nc" id="L412">    String[] paramNames = paranamer.lookupParameterNames(method);</span>
+<span class="nc" id="L413">    Type[] paramTypes = method.getGenericParameterTypes();</span>
+<span class="nc" id="L414">    Annotation[][] annotations = method.getParameterAnnotations();</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">    for (int i = 0; i &lt; paramTypes.length; i++) {</span>
+<span class="nc" id="L416">      Schema paramSchema = getSchema(paramTypes[i], names);</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">      for (int j = 0; j &lt; annotations[i].length; j++)</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">        if (annotations[i][j] instanceof Union)</span>
+<span class="nc" id="L419">          paramSchema = getAnnotatedUnion(((Union)annotations[i][j]), names);</span>
+<span class="nc bnc" id="L420" title="All 2 branches missed.">        else if (annotations[i][j] instanceof Nullable)</span>
+<span class="nc" id="L421">          paramSchema = makeNullable(paramSchema);</span>
+<span class="nc bnc" id="L422" title="All 2 branches missed.">      String paramName =  paramNames.length == paramTypes.length</span>
+        ? paramNames[i]
+<span class="nc" id="L424">        : paramSchema.getName()+i;</span>
+<span class="nc" id="L425">      fields.add(new Schema.Field(paramName, paramSchema,</span>
+        null /* doc */, null));
+    }
+<span class="nc" id="L428">    Schema request = Schema.createRecord(fields);</span>
+
+<span class="nc" id="L430">    Union union = method.getAnnotation(Union.class);</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">    Schema response = union == null</span>
+<span class="nc" id="L432">      ? getSchema(method.getGenericReturnType(), names)</span>
+<span class="nc" id="L433">      : getAnnotatedUnion(union, names);</span>
+<span class="nc bnc" id="L434" title="All 2 branches missed.">    if (method.isAnnotationPresent(Nullable.class))          // nullable</span>
+<span class="nc" id="L435">      response = makeNullable(response);</span>
+
+<span class="nc" id="L437">    List&lt;Schema&gt; errs = new ArrayList&lt;Schema&gt;();</span>
+<span class="nc" id="L438">    errs.add(Protocol.SYSTEM_ERROR);              // every method can throw</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">    for (Type err : method.getGenericExceptionTypes())</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">      if (err != AvroRemoteException.class) </span>
+<span class="nc" id="L441">        errs.add(getSchema(err, names));</span>
+<span class="nc" id="L442">    Schema errors = Schema.createUnion(errs);</span>
+
+<span class="nc" id="L444">    return protocol.createMessage(method.getName(), null /* doc */, request, response, errors);</span>
+  }
+
+  private Schema getSchema(Type type, Map&lt;String,Schema&gt; names) {
+    try {
+<span class="nc" id="L449">      return createSchema(type, names);</span>
+<span class="nc" id="L450">    } catch (AvroTypeException e) {               // friendly exception</span>
+<span class="nc" id="L451">      throw new AvroTypeException(&quot;Error getting schema for &quot;+type+&quot;: &quot;</span>
+<span class="nc" id="L452">                                  +e.getMessage(), e);</span>
+    }
+  }
+
+  @Override
+  protected int compare(Object o1, Object o2, Schema s, boolean equals) {
+<span class="nc bnc" id="L458" title="All 3 branches missed.">    switch (s.getType()) {</span>
+    case ARRAY:
+<span class="nc bnc" id="L460" title="All 2 branches missed.">      if (!o1.getClass().isArray())</span>
+<span class="nc" id="L461">        break;</span>
+<span class="nc" id="L462">      Schema elementType = s.getElementType();</span>
+<span class="nc" id="L463">      int l1 = java.lang.reflect.Array.getLength(o1);</span>
+<span class="nc" id="L464">      int l2 = java.lang.reflect.Array.getLength(o2);</span>
+<span class="nc" id="L465">      int l = Math.min(l1, l2);</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">      for (int i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L467">        int compare = compare(java.lang.reflect.Array.get(o1, i),</span>
+<span class="nc" id="L468">                              java.lang.reflect.Array.get(o2, i),</span>
+                              elementType, equals);
+<span class="nc bnc" id="L470" title="All 2 branches missed.">        if (compare != 0) return compare;</span>
+      }
+<span class="nc" id="L472">      return l1 - l2;</span>
+    case BYTES:
+<span class="nc bnc" id="L474" title="All 2 branches missed.">      if (!o1.getClass().isArray())</span>
+<span class="nc" id="L475">        break;</span>
+<span class="nc" id="L476">      byte[] b1 = (byte[])o1; </span>
+<span class="nc" id="L477">      byte[] b2 = (byte[])o2; </span>
+<span class="nc" id="L478">      return BinaryData.compareBytes(b1, 0, b1.length, b2, 0, b2.length);</span>
+    }
+<span class="nc" id="L480">    return super.compare(o1, o2, s, equals);</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

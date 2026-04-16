@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.generic</a> &gt; <span class="el_source">GenericData.java</span></div><h1>GenericData.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.generic;
+
+import java.nio.ByteBuffer;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.Schema.Type;
+import org.apache.avro.UnresolvedUnionException;
+import org.apache.avro.io.BinaryData;
+import org.apache.avro.util.Utf8;
+
+/** Utilities for generic Java data. */
+public class GenericData {
+
+<span class="nc" id="L39">  private static final GenericData INSTANCE = new GenericData();</span>
+  
+  /** Return the singleton instance. */
+<span class="nc" id="L42">  public static GenericData get() { return INSTANCE; }</span>
+
+<span class="nc" id="L44">  protected GenericData() {}</span>
+  
+  /** Default implementation of {@link GenericRecord}. */
+  public static class Record implements GenericRecord, Comparable&lt;Record&gt; {
+    private final Schema schema;
+    private final Object[] values;
+<span class="nc" id="L50">    public Record(Schema schema) {</span>
+<span class="nc bnc" id="L51" title="All 4 branches missed.">      if (schema == null || !Type.RECORD.equals(schema.getType()))</span>
+<span class="nc" id="L52">        throw new AvroRuntimeException(&quot;Not a record schema: &quot;+schema);</span>
+<span class="nc" id="L53">      this.schema = schema;</span>
+<span class="nc" id="L54">      this.values = new Object[schema.getFields().size()];</span>
+<span class="nc" id="L55">    }</span>
+<span class="nc" id="L56">    @Override public Schema getSchema() { return schema; }</span>
+    @Override public void put(String key, Object value) {
+<span class="nc" id="L58">      values[schema.getField(key).pos()] = value;</span>
+<span class="nc" id="L59">    }</span>
+<span class="nc" id="L60">    @Override public void put(int i, Object v) { values[i] = v; }</span>
+    @Override public Object get(String key) {
+<span class="nc" id="L62">      Field field = schema.getField(key);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">      if (field == null) return null;</span>
+<span class="nc" id="L64">      return values[field.pos()];</span>
+    }
+<span class="nc" id="L66">    @Override public Object get(int i) { return values[i]; }</span>
+    @Override public boolean equals(Object o) {
+<span class="nc bnc" id="L68" title="All 2 branches missed.">      if (o == this) return true;                 // identical object</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">      if (!(o instanceof Record)) return false;   // not a record</span>
+<span class="nc" id="L70">      Record that = (Record)o;</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">      if (!schema.getFullName().equals(that.schema.getFullName()))</span>
+<span class="nc" id="L72">        return false;                             // not the same schema</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">      return GenericData.get().compare(this, that, schema, true) == 0;</span>
+    }
+    @Override public int hashCode() {
+<span class="nc" id="L76">      return GenericData.get().hashCode(this, schema);</span>
+    }
+    @Override public int compareTo(Record that) {
+<span class="nc" id="L79">      return GenericData.get().compare(this, that, schema);</span>
+    }
+    @Override public String toString() {
+<span class="nc" id="L82">      return GenericData.get().toString(this);</span>
+    }
+  }
+
+  /** Default implementation of an array. */
+  @SuppressWarnings(value=&quot;unchecked&quot;)
+  public static class Array&lt;T&gt; extends AbstractList&lt;T&gt;
+    implements GenericArray&lt;T&gt;, Comparable&lt;GenericArray&lt;T&gt;&gt; {
+<span class="nc" id="L90">    private static final Object[] EMPTY = new Object[0];</span>
+    private final Schema schema;
+    private int size;
+<span class="nc" id="L93">    private Object[] elements = EMPTY;</span>
+<span class="nc" id="L94">    public Array(int capacity, Schema schema) {</span>
+<span class="nc bnc" id="L95" title="All 4 branches missed.">      if (schema == null || !Type.ARRAY.equals(schema.getType()))</span>
+<span class="nc" id="L96">        throw new AvroRuntimeException(&quot;Not an array schema: &quot;+schema);</span>
+<span class="nc" id="L97">      this.schema = schema;</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">      if (capacity != 0)</span>
+<span class="nc" id="L99">        elements = new Object[capacity];</span>
+<span class="nc" id="L100">    }</span>
+<span class="nc" id="L101">    public Schema getSchema() { return schema; }</span>
+<span class="nc" id="L102">    @Override public int size() { return size; }</span>
+<span class="nc" id="L103">    @Override public void clear() { size = 0; }</span>
+    @Override public Iterator&lt;T&gt; iterator() {
+<span class="nc" id="L105">      return new Iterator&lt;T&gt;() {</span>
+<span class="nc" id="L106">        private int position = 0;</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        public boolean hasNext() { return position &lt; size; }</span>
+<span class="nc" id="L108">        public T next() { return (T)elements[position++]; }</span>
+<span class="nc" id="L109">        public void remove() { throw new UnsupportedOperationException(); }</span>
+      };
+    }
+    @Override public T get(int i) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">      if (i &gt;= size)</span>
+<span class="nc" id="L114">        throw new IndexOutOfBoundsException(&quot;Index &quot; + i + &quot; out of bounds.&quot;);</span>
+<span class="nc" id="L115">      return (T)elements[i];</span>
+    }
+    @Override public boolean add(T o) {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">      if (size == elements.length) {</span>
+<span class="nc" id="L119">        Object[] newElements = new Object[(size * 3)/2 + 1];</span>
+<span class="nc" id="L120">        System.arraycopy(elements, 0, newElements, 0, size);</span>
+<span class="nc" id="L121">        elements = newElements;</span>
+      }
+<span class="nc" id="L123">      elements[size++] = o;</span>
+<span class="nc" id="L124">      return true;</span>
+    }
+    @Override public T set(int i, T o) {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">      if (i &gt;= size)</span>
+<span class="nc" id="L128">        throw new IndexOutOfBoundsException(&quot;Index &quot; + i + &quot; out of bounds.&quot;);</span>
+<span class="nc" id="L129">      T response = (T)elements[i];</span>
+<span class="nc" id="L130">      elements[i] = o;</span>
+<span class="nc" id="L131">      return response;</span>
+    }
+    @Override public T remove(int i) {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">      if (i &gt;= size)</span>
+<span class="nc" id="L135">        throw new IndexOutOfBoundsException(&quot;Index &quot; + i + &quot; out of bounds.&quot;);</span>
+<span class="nc" id="L136">      T result = (T)elements[i];</span>
+<span class="nc" id="L137">      --size;</span>
+<span class="nc" id="L138">      System.arraycopy(elements, i+1, elements, i, (size-i));</span>
+<span class="nc" id="L139">      elements[size] = null;</span>
+<span class="nc" id="L140">      return result;</span>
+    }
+    public T peek() {
+<span class="nc bnc" id="L143" title="All 2 branches missed.">      return (size &lt; elements.length) ? (T)elements[size] : null;</span>
+    }
+    @Override
+    public int hashCode() {
+<span class="nc" id="L147">      return GenericData.get().hashCode(this, schema);</span>
+    }
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">      if (o == this) return true;                 // identical object</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">      if (!(o instanceof Array)) return false;    // not an array</span>
+<span class="nc" id="L153">      Array that = (Array)o;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">      if (!schema.equals(that.schema))</span>
+<span class="nc" id="L155">        return false;                             // not the same schema</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">      return this.compareTo(that) == 0;</span>
+    }
+    public int compareTo(GenericArray&lt;T&gt; that) {
+<span class="nc" id="L159">      return GenericData.get().compare(this, that, this.getSchema());</span>
+    }
+    public void reverse() {
+<span class="nc" id="L162">      int left = 0;</span>
+<span class="nc" id="L163">      int right = elements.length - 1;</span>
+      
+<span class="nc bnc" id="L165" title="All 2 branches missed.">      while (left &lt; right) {</span>
+<span class="nc" id="L166">        Object tmp = elements[left];</span>
+<span class="nc" id="L167">        elements[left] = elements[right];</span>
+<span class="nc" id="L168">        elements[right] = tmp;</span>
+        
+<span class="nc" id="L170">        left++;</span>
+<span class="nc" id="L171">        right--;</span>
+<span class="nc" id="L172">      }</span>
+<span class="nc" id="L173">    }</span>
+    @Override
+    public String toString() {
+<span class="nc" id="L176">      StringBuffer buffer = new StringBuffer();</span>
+<span class="nc" id="L177">      buffer.append(&quot;[&quot;);</span>
+<span class="nc" id="L178">      int count = 0;</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">      for (T e : this) {</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        buffer.append(e==null ? &quot;null&quot; : e.toString());</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (++count &lt; size())</span>
+<span class="nc" id="L182">          buffer.append(&quot;, &quot;);</span>
+<span class="nc" id="L183">      }</span>
+<span class="nc" id="L184">      buffer.append(&quot;]&quot;);</span>
+<span class="nc" id="L185">      return buffer.toString();</span>
+    }
+  }
+
+  /** Default implementation of {@link GenericFixed}. */
+  public static class Fixed implements GenericFixed, Comparable&lt;Fixed&gt; {
+    private Schema schema;
+    private byte[] bytes;
+
+<span class="nc" id="L194">    public Fixed(Schema schema) { setSchema(schema); }</span>
+
+<span class="nc" id="L196">    public Fixed(Schema schema, byte[] bytes) {</span>
+<span class="nc" id="L197">      this.schema = schema;</span>
+<span class="nc" id="L198">      this.bytes = bytes;</span>
+<span class="nc" id="L199">    }</span>
+
+<span class="nc" id="L201">    protected Fixed() {}</span>
+
+    protected void setSchema(Schema schema) {
+<span class="nc" id="L204">      this.schema = schema;</span>
+<span class="nc" id="L205">      this.bytes = new byte[schema.getFixedSize()];</span>
+<span class="nc" id="L206">    }</span>
+
+<span class="nc" id="L208">    @Override public Schema getSchema() { return schema; }</span>
+
+<span class="nc" id="L210">    public void bytes(byte[] bytes) { this.bytes = bytes; }</span>
+
+<span class="nc" id="L212">    public byte[] bytes() { return bytes; }</span>
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L216" title="All 2 branches missed.">      if (o == this) return true;</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">      return o instanceof GenericFixed</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        &amp;&amp; Arrays.equals(bytes, ((GenericFixed)o).bytes());</span>
+    }
+
+    @Override
+<span class="nc" id="L222">    public int hashCode() { return Arrays.hashCode(bytes); }</span>
+
+    @Override
+<span class="nc" id="L225">    public String toString() { return Arrays.toString(bytes); }</span>
+
+    public int compareTo(Fixed that) {
+<span class="nc" id="L228">      return BinaryData.compareBytes(this.bytes, 0, this.bytes.length,</span>
+                                     that.bytes, 0, that.bytes.length);
+    }
+  }
+
+  /** Default implementation of {@link GenericEnumSymbol}. */
+  public static class EnumSymbol implements GenericEnumSymbol {
+    private Schema schema;
+    private String symbol;
+
+<span class="nc" id="L238">    public EnumSymbol(Schema schema, String symbol) {</span>
+<span class="nc" id="L239">      this.schema = schema;</span>
+<span class="nc" id="L240">      this.symbol = symbol;</span>
+<span class="nc" id="L241">    }</span>
+
+<span class="nc" id="L243">    @Override public Schema getSchema() { return schema; }</span>
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L247" title="All 2 branches missed.">      if (o == this) return true;</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">      return o instanceof GenericEnumSymbol</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        &amp;&amp; symbol.equals(o.toString());</span>
+    }
+
+    @Override
+<span class="nc" id="L253">    public int hashCode() { return symbol.hashCode(); }</span>
+
+    @Override
+<span class="nc" id="L256">    public String toString() { return symbol; }</span>
+  }
+
+  /** Returns true if a Java datum matches a schema. */
+  public boolean validate(Schema schema, Object datum) {
+<span class="nc bnc" id="L261" title="All 15 branches missed.">    switch (schema.getType()) {</span>
+    case RECORD:
+<span class="nc bnc" id="L263" title="All 2 branches missed.">      if (!(datum instanceof IndexedRecord)) return false;</span>
+<span class="nc" id="L264">      IndexedRecord fields = (IndexedRecord)datum;</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">      for (Field f : schema.getFields()) {</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">        if (!validate(f.schema(), fields.get(f.pos())))</span>
+<span class="nc" id="L267">          return false;</span>
+<span class="nc" id="L268">      }</span>
+<span class="nc" id="L269">      return true;</span>
+    case ENUM:
+<span class="nc" id="L271">      return schema.getEnumSymbols().contains(datum.toString());</span>
+    case ARRAY:
+<span class="nc bnc" id="L273" title="All 2 branches missed.">      if (!(datum instanceof Collection)) return false;</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">      for (Object element : (Collection&lt;?&gt;)datum)</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        if (!validate(schema.getElementType(), element))</span>
+<span class="nc" id="L276">          return false;</span>
+<span class="nc" id="L277">      return true;</span>
+    case MAP:
+<span class="nc bnc" id="L279" title="All 2 branches missed.">      if (!(datum instanceof Map)) return false;</span>
+      @SuppressWarnings(value=&quot;unchecked&quot;)
+<span class="nc" id="L281">      Map&lt;Object,Object&gt; map = (Map&lt;Object,Object&gt;)datum;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">      for (Map.Entry&lt;Object,Object&gt; entry : map.entrySet())</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        if (!validate(schema.getValueType(), entry.getValue()))</span>
+<span class="nc" id="L284">          return false;</span>
+<span class="nc" id="L285">      return true;</span>
+    case UNION:
+<span class="nc bnc" id="L287" title="All 2 branches missed.">      for (Schema type : schema.getTypes())</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (validate(type, datum))</span>
+<span class="nc" id="L289">          return true;</span>
+<span class="nc" id="L290">      return false;</span>
+    case FIXED:
+<span class="nc bnc" id="L292" title="All 2 branches missed.">      return datum instanceof GenericFixed</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        &amp;&amp; ((GenericFixed)datum).bytes().length==schema.getFixedSize();</span>
+<span class="nc" id="L294">    case STRING:  return isString(datum);</span>
+<span class="nc" id="L295">    case BYTES:   return isBytes(datum);</span>
+<span class="nc" id="L296">    case INT:     return datum instanceof Integer;</span>
+<span class="nc" id="L297">    case LONG:    return datum instanceof Long;</span>
+<span class="nc" id="L298">    case FLOAT:   return datum instanceof Float;</span>
+<span class="nc" id="L299">    case DOUBLE:  return datum instanceof Double;</span>
+<span class="nc" id="L300">    case BOOLEAN: return datum instanceof Boolean;</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">    case NULL:    return datum == null;</span>
+<span class="nc" id="L302">    default: return false;</span>
+    }
+  }
+
+  /** Renders a Java datum as &lt;a href=&quot;http://www.json.org/&quot;&gt;JSON&lt;/a&gt;. */
+  public String toString(Object datum) {
+<span class="nc" id="L308">    StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L309">    toString(datum, buffer);</span>
+<span class="nc" id="L310">    return buffer.toString();</span>
+  }
+  /** Renders a Java datum as &lt;a href=&quot;http://www.json.org/&quot;&gt;JSON&lt;/a&gt;. */
+  protected void toString(Object datum, StringBuilder buffer) {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">    if (datum instanceof IndexedRecord) {</span>
+<span class="nc" id="L315">      buffer.append(&quot;{&quot;);</span>
+<span class="nc" id="L316">      int count = 0;</span>
+<span class="nc" id="L317">      IndexedRecord record = (IndexedRecord)datum;</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">      for (Field f : record.getSchema().getFields()) {</span>
+<span class="nc" id="L319">        toString(f.name(), buffer);</span>
+<span class="nc" id="L320">        buffer.append(&quot;: &quot;);</span>
+<span class="nc" id="L321">        toString(record.get(f.pos()), buffer);</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (++count &lt; record.getSchema().getFields().size())</span>
+<span class="nc" id="L323">          buffer.append(&quot;, &quot;);</span>
+<span class="nc" id="L324">      }</span>
+<span class="nc" id="L325">      buffer.append(&quot;}&quot;);</span>
+<span class="nc bnc" id="L326" title="All 2 branches missed.">    } else if (datum instanceof Collection) {</span>
+<span class="nc" id="L327">      Collection&lt;?&gt; array = (Collection&lt;?&gt;)datum;</span>
+<span class="nc" id="L328">      buffer.append(&quot;[&quot;);</span>
+<span class="nc" id="L329">      long last = array.size()-1;</span>
+<span class="nc" id="L330">      int i = 0;</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">      for (Object element : array) {</span>
+<span class="nc" id="L332">        toString(element, buffer);</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">        if (i++ &lt; last)</span>
+<span class="nc" id="L334">          buffer.append(&quot;, &quot;);</span>
+<span class="nc" id="L335">      }        </span>
+<span class="nc" id="L336">      buffer.append(&quot;]&quot;);</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">    } else if (datum instanceof Map) {</span>
+<span class="nc" id="L338">      buffer.append(&quot;{&quot;);</span>
+<span class="nc" id="L339">      int count = 0;</span>
+      @SuppressWarnings(value=&quot;unchecked&quot;)
+<span class="nc" id="L341">      Map&lt;Object,Object&gt; map = (Map&lt;Object,Object&gt;)datum;</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">      for (Map.Entry&lt;Object,Object&gt; entry : map.entrySet()) {</span>
+<span class="nc" id="L343">        toString(entry.getKey(), buffer);</span>
+<span class="nc" id="L344">        buffer.append(&quot;: &quot;);</span>
+<span class="nc" id="L345">        toString(entry.getValue(), buffer);</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">        if (++count &lt; map.size())</span>
+<span class="nc" id="L347">          buffer.append(&quot;, &quot;);</span>
+<span class="nc" id="L348">      }</span>
+<span class="nc" id="L349">      buffer.append(&quot;}&quot;);</span>
+<span class="nc bnc" id="L350" title="All 4 branches missed.">    } else if (datum instanceof CharSequence</span>
+               || datum instanceof GenericEnumSymbol) {
+<span class="nc" id="L352">      buffer.append(&quot;\&quot;&quot;);</span>
+<span class="nc" id="L353">      writeEscapedString(datum.toString(), buffer);</span>
+<span class="nc" id="L354">      buffer.append(&quot;\&quot;&quot;);</span>
+<span class="nc bnc" id="L355" title="All 2 branches missed.">    } else if (datum instanceof ByteBuffer) {</span>
+<span class="nc" id="L356">      buffer.append(&quot;{\&quot;bytes\&quot;: \&quot;&quot;);</span>
+<span class="nc" id="L357">      ByteBuffer bytes = (ByteBuffer)datum;</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">      for (int i = bytes.position(); i &lt; bytes.limit(); i++)</span>
+<span class="nc" id="L359">        buffer.append((char)bytes.get(i));</span>
+<span class="nc" id="L360">      buffer.append(&quot;\&quot;}&quot;);</span>
+<span class="nc" id="L361">    } else {</span>
+<span class="nc" id="L362">      buffer.append(datum);</span>
+    }
+<span class="nc" id="L364">  }</span>
+  
+  /* Adapted from http://code.google.com/p/json-simple */
+  private void writeEscapedString(String string, StringBuilder builder) {
+<span class="nc bnc" id="L368" title="All 2 branches missed.">    for(int i = 0; i &lt; string.length(); i++){</span>
+<span class="nc" id="L369">      char ch = string.charAt(i);</span>
+<span class="nc bnc" id="L370" title="All 9 branches missed.">      switch(ch){</span>
+        case '&quot;':
+<span class="nc" id="L372">          builder.append(&quot;\\\&quot;&quot;);</span>
+<span class="nc" id="L373">          break;</span>
+        case '\\':
+<span class="nc" id="L375">          builder.append(&quot;\\\\&quot;);</span>
+<span class="nc" id="L376">          break;</span>
+        case '\b':
+<span class="nc" id="L378">          builder.append(&quot;\\b&quot;);</span>
+<span class="nc" id="L379">          break;</span>
+        case '\f':
+<span class="nc" id="L381">          builder.append(&quot;\\f&quot;);</span>
+<span class="nc" id="L382">          break;</span>
+        case '\n':
+<span class="nc" id="L384">          builder.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L385">          break;</span>
+        case '\r':
+<span class="nc" id="L387">          builder.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L388">          break;</span>
+        case '\t':
+<span class="nc" id="L390">          builder.append(&quot;\\t&quot;);</span>
+<span class="nc" id="L391">          break;</span>
+        case '/':
+<span class="nc" id="L393">          builder.append(&quot;\\/&quot;);</span>
+<span class="nc" id="L394">          break;</span>
+        default:
+          // Reference: http://www.unicode.org/versions/Unicode5.1.0/
+<span class="nc bnc" id="L397" title="All 12 branches missed.">          if((ch&gt;='\u0000' &amp;&amp; ch&lt;='\u001F') || (ch&gt;='\u007F' &amp;&amp; ch&lt;='\u009F') || (ch&gt;='\u2000' &amp;&amp; ch&lt;='\u20FF')){</span>
+<span class="nc" id="L398">            String hex = Integer.toHexString(ch);</span>
+<span class="nc" id="L399">            builder.append(&quot;\\u&quot;);</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">            for(int j = 0; j &lt; 4-builder.length(); j++)</span>
+<span class="nc" id="L401">              builder.append('0');</span>
+<span class="nc" id="L402">            builder.append(string.toUpperCase());</span>
+<span class="nc" id="L403">          } else {</span>
+<span class="nc" id="L404">            builder.append(ch);</span>
+          }
+        }
+    }
+<span class="nc" id="L408">  }</span>
+
+  /** Create a schema given an example datum. */
+  public Schema induce(Object datum) {
+<span class="nc bnc" id="L412" title="All 2 branches missed.">    if (datum instanceof IndexedRecord) {</span>
+<span class="nc" id="L413">      return ((IndexedRecord)datum).getSchema();</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">    } else if (datum instanceof Collection) {</span>
+<span class="nc" id="L415">      Schema elementType = null;</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">      for (Object element : (Collection&lt;?&gt;)datum) {</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">        if (elementType == null) {</span>
+<span class="nc" id="L418">          elementType = induce(element);</span>
+<span class="nc bnc" id="L419" title="All 2 branches missed.">        } else if (!elementType.equals(induce(element))) {</span>
+<span class="nc" id="L420">          throw new AvroTypeException(&quot;No mixed type arrays.&quot;);</span>
+        }
+<span class="nc" id="L422">      }</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">      if (elementType == null) {</span>
+<span class="nc" id="L424">        throw new AvroTypeException(&quot;Empty array: &quot;+datum);</span>
+      }
+<span class="nc" id="L426">      return Schema.createArray(elementType);</span>
+
+<span class="nc bnc" id="L428" title="All 2 branches missed.">    } else if (datum instanceof Map) {</span>
+      @SuppressWarnings(value=&quot;unchecked&quot;)
+<span class="nc" id="L430">      Map&lt;Object,Object&gt; map = (Map&lt;Object,Object&gt;)datum;</span>
+<span class="nc" id="L431">      Schema value = null;</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">      for (Map.Entry&lt;Object,Object&gt; entry : map.entrySet()) {</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L434">          value = induce(entry.getValue());</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">        } else if (!value.equals(induce(entry.getValue()))) {</span>
+<span class="nc" id="L436">          throw new AvroTypeException(&quot;No mixed type map values.&quot;);</span>
+        }
+<span class="nc" id="L438">      }</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">      if (value == null) {</span>
+<span class="nc" id="L440">        throw new AvroTypeException(&quot;Empty map: &quot;+datum);</span>
+      }
+<span class="nc" id="L442">      return Schema.createMap(value);</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">    } else if (datum instanceof GenericFixed) {</span>
+<span class="nc" id="L444">      return Schema.createFixed(null, null, null,</span>
+<span class="nc" id="L445">                                ((GenericFixed)datum).bytes().length);</span>
+    }
+<span class="nc bnc" id="L447" title="All 2 branches missed.">    else if (datum instanceof CharSequence) return Schema.create(Type.STRING);</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">    else if (datum instanceof ByteBuffer) return Schema.create(Type.BYTES);</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">    else if (datum instanceof Integer)    return Schema.create(Type.INT);</span>
+<span class="nc bnc" id="L450" title="All 2 branches missed.">    else if (datum instanceof Long)       return Schema.create(Type.LONG);</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">    else if (datum instanceof Float)      return Schema.create(Type.FLOAT);</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">    else if (datum instanceof Double)     return Schema.create(Type.DOUBLE);</span>
+<span class="nc bnc" id="L453" title="All 2 branches missed.">    else if (datum instanceof Boolean)    return Schema.create(Type.BOOLEAN);</span>
+<span class="nc bnc" id="L454" title="All 2 branches missed.">    else if (datum == null)               return Schema.create(Type.NULL);</span>
+
+<span class="nc" id="L456">    else throw new AvroTypeException(&quot;Can't create schema for: &quot;+datum);</span>
+  }
+
+  /** Called by {@link GenericDatumReader#readRecord} to set a record fields
+   * value to a record instance.  The default implementation is for {@link
+   * IndexedRecord}.*/
+  public void setField(Object record, String name, int position, Object o) {
+<span class="nc" id="L463">    ((IndexedRecord)record).put(position, o);</span>
+<span class="nc" id="L464">  }</span>
+  
+  /** Called by {@link GenericDatumReader#readRecord} to retrieve a record
+   * field value from a reused instance.  The default implementation is for
+   * {@link IndexedRecord}.*/
+  public Object getField(Object record, String name, int position) {
+<span class="nc" id="L470">    return ((IndexedRecord)record).get(position);</span>
+  }
+
+  /** Return the index for a datum within a union.  Implemented with {@link
+   * #instanceOf(Schema,Object)}.*/
+  public int resolveUnion(Schema union, Object datum) {
+<span class="nc" id="L476">    int i = 0;</span>
+<span class="nc bnc" id="L477" title="All 2 branches missed.">    for (Schema type : union.getTypes()) {</span>
+<span class="nc bnc" id="L478" title="All 2 branches missed.">      if (instanceOf(type, datum))</span>
+<span class="nc" id="L479">        return i;</span>
+<span class="nc" id="L480">      i++;</span>
+<span class="nc" id="L481">    }</span>
+<span class="nc" id="L482">    throw new UnresolvedUnionException(union, datum);</span>
+  }
+
+  /** Called by {@link #resolveUnion(Schema,Object)}.  May be overridden for
+      alternate data representations.*/
+  protected boolean instanceOf(Schema schema, Object datum) {
+<span class="nc bnc" id="L488" title="All 14 branches missed.">    switch (schema.getType()) {</span>
+    case RECORD:
+<span class="nc bnc" id="L490" title="All 2 branches missed.">      if (!isRecord(datum)) return false;</span>
+<span class="nc bnc" id="L491" title="All 2 branches missed.">      return (schema.getFullName() == null)</span>
+<span class="nc bnc" id="L492" title="All 2 branches missed.">        ? getRecordSchema(datum).getFullName() == null</span>
+<span class="nc" id="L493">        : schema.getFullName().equals(getRecordSchema(datum).getFullName());</span>
+    case ENUM:
+<span class="nc bnc" id="L495" title="All 2 branches missed.">      if (!isEnum(datum)) return false;</span>
+<span class="nc" id="L496">      return schema.getFullName().equals(getEnumSchema(datum).getFullName());</span>
+<span class="nc" id="L497">    case ARRAY:   return isArray(datum);</span>
+<span class="nc" id="L498">    case MAP:     return isMap(datum);</span>
+    case FIXED:
+<span class="nc bnc" id="L500" title="All 2 branches missed.">      if (!isFixed(datum)) return false;</span>
+<span class="nc" id="L501">      return schema.getFullName().equals(getFixedSchema(datum).getFullName());</span>
+<span class="nc" id="L502">    case STRING:  return isString(datum);</span>
+<span class="nc" id="L503">    case BYTES:   return isBytes(datum);</span>
+<span class="nc" id="L504">    case INT:     return datum instanceof Integer;</span>
+<span class="nc" id="L505">    case LONG:    return datum instanceof Long;</span>
+<span class="nc" id="L506">    case FLOAT:   return datum instanceof Float;</span>
+<span class="nc" id="L507">    case DOUBLE:  return datum instanceof Double;</span>
+<span class="nc" id="L508">    case BOOLEAN: return datum instanceof Boolean;</span>
+<span class="nc bnc" id="L509" title="All 2 branches missed.">    case NULL:    return datum == null;</span>
+<span class="nc" id="L510">    default: throw new AvroRuntimeException(&quot;Unexpected type: &quot; +schema);</span>
+    }
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isArray(Object datum) {
+<span class="nc" id="L516">    return datum instanceof Collection;</span>
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isRecord(Object datum) {
+<span class="nc" id="L521">    return datum instanceof IndexedRecord;</span>
+  }
+
+  /** Called to obtain the schema of a record.  By default calls
+   * {GenericContainer#getSchema().  May be overridden for alternate record
+   * representations. */
+  protected Schema getRecordSchema(Object record) {
+<span class="nc" id="L528">    return ((GenericContainer)record).getSchema();</span>
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isEnum(Object datum) {
+<span class="nc" id="L533">    return datum instanceof GenericEnumSymbol;</span>
+  }
+  
+  /** Called to obtain the schema of a enum.  By default calls
+   * {GenericContainer#getSchema().  May be overridden for alternate enum
+   * representations. */
+  protected Schema getEnumSchema(Object enu) {
+<span class="nc" id="L540">    return ((GenericContainer)enu).getSchema();</span>
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isMap(Object datum) {
+<span class="nc" id="L545">    return datum instanceof Map;</span>
+  }
+  
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isFixed(Object datum) {
+<span class="nc" id="L550">    return datum instanceof GenericFixed;</span>
+  }
+
+  /** Called to obtain the schema of a fixed.  By default calls
+   * {GenericContainer#getSchema().  May be overridden for alternate fixed
+   * representations. */
+  protected Schema getFixedSchema(Object fixed) {
+<span class="nc" id="L557">    return ((GenericContainer)fixed).getSchema();</span>
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isString(Object datum) {
+<span class="nc" id="L562">    return datum instanceof CharSequence;</span>
+  }
+
+  /** Called by the default implementation of {@link #instanceOf}.*/
+  protected boolean isBytes(Object datum) {
+<span class="nc" id="L567">    return datum instanceof ByteBuffer;</span>
+  }
+
+  /** Compute a hash code according to a schema, consistent with {@link
+   * #compare(Object,Object,Schema)}. */
+  public int hashCode(Object o, Schema s) {
+<span class="nc bnc" id="L573" title="All 2 branches missed.">    if (o == null) return 0;                      // incomplete datum</span>
+<span class="nc" id="L574">    int hashCode = 1;</span>
+<span class="nc bnc" id="L575" title="All 7 branches missed.">    switch (s.getType()) {</span>
+    case RECORD:
+<span class="nc" id="L577">      IndexedRecord r = (IndexedRecord)o;</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">      for (Field f : s.getFields()) {</span>
+<span class="nc bnc" id="L579" title="All 2 branches missed.">        if (f.order() == Field.Order.IGNORE)</span>
+<span class="nc" id="L580">          continue;</span>
+<span class="nc" id="L581">        hashCode = hashCodeAdd(hashCode, r.get(f.pos()), f.schema());</span>
+<span class="nc" id="L582">      }</span>
+<span class="nc" id="L583">      return hashCode;</span>
+    case ARRAY:
+<span class="nc" id="L585">      Collection&lt;?&gt; a = (Collection&lt;?&gt;)o;</span>
+<span class="nc" id="L586">      Schema elementType = s.getElementType();</span>
+<span class="nc bnc" id="L587" title="All 2 branches missed.">      for (Object e : a)</span>
+<span class="nc" id="L588">        hashCode = hashCodeAdd(hashCode, e, elementType);</span>
+<span class="nc" id="L589">      return hashCode;</span>
+    case UNION:
+<span class="nc" id="L591">      return hashCode(o, s.getTypes().get(resolveUnion(s, o)));</span>
+    case ENUM:
+<span class="nc" id="L593">      return s.getEnumOrdinal(o.toString());</span>
+    case NULL:
+<span class="nc" id="L595">      return 0;</span>
+    case STRING:
+<span class="nc bnc" id="L597" title="All 2 branches missed.">      return (o instanceof Utf8 ? o : new Utf8(o.toString())).hashCode();</span>
+    default:
+<span class="nc" id="L599">      return o.hashCode();</span>
+    }
+  }
+
+  /** Add the hash code for an object into an accumulated hash code. */
+  protected int hashCodeAdd(int hashCode, Object o, Schema s) {
+<span class="nc" id="L605">    return 31*hashCode + hashCode(o, s);</span>
+  }
+
+  /** Compare objects according to their schema.  If equal, return zero.  If
+   * greater-than, return 1, if less than return -1.  Order is consistent with
+   * that of {@link BinaryData#compare(byte[], int, byte[], int, Schema)}.
+   */
+  public int compare(Object o1, Object o2, Schema s) {
+<span class="nc" id="L613">    return compare(o1, o2, s, false);</span>
+  }
+
+  /** Comparison implementation.  When equals is true, only checks for equality,
+   * not for order. */
+  @SuppressWarnings(value=&quot;unchecked&quot;)
+  protected int compare(Object o1, Object o2, Schema s, boolean equals) {
+<span class="nc bnc" id="L620" title="All 2 branches missed.">    if (o1 == o2) return 0;</span>
+<span class="nc bnc" id="L621" title="All 8 branches missed.">    switch (s.getType()) {</span>
+    case RECORD:
+<span class="nc bnc" id="L623" title="All 2 branches missed.">      for (Field f : s.getFields()) {</span>
+<span class="nc bnc" id="L624" title="All 2 branches missed.">        if (f.order() == Field.Order.IGNORE)</span>
+<span class="nc" id="L625">          continue;                               // ignore this field</span>
+<span class="nc" id="L626">        int pos = f.pos();</span>
+<span class="nc" id="L627">        String name = f.name();</span>
+<span class="nc" id="L628">        int compare =</span>
+<span class="nc" id="L629">          compare(getField(o1, name, pos), getField(o2, name, pos),</span>
+<span class="nc" id="L630">                  f.schema(), equals);</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">        if (compare != 0)                         // not equal</span>
+<span class="nc bnc" id="L632" title="All 2 branches missed.">          return f.order() == Field.Order.DESCENDING ? -compare : compare;</span>
+<span class="nc" id="L633">      }</span>
+<span class="nc" id="L634">      return 0;</span>
+    case ENUM:
+<span class="nc" id="L636">      return s.getEnumOrdinal(o1.toString()) - s.getEnumOrdinal(o2.toString());</span>
+    case ARRAY:
+<span class="nc" id="L638">      Collection a1 = (Collection)o1;</span>
+<span class="nc" id="L639">      Collection a2 = (Collection)o2;</span>
+<span class="nc" id="L640">      Iterator e1 = a1.iterator();</span>
+<span class="nc" id="L641">      Iterator e2 = a2.iterator();</span>
+<span class="nc" id="L642">      Schema elementType = s.getElementType();</span>
+<span class="nc bnc" id="L643" title="All 4 branches missed.">      while(e1.hasNext() &amp;&amp; e2.hasNext()) {</span>
+<span class="nc" id="L644">        int compare = compare(e1.next(), e2.next(), elementType, equals);</span>
+<span class="nc bnc" id="L645" title="All 2 branches missed.">        if (compare != 0) return compare;</span>
+<span class="nc" id="L646">      }</span>
+<span class="nc bnc" id="L647" title="All 4 branches missed.">      return e1.hasNext() ? 1 : (e2.hasNext() ? -1 : 0);</span>
+    case MAP:
+<span class="nc bnc" id="L649" title="All 2 branches missed.">      if (equals)</span>
+<span class="nc bnc" id="L650" title="All 2 branches missed.">        return ((Map)o1).equals(o2) ? 0 : 1;</span>
+<span class="nc" id="L651">      throw new AvroRuntimeException(&quot;Can't compare maps!&quot;);</span>
+    case UNION:
+<span class="nc" id="L653">      int i1 = resolveUnion(s, o1);</span>
+<span class="nc" id="L654">      int i2 = resolveUnion(s, o2);</span>
+<span class="nc bnc" id="L655" title="All 2 branches missed.">      return (i1 == i2)</span>
+<span class="nc" id="L656">        ? compare(o1, o2, s.getTypes().get(i1), equals)</span>
+        : i1 - i2;
+    case NULL:
+<span class="nc" id="L659">      return 0;</span>
+    case STRING:
+<span class="nc bnc" id="L661" title="All 2 branches missed.">      Utf8 u1 = o1 instanceof Utf8 ? (Utf8)o1 : new Utf8(o1.toString());</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">      Utf8 u2 = o2 instanceof Utf8 ? (Utf8)o2 : new Utf8(o2.toString());</span>
+<span class="nc" id="L663">      return u1.compareTo(u2);</span>
+    default:
+<span class="nc" id="L665">      return ((Comparable)o1).compareTo(o2);</span>
+    }
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

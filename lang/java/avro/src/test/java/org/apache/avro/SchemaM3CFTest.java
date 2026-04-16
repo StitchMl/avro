@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 /**
@@ -17,6 +16,7 @@ import org.junit.Test;
  * affect validation, construction or equality semantics and documents the
  * simplified CFG used to derive the tests.</p>
  */
+@SuppressWarnings("ALL")
 public class SchemaM3CFTest {
 
   /**
@@ -28,18 +28,17 @@ public class SchemaM3CFTest {
    * @return a field instance with no optional metadata set
    */
   private static Schema.Field field(String name, Schema schema) {
-    return new Schema.Field(name, schema, null, (JsonNode) null);
+    return new Schema.Field(name, schema, null, null);
   }
 
   /**
    * Builds a recursive single-link record used to exercise the cycle-handling
    * branch in record equality.
    *
-   * @param name record name to assign
    * @return a self-referential record schema
    */
-  private static Schema recursiveRecord(String name) {
-    Schema record = Schema.createRecord(name, null, "org.example", false);
+  private static Schema recursiveNodeRecord() {
+    Schema record = Schema.createRecord("Node", null, "org.example", false);
     record.setFields(Collections.singletonList(field("next", record)));
     return record;
   }
@@ -249,10 +248,12 @@ public class SchemaM3CFTest {
   @Test
   public void equals_onPrimitiveSchema_coversSelfNonSchemaAndTypeMismatchBranches() {
     Schema intSchema = Schema.create(Schema.Type.INT);
+    Schema longSchema = Schema.create(Schema.Type.LONG);
+    Object nonSchema = new Object();
 
-    assertEquals(intSchema, intSchema);
-    assertFalse(intSchema.equals("int"));
-    assertFalse(intSchema.equals(Schema.create(Schema.Type.LONG)));
+    assertTrue(intSchema.equals(intSchema));
+    assertFalse(intSchema.equals(nonSchema));
+    assertFalse(intSchema.equals(longSchema));
   }
 
   /**
@@ -266,7 +267,8 @@ public class SchemaM3CFTest {
     left.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
     right.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentNames = left.equals(right);
+    assertFalse(equalsDifferentNames);
   }
 
   /**
@@ -281,7 +283,8 @@ public class SchemaM3CFTest {
     right.setFields(Collections.singletonList(field("id", Schema.create(Schema.Type.INT))));
     left.addProp("custom", "left");
 
-    assertFalse(left.equals(right));
+    boolean equalsDifferentProps = left.equals(right);
+    assertFalse(equalsDifferentProps);
   }
 
   /**
@@ -290,9 +293,10 @@ public class SchemaM3CFTest {
    */
   @Test
   public void equals_onRecursiveRecords_usesSeenSetToTerminateAndReturnTrue() {
-    Schema left = recursiveRecord("Node");
-    Schema right = recursiveRecord("Node");
+    Schema left = recursiveNodeRecord();
+    Schema right = recursiveNodeRecord();
 
-    assertTrue(left.equals(right));
+    boolean equalsRecursive = left.equals(right);
+    assertTrue(equalsRecursive);
   }
 }

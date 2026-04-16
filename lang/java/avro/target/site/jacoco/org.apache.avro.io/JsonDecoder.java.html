@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonDecoder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.io</a> &gt; <span class="el_source">JsonDecoder.java</span></div><h1>JsonDecoder.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.io;
+
+import java.io.IOException;
+import java.io.EOFException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Schema;
+import org.apache.avro.io.parsing.JsonGrammarGenerator;
+import org.apache.avro.io.parsing.Parser;
+import org.apache.avro.io.parsing.Symbol;
+import org.apache.avro.util.Utf8;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
+
+/** A {@link Decoder} for Avro's JSON data encoding. 
+ * &lt;/p&gt;
+ * Construct using {@link DecoderFactory}.
+ * &lt;/p&gt;
+ * JsonDecoder is not thread-safe.
+ * */
+public class JsonDecoder extends ParsingDecoder
+  implements Parser.ActionHandler {
+  private JsonParser in;
+<span class="nc" id="L44">  private static JsonFactory jsonFactory = new JsonFactory();</span>
+  
+  static final String CHARSET = &quot;ISO-8859-1&quot;;
+
+  private JsonDecoder(Symbol root, InputStream in) throws IOException {
+<span class="nc" id="L49">    super(root);</span>
+<span class="nc" id="L50">    configure(in);</span>
+<span class="nc" id="L51">  }</span>
+  
+  private JsonDecoder(Symbol root, String in) throws IOException {
+<span class="nc" id="L54">    super(root);</span>
+<span class="nc" id="L55">    configure(in);</span>
+<span class="nc" id="L56">  }</span>
+
+  JsonDecoder(Schema schema, InputStream in) throws IOException {
+<span class="nc" id="L59">    this(getSymbol(schema), in);</span>
+<span class="nc" id="L60">  }</span>
+  
+  JsonDecoder(Schema schema, String in) throws IOException {
+<span class="nc" id="L63">    this(getSymbol(schema), in);</span>
+<span class="nc" id="L64">  }</span>
+  
+  private static Symbol getSymbol(Schema schema) {
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    if (null == schema) {</span>
+<span class="nc" id="L68">      throw new NullPointerException(&quot;Schema cannot be null!&quot;);</span>
+    }
+<span class="nc" id="L70">    return new JsonGrammarGenerator().generate(schema);</span>
+  }
+
+  /**
+   * Reconfigures this JsonDecoder to use the InputStream provided.
+   * &lt;p/&gt;
+   * If the InputStream provided is null, a NullPointerException is thrown.
+   * &lt;p/&gt;
+   * Otherwise, this JsonDecoder will reset its state and then
+   * reconfigure its input.
+   * @param in
+   *   The IntputStream to read from. Cannot be null.
+   * @throws IOException
+   * @return this JsonDecoder
+   */
+  public JsonDecoder configure(InputStream in) throws IOException {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">    if (null == in) {</span>
+<span class="nc" id="L87">      throw new NullPointerException(&quot;InputStream to read from cannot be null!&quot;);</span>
+    }
+<span class="nc" id="L89">    parser.reset();</span>
+<span class="nc" id="L90">    this.in = jsonFactory.createJsonParser(in);</span>
+<span class="nc" id="L91">    this.in.nextToken();</span>
+<span class="nc" id="L92">    return this;</span>
+  }
+  
+  /**
+   * Reconfigures this JsonDecoder to use the String provided for input.
+   * &lt;p/&gt;
+   * If the String provided is null, a NullPointerException is thrown.
+   * &lt;p/&gt;
+   * Otherwise, this JsonDecoder will reset its state and then
+   * reconfigure its input.
+   * @param in
+   *   The String to read from. Cannot be null.
+   * @throws IOException
+   * @return this JsonDecoder
+   */
+  public JsonDecoder configure(String in) throws IOException {
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    if (null == in) {</span>
+<span class="nc" id="L109">      throw new NullPointerException(&quot;String to read from cannot be null!&quot;);</span>
+    }
+<span class="nc" id="L111">    parser.reset();</span>
+<span class="nc" id="L112">    this.in = new JsonFactory().createJsonParser(in);</span>
+<span class="nc" id="L113">    this.in.nextToken();</span>
+<span class="nc" id="L114">    return this;</span>
+  }
+
+  private void advance(Symbol symbol) throws IOException {
+<span class="nc" id="L118">    this.parser.processTrailingImplicitActions();</span>
+<span class="nc bnc" id="L119" title="All 4 branches missed.">    if (in.getCurrentToken() == null &amp;&amp; this.parser.depth() == 1)</span>
+<span class="nc" id="L120">      throw new EOFException();</span>
+<span class="nc" id="L121">    parser.advance(symbol);</span>
+<span class="nc" id="L122">  }</span>
+
+  @Override
+  public void readNull() throws IOException {
+<span class="nc" id="L126">    advance(Symbol.NULL);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NULL) {</span>
+<span class="nc" id="L128">      in.nextToken();</span>
+    } else {
+<span class="nc" id="L130">      throw error(&quot;null&quot;);</span>
+    }
+<span class="nc" id="L132">  }</span>
+
+  @Override
+  public boolean readBoolean() throws IOException {
+<span class="nc" id="L136">    advance(Symbol.BOOLEAN);</span>
+<span class="nc" id="L137">    JsonToken t = in.getCurrentToken(); </span>
+<span class="nc bnc" id="L138" title="All 4 branches missed.">    if (t == JsonToken.VALUE_TRUE || t == JsonToken.VALUE_FALSE) {</span>
+<span class="nc" id="L139">      in.nextToken();</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">      return t == JsonToken.VALUE_TRUE;</span>
+    } else {
+<span class="nc" id="L142">      throw error(&quot;boolean&quot;);</span>
+    }
+  }
+
+  @Override
+  public int readInt() throws IOException {
+<span class="nc" id="L148">    advance(Symbol.INT);</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) {</span>
+<span class="nc" id="L150">      int result = in.getIntValue();</span>
+<span class="nc" id="L151">      in.nextToken();</span>
+<span class="nc" id="L152">      return result;</span>
+    } else {
+<span class="nc" id="L154">      throw error(&quot;int&quot;);</span>
+    }
+  }
+    
+  @Override
+  public long readLong() throws IOException {
+<span class="nc" id="L160">    advance(Symbol.LONG);</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) {</span>
+<span class="nc" id="L162">      long result = in.getLongValue();</span>
+<span class="nc" id="L163">      in.nextToken();</span>
+<span class="nc" id="L164">      return result;</span>
+    } else {
+<span class="nc" id="L166">      throw error(&quot;long&quot;);</span>
+    }
+  }
+
+  @Override
+  public float readFloat() throws IOException {
+<span class="nc" id="L172">    advance(Symbol.FLOAT);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NUMBER_FLOAT) {</span>
+<span class="nc" id="L174">      float result = in.getFloatValue();</span>
+<span class="nc" id="L175">      in.nextToken();</span>
+<span class="nc" id="L176">      return result;</span>
+    } else {
+<span class="nc" id="L178">      throw error(&quot;float&quot;);</span>
+    }
+  }
+
+  @Override
+  public double readDouble() throws IOException {
+<span class="nc" id="L184">    advance(Symbol.DOUBLE);</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NUMBER_FLOAT) {</span>
+<span class="nc" id="L186">      double result = in.getDoubleValue();</span>
+<span class="nc" id="L187">      in.nextToken();</span>
+<span class="nc" id="L188">      return result;</span>
+    } else {
+<span class="nc" id="L190">      throw error(&quot;double&quot;);</span>
+    }
+  }
+    
+  @Override
+  public Utf8 readString(Utf8 old) throws IOException {
+<span class="nc" id="L196">    advance(Symbol.STRING);</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">    if (parser.topSymbol() == Symbol.MAP_KEY_MARKER) {</span>
+<span class="nc" id="L198">      parser.advance(Symbol.MAP_KEY_MARKER);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">      if (in.getCurrentToken() != JsonToken.FIELD_NAME) {</span>
+<span class="nc" id="L200">        throw error(&quot;map-key&quot;);</span>
+      }
+    } else {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">      if (in.getCurrentToken() != JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L204">        throw error(&quot;string&quot;);</span>
+      }
+    }
+<span class="nc" id="L207">    String result = in.getText();</span>
+<span class="nc" id="L208">    in.nextToken();</span>
+<span class="nc" id="L209">    return new Utf8(result);</span>
+  }
+
+  @Override
+  public void skipString() throws IOException {
+<span class="nc" id="L214">    advance(Symbol.STRING);</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">    if (parser.topSymbol() == Symbol.MAP_KEY_MARKER) {</span>
+<span class="nc" id="L216">      parser.advance(Symbol.MAP_KEY_MARKER);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">      if (in.getCurrentToken() != JsonToken.FIELD_NAME) {</span>
+<span class="nc" id="L218">        throw error(&quot;map-key&quot;);</span>
+      }
+    } else {
+<span class="nc bnc" id="L221" title="All 2 branches missed.">      if (in.getCurrentToken() != JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L222">        throw error(&quot;string&quot;);</span>
+      }
+    }
+<span class="nc" id="L225">    in.nextToken();</span>
+<span class="nc" id="L226">  }</span>
+
+  @Override
+  public ByteBuffer readBytes(ByteBuffer old) throws IOException {
+<span class="nc" id="L230">    advance(Symbol.BYTES);</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L232">      byte[] result = readByteArray();</span>
+<span class="nc" id="L233">      in.nextToken();</span>
+<span class="nc" id="L234">      return ByteBuffer.wrap(result);</span>
+    } else {
+<span class="nc" id="L236">      throw error(&quot;bytes&quot;);</span>
+    }
+  }
+
+  private byte[] readByteArray() throws IOException {
+<span class="nc" id="L241">    byte[] result = in.getText().getBytes(CHARSET);</span>
+<span class="nc" id="L242">    return result;</span>
+  }
+
+  @Override
+  public void skipBytes() throws IOException {
+<span class="nc" id="L247">    advance(Symbol.BYTES);</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L249">      in.nextToken();</span>
+    } else {
+<span class="nc" id="L251">      throw error(&quot;bytes&quot;);</span>
+    }
+<span class="nc" id="L253">  }</span>
+
+  private void checkFixed(int size) throws IOException {
+<span class="nc" id="L256">    advance(Symbol.FIXED);</span>
+<span class="nc" id="L257">    Symbol.IntCheckAction top = (Symbol.IntCheckAction) parser.popSymbol();</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">    if (size != top.size) {</span>
+<span class="nc" id="L259">      throw new AvroTypeException(</span>
+        &quot;Incorrect length for fixed binary: expected &quot; +
+        top.size + &quot; but received &quot; + size + &quot; bytes.&quot;);
+    }
+<span class="nc" id="L263">  }</span>
+    
+  @Override
+  public void readFixed(byte[] bytes, int start, int len) throws IOException {
+<span class="nc" id="L267">    checkFixed(len);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L269">      byte[] result = readByteArray();</span>
+<span class="nc" id="L270">      in.nextToken();</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">      if (result.length != len) {</span>
+<span class="nc" id="L272">        throw new AvroTypeException(&quot;Expected fixed length &quot; + len</span>
+            + &quot;, but got&quot; + result.length);
+      }
+<span class="nc" id="L275">      System.arraycopy(result, 0, bytes, start, len);</span>
+<span class="nc" id="L276">    } else {</span>
+<span class="nc" id="L277">      throw error(&quot;fixed&quot;);</span>
+    }
+<span class="nc" id="L279">  }</span>
+
+  @Override
+  public void skipFixed(int length) throws IOException {
+<span class="nc" id="L283">    checkFixed(length);</span>
+<span class="nc" id="L284">    doSkipFixed(length);</span>
+<span class="nc" id="L285">  }</span>
+
+  private void doSkipFixed(int length) throws IOException {
+<span class="nc bnc" id="L288" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L289">      byte[] result = readByteArray();</span>
+<span class="nc" id="L290">      in.nextToken();</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">      if (result.length != length) {</span>
+<span class="nc" id="L292">        throw new AvroTypeException(&quot;Expected fixed length &quot; + length</span>
+            + &quot;, but got&quot; + result.length);
+      }
+<span class="nc" id="L295">    } else {</span>
+<span class="nc" id="L296">      throw error(&quot;fixed&quot;);</span>
+    }
+<span class="nc" id="L298">  }</span>
+
+  @Override
+  protected void skipFixed() throws IOException {
+<span class="nc" id="L302">    advance(Symbol.FIXED);</span>
+<span class="nc" id="L303">    Symbol.IntCheckAction top = (Symbol.IntCheckAction) parser.popSymbol();</span>
+<span class="nc" id="L304">    doSkipFixed(top.size);</span>
+<span class="nc" id="L305">  }</span>
+
+  @Override
+  public int readEnum() throws IOException {
+<span class="nc" id="L309">    advance(Symbol.ENUM);</span>
+<span class="nc" id="L310">    Symbol.EnumLabelsAction top = (Symbol.EnumLabelsAction) parser.popSymbol();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_STRING) {</span>
+<span class="nc" id="L312">      in.getText();</span>
+<span class="nc" id="L313">      int n = top.findLabel(in.getText());</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">      if (n &gt;= 0) {</span>
+<span class="nc" id="L315">        in.nextToken();</span>
+<span class="nc" id="L316">        return n;</span>
+      }
+<span class="nc" id="L318">      throw new AvroTypeException(&quot;Unknown symbol in enum &quot; + in.getText());</span>
+    } else {
+<span class="nc" id="L320">      throw error(&quot;fixed&quot;);</span>
+    }
+  }
+
+  @Override
+  public long readArrayStart() throws IOException {
+<span class="nc" id="L326">    advance(Symbol.ARRAY_START);</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.START_ARRAY) {</span>
+<span class="nc" id="L328">      in.nextToken();</span>
+<span class="nc" id="L329">      return doArrayNext();</span>
+    } else {
+<span class="nc" id="L331">      throw error(&quot;array-start&quot;);</span>
+    }
+  }
+
+  @Override
+  public long arrayNext() throws IOException {
+<span class="nc" id="L337">    advance(Symbol.ITEM_END);</span>
+<span class="nc" id="L338">    return doArrayNext();</span>
+  }
+
+  private long doArrayNext() throws IOException {
+<span class="nc bnc" id="L342" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.END_ARRAY) {</span>
+<span class="nc" id="L343">      parser.advance(Symbol.ARRAY_END);</span>
+<span class="nc" id="L344">      in.nextToken();</span>
+<span class="nc" id="L345">      return 0;</span>
+    } else {
+<span class="nc" id="L347">      return 1;</span>
+    }
+  }
+
+  @Override
+  public long skipArray() throws IOException {
+<span class="nc" id="L353">    advance(Symbol.ARRAY_START);</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.START_ARRAY) {</span>
+<span class="nc" id="L355">      in.skipChildren();</span>
+<span class="nc" id="L356">      in.nextToken();</span>
+<span class="nc" id="L357">      advance(Symbol.ARRAY_END);    </span>
+    } else {
+<span class="nc" id="L359">      throw error(&quot;array-start&quot;);</span>
+    }
+<span class="nc" id="L361">    return 0;</span>
+  }
+
+  @Override
+  public long readMapStart() throws IOException {
+<span class="nc" id="L366">    advance(Symbol.MAP_START);</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.START_OBJECT) {</span>
+<span class="nc" id="L368">      in.nextToken();</span>
+<span class="nc" id="L369">      return doMapNext();</span>
+    } else {
+<span class="nc" id="L371">      throw error(&quot;map-start&quot;);</span>
+    }
+  }
+
+  @Override
+  public long mapNext() throws IOException {
+<span class="nc" id="L377">    advance(Symbol.ITEM_END);</span>
+<span class="nc" id="L378">    return doMapNext();</span>
+  }
+
+  private long doMapNext() throws IOException {
+<span class="nc bnc" id="L382" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.END_OBJECT) {</span>
+<span class="nc" id="L383">      in.nextToken();</span>
+<span class="nc" id="L384">      advance(Symbol.MAP_END);</span>
+<span class="nc" id="L385">      return 0;</span>
+    } else {
+<span class="nc" id="L387">      return 1;</span>
+    }
+  }
+
+  @Override
+  public long skipMap() throws IOException {
+<span class="nc" id="L393">    advance(Symbol.MAP_START);</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.START_OBJECT) {</span>
+<span class="nc" id="L395">      in.skipChildren();</span>
+<span class="nc" id="L396">      in.nextToken();</span>
+<span class="nc" id="L397">      advance(Symbol.MAP_END);    </span>
+    } else {
+<span class="nc" id="L399">      throw error(&quot;map-start&quot;);</span>
+    }
+<span class="nc" id="L401">    return 0;</span>
+  }
+
+  @Override
+  public int readIndex() throws IOException {
+<span class="nc" id="L406">    advance(Symbol.UNION);</span>
+<span class="nc" id="L407">    Symbol.Alternative a = (Symbol.Alternative) parser.popSymbol();</span>
+    
+    String label;
+<span class="nc bnc" id="L410" title="All 2 branches missed.">    if (in.getCurrentToken() == JsonToken.VALUE_NULL) {</span>
+<span class="nc" id="L411">      label = &quot;null&quot;;</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">    } else if (in.getCurrentToken() == JsonToken.START_OBJECT &amp;&amp;</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">               in.nextToken() == JsonToken.FIELD_NAME) {</span>
+<span class="nc" id="L414">      label = in.getText();</span>
+<span class="nc" id="L415">      in.nextToken();</span>
+<span class="nc" id="L416">      parser.pushSymbol(Symbol.UNION_END);</span>
+    } else {
+<span class="nc" id="L418">      throw error(&quot;start-union&quot;);</span>
+    }
+<span class="nc" id="L420">    int n = a.findLabel(label);</span>
+<span class="nc bnc" id="L421" title="All 2 branches missed.">    if (n &lt; 0)</span>
+<span class="nc" id="L422">      throw new AvroTypeException(&quot;Unknown union branch &quot; + label);</span>
+<span class="nc" id="L423">    parser.pushSymbol(a.getSymbol(n));</span>
+<span class="nc" id="L424">    return n;</span>
+  }
+
+  @Override
+  public Symbol doAction(Symbol input, Symbol top) throws IOException {
+<span class="nc bnc" id="L429" title="All 2 branches missed.">    if (top instanceof Symbol.FieldAdjustAction) {</span>
+<span class="nc" id="L430">      Symbol.FieldAdjustAction fa = (Symbol.FieldAdjustAction) top;</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">      if (in.getCurrentToken() == JsonToken.FIELD_NAME) {</span>
+<span class="nc" id="L432">        String fn = in.getCurrentName();</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        if (fa.fname.equals(fn)) {</span>
+<span class="nc" id="L434">          in.nextToken();</span>
+<span class="nc" id="L435">          return null;</span>
+        } else {
+<span class="nc" id="L437">          throw new AvroTypeException(&quot;Expected field name &quot; + fa.fname +</span>
+<span class="nc" id="L438">              &quot; got &quot; + in.getCurrentName());</span>
+        }
+      }
+<span class="nc bnc" id="L441" title="All 2 branches missed.">    } else if (top == Symbol.RECORD_START) {</span>
+<span class="nc bnc" id="L442" title="All 2 branches missed.">      if (in.getCurrentToken() == JsonToken.START_OBJECT) {</span>
+<span class="nc" id="L443">        in.nextToken();</span>
+      } else {
+<span class="nc" id="L445">        throw error(&quot;record-start&quot;);</span>
+      }
+<span class="nc bnc" id="L447" title="All 4 branches missed.">    } else if (top == Symbol.RECORD_END || top == Symbol.UNION_END) {</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">      if (in.getCurrentToken() == JsonToken.END_OBJECT) {</span>
+<span class="nc" id="L449">        in.nextToken();</span>
+      } else {
+<span class="nc bnc" id="L451" title="All 2 branches missed.">        throw error(top == Symbol.RECORD_END ? &quot;record-end&quot; : &quot;union-end&quot;);</span>
+      }
+    } else {
+<span class="nc" id="L454">      throw new AvroTypeException(&quot;Unknown action symbol &quot; + top);</span>
+    }
+<span class="nc" id="L456">    return null;</span>
+  }
+
+  private AvroTypeException error(String type) {
+<span class="nc" id="L460">    return new AvroTypeException(&quot;Expected &quot; + type +</span>
+<span class="nc" id="L461">        &quot;. Got &quot; + in.getCurrentToken());</span>
+  }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

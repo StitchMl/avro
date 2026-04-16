@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReflectDatumWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.reflect</a> &gt; <span class="el_source">ReflectDatumWriter.java</span></div><h1>ReflectDatumWriter.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.reflect;
+
+import java.lang.reflect.Array;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Collection;
+
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.io.Encoder;
+
+/**
+ * {@link org.apache.avro.io.DatumWriter DatumWriter} for existing classes
+ * via Java reflection.
+ */
+public class ReflectDatumWriter&lt;T&gt; extends SpecificDatumWriter&lt;T&gt; {
+  public ReflectDatumWriter() {
+<span class="nc" id="L35">    this(ReflectData.get());</span>
+<span class="nc" id="L36">  }</span>
+
+  public ReflectDatumWriter(Class&lt;T&gt; c) {
+<span class="nc" id="L39">    this(c, ReflectData.get());</span>
+<span class="nc" id="L40">  }</span>
+
+  public ReflectDatumWriter(Class&lt;T&gt; c, ReflectData data) {
+<span class="nc" id="L43">    this(data.getSchema(c), data);</span>
+<span class="nc" id="L44">  }</span>
+
+  public ReflectDatumWriter(Schema root) {
+<span class="nc" id="L47">    this(root, ReflectData.get());</span>
+<span class="nc" id="L48">  }</span>
+
+  protected ReflectDatumWriter(Schema root, ReflectData reflectData) {
+<span class="nc" id="L51">    super(root, reflectData);</span>
+<span class="nc" id="L52">  }</span>
+  
+  protected ReflectDatumWriter(ReflectData reflectData) {
+<span class="nc" id="L55">    super(reflectData);</span>
+<span class="nc" id="L56">  }</span>
+  
+  @Override
+  @SuppressWarnings(&quot;unchecked&quot;)
+  protected long getArraySize(Object array) {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">    if (array instanceof Collection)</span>
+<span class="nc" id="L62">      return ((Collection)array).size();</span>
+<span class="nc" id="L63">    return Array.getLength(array);</span>
+  }
+
+  @Override
+  @SuppressWarnings(&quot;unchecked&quot;)
+  protected Iterator&lt;Object&gt; getArrayElements(final Object array) {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">    if (array instanceof Collection)</span>
+<span class="nc" id="L70">      return ((Collection&lt;Object&gt;)array).iterator();</span>
+<span class="nc" id="L71">    return new Iterator&lt;Object&gt;() {</span>
+<span class="nc" id="L72">      private int i = 0;</span>
+<span class="nc" id="L73">      private final int length = Array.getLength(array);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">      public boolean hasNext() { return i &lt; length; }</span>
+<span class="nc" id="L75">      public Object next() { return Array.get(array, i++); }</span>
+<span class="nc" id="L76">      public void remove() { throw new UnsupportedOperationException(); }</span>
+    };
+  }
+
+  @Override
+  protected void writeString(Schema schema, Object datum, Encoder out)
+    throws IOException {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">    if (schema.getProp(ReflectData.CLASS_PROP) != null) // Stringable annotated</span>
+<span class="nc" id="L84">      datum = datum.toString();                         // call toString()</span>
+<span class="nc" id="L85">    writeString(datum, out);</span>
+<span class="nc" id="L86">  }</span>
+
+  @Override
+  protected void writeBytes(Object datum, Encoder out) throws IOException {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">    if (datum instanceof byte[])</span>
+<span class="nc" id="L91">      out.writeBytes((byte[])datum);</span>
+    else
+<span class="nc" id="L93">      super.writeBytes(datum, out);</span>
+<span class="nc" id="L94">  }</span>
+
+  @Override
+  protected void write(Schema schema, Object datum, Encoder out)
+    throws IOException {
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    if (datum instanceof Short)</span>
+<span class="nc" id="L100">      datum = ((Short)datum).intValue();</span>
+    try {
+<span class="nc" id="L102">      super.write(schema, datum, out);</span>
+<span class="nc" id="L103">    } catch (NullPointerException e) {            // improve error message</span>
+<span class="nc" id="L104">      NullPointerException result =</span>
+<span class="nc" id="L105">        new NullPointerException(&quot;in &quot;+schema.getFullName()+&quot; &quot;+e.getMessage());</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">      result.initCause(e.getCause() == null ? e : e.getCause());</span>
+<span class="nc" id="L107">      throw result;</span>
+<span class="nc" id="L108">    }</span>
+<span class="nc" id="L109">  }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

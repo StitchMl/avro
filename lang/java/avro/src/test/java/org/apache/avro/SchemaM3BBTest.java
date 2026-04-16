@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 /**
@@ -31,7 +30,7 @@ public class SchemaM3BBTest {
    * @return a field instance ready to be attached to a record schema
    */
   private static Schema.Field field(String name, Schema schema) {
-    return new Schema.Field(name, schema, null, (JsonNode) null);
+    return new Schema.Field(name, schema, null, null);
   }
 
   /**

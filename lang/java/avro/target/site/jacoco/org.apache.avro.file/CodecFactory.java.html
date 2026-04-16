@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CodecFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.file</a> &gt; <span class="el_source">CodecFactory.java</span></div><h1>CodecFactory.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.file;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.Deflater;
+
+import org.apache.avro.AvroRuntimeException;
+
+/** Encapsulates the ability to specify and configure a compression codec. */
+<span class="nc" id="L27">public abstract class CodecFactory {</span>
+  /** Null codec, for no compression. */
+  public static CodecFactory nullCodec() { 
+<span class="nc" id="L30">    return NullCodec.OPTION; </span>
+  };
+  
+  /** Deflate codec, with specific compression.
+   * compressionLevel should be between 1 and 9, inclusive. */
+  public static CodecFactory deflateCodec(int compressionLevel) { 
+<span class="nc" id="L36">    return new DeflateCodec.Option(compressionLevel); </span>
+  };
+  
+  /** Snappy codec.*/
+  public static CodecFactory snappyCodec() { 
+<span class="nc" id="L41">    return new SnappyCodec.Option(); </span>
+  };
+  
+  /** Creates internal Codec. */
+  protected abstract Codec createInstance();
+  
+  /** Mapping of string names (stored as metas) and codecs. 
+   * Note that currently options (like compression level)
+   * are not recoverable. */
+<span class="nc" id="L50">  private static final Map&lt;String, CodecFactory&gt; REGISTERED = </span>
+    new HashMap&lt;String, CodecFactory&gt;();
+
+  private static final int DEFAULT_DEFLATE_LEVEL = Deflater.DEFAULT_COMPRESSION;
+
+  static {
+<span class="nc" id="L56">    addCodec(&quot;null&quot;, nullCodec());</span>
+<span class="nc" id="L57">    addCodec(&quot;deflate&quot;, deflateCodec(DEFAULT_DEFLATE_LEVEL));</span>
+<span class="nc" id="L58">    addCodec(&quot;snappy&quot;, snappyCodec());</span>
+<span class="nc" id="L59">  }</span>
+
+  /** Maps a codec name into a CodecOption. */
+  public static CodecFactory fromString(String s) {
+<span class="nc" id="L63">    CodecFactory o = REGISTERED.get(s);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">    if (o == null) {</span>
+<span class="nc" id="L65">      throw new AvroRuntimeException(&quot;Unrecognized codec: &quot; + s);</span>
+    }
+<span class="nc" id="L67">    return o;</span>
+  }
+  
+  /** Adds a new codec implementation.  If name already had
+   * a codec associated with it, returns the previous codec. */
+  public static CodecFactory addCodec(String name, CodecFactory c) {
+<span class="nc" id="L73">    return REGISTERED.put(name, c);</span>
+  }
+  
+  @Override
+  public String toString() {
+<span class="nc" id="L78">    Codec instance = this.createInstance();</span>
+<span class="nc" id="L79">    return instance.toString();</span>
+  }
+  
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
