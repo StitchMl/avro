@@ -1,0 +1,103 @@
+﻿COMMAND: mvn -f C:\Users\matte\IdeaProjects\avro\lang\java\avro\pom.xml -DskipTests clean test
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot
+TIMESTAMP: 2026-04-16T13:15:12.9931659+02:00
+
+[INFO] Scanning for projects...
+
+[INFO] 
+
+[INFO] ------------------------< org.apache.avro:avro >------------------------
+
+[INFO] Building Apache Avro 1.5.4
+
+[INFO]   from pom.xml
+
+[INFO] --------------------------------[ jar ]---------------------------------
+
+[INFO] 
+
+[INFO] --- clean:2.4.1:clean (default-clean) @ avro ---
+
+[INFO] Deleting C:\Users\matte\IdeaProjects\avro\lang\java\avro\target
+
+[INFO] 
+
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ avro ---
+
+[INFO] argLine set to -javaagent:C:\\Users\\matte\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\matte\\IdeaProjects\\avro\\lang\\java\\avro\\target\\jacoco.exec
+
+[INFO] 
+
+[INFO] --- remote-resources:1.1:process (default) @ avro ---
+
+[INFO] Setting property: classpath.resource.loader.class => 'org.codehaus.plexus.velocity.ContextClassLoaderResourceLoader'.
+
+[INFO] Setting property: velocimacro.messages.on => 'false'.
+
+[INFO] Setting property: resource.loader => 'classpath'.
+
+[INFO] Setting property: resource.manager.logwhenfound => 'false'.
+
+[INFO] 
+
+[INFO] --- resources:2.4:resources (default-resources) @ avro ---
+
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+
+[INFO] skip non existing resourceDirectory C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\main\resources
+
+[INFO] Copying 3 resources
+
+[INFO] 
+
+[INFO] --- compiler:2.3.2:compile (default-compile) @ avro ---
+
+[INFO] Compiling 74 source files to C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\classes
+
+[INFO] 
+
+[INFO] --- resources:2.4:testResources (default-testResources) @ avro ---
+
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+
+[INFO] skip non existing resourceDirectory C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\test\resources
+
+[INFO] Copying 3 resources
+
+[INFO] 
+
+[INFO] --- compiler:2.3.2:testCompile (default-testCompile) @ avro ---
+
+[INFO] Compiling 32 source files to C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\test-classes
+
+[INFO] 
+
+[INFO] --- paranamer:2.3:generate (paranamer-test) @ avro ---
+
+[INFO] Generating parameter names from C:\Users\matte\IdeaProjects\avro\lang\java\avro\src\test\java to C:\Users\matte\IdeaProjects\avro\lang\java\avro\target\test-classes
+
+[INFO] 
+
+[INFO] --- surefire:2.7.2:test (default-test) @ avro ---
+
+[INFO] Tests are skipped.
+
+[INFO] 
+
+[INFO] --- checkstyle:2.6:check (checkstyle-check) @ avro ---
+
+[INFO] 
+
+[INFO] ------------------------------------------------------------------------
+
+[INFO] BUILD SUCCESS
+
+[INFO] ------------------------------------------------------------------------
+
+[INFO] Total time:  4.726 s
+
+[INFO] Finished at: 2026-04-16T13:15:18+02:00
+
+[INFO] ------------------------------------------------------------------------
+
+
