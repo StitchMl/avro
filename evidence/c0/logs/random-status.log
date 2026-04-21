@@ -1,0 +1,7 @@
+COMMAND: SchemaM3RandomTest.java intentionally not committed on m3-c0-schema
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot
+TIMESTAMP: 2026-04-21T10:00:00+02:00
+
+SUITE_PRESENT: False
+SUITE_POLICY: Randoop output treated as exploratory only (see evidence/c0/randoop/README.md)
+EXIT_CODE: -1

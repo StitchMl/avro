@@ -1,0 +1,37 @@
+name: m3-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Build and test module
+        run: mvn -f lang/java/avro/pom.xml clean test jacoco:report
+
+      - name: Run PIT mutation analysis
+        run: mvn -f lang/java/avro/pom.xml test-compile org.pitest:pitest-maven:mutationCoverage
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: lang/java/avro/target/site/jacoco
+
+      - name: Upload PIT report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pit-report
+          path: lang/java/avro/target/pit-reports

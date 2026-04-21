@@ -19,6 +19,7 @@ Available reports:
 - `mutation-report.md`
 - `smell-report.md`
 - `loc-complexity.md`
+- `randoop/`
 - `run-status.properties`
 - `logs/` raw command logs
 
