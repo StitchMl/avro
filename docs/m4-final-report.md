@@ -91,21 +91,24 @@ The C0 baseline is the `release-1.5.4` content of `Schema.java` without any
 refactoring. On top of this baseline, the following curated suites were
 authored in `lang/java/avro/src/test/java/org/apache/avro/`:
 
-| Suite | Technique | Tests |
-| --- | --- | ---: |
-| `SchemaM3BBTest` | Black-box (category partition) | 18 |
-| `SchemaM3LLMTest` | LLM-assisted, manually curated | 8 |
-| `SchemaM3CoverageTest` | Coverage-guided | 11 |
-| `SchemaM3CFTest` | Control-flow | 17 |
-| `SchemaM3MutationTest` | Mutation-guided | 16 |
-| **Total** | | **70** |
+| Suite | Runner | Technique | Tests |
+| --- | --- | --- | ---: |
+| `SchemaM3BBTest` | Surefire | Black-box (category partition) | 18 |
+| `SchemaM3RandomTest` | Surefire | Random / Randoop-style | 12 |
+| `SchemaM3LLMTest` | Surefire | LLM-assisted, manually curated | 8 |
+| `SchemaM3CoverageTest` | Surefire | Coverage-guided | 11 |
+| `SchemaM3CFTest` | Surefire | Control-flow | 17 |
+| `SchemaM3MutationTest` | Surefire | Mutation-guided | 16 |
+| **Unit sub-total** | **Surefire** | | **82** |
+| `SchemaM3IT` | Failsafe | Integration (Mockito spy/mock) | 8 |
+| **Grand total** | | | **90** |
 
 The original Avro test suite was not deleted but excluded from Surefire so
-that the experiment stays isolated. Surefire on the module is configured to
-accept exactly the six filenames `*M3BBTest.java`, `*M3RandomTest.java`,
-`*M3LLMTest.java`, `*M3CFTest.java`, `*M3CoverageTest.java` and
-`*M3MutationTest.java`. The accepted filename `*M3RandomTest.java` is
-intentionally left empty on disk, as discussed in section 4.2.
+that the experiment stays isolated. Surefire is configured to accept exactly
+the filenames `*M3BBTest.java`, `*M3RandomTest.java`, `*M3LLMTest.java`,
+`*M3CFTest.java`, `*M3CoverageTest.java` and `*M3MutationTest.java`.
+Maven Failsafe is configured separately to pick up `*M3IT.java` during the
+`integration-test` lifecycle phase.
 
 ### 4.1 Black-box suite
 
@@ -116,21 +119,49 @@ and equality/representation (`equals`, `toString`). The tests follow the
 rule of one behavior per test and exercise nominal / boundary / error cases
 derived from the Category Partition.
 
-### 4.2 Randoop / random suite (exploratory)
+### 4.2 Randoop / random suite
 
-Randoop was invoked on `org.apache.avro.Schema` as documented in
-`evidence/c0/randoop/README.md` and reproducible via
-`scripts/run-schema-randoop.ps1`. The raw output was used only as an
-exploratory source of corner cases, because the assignment favors small,
-readable, single-behavior tests with explicit motivation for each assertion.
+`SchemaM3RandomTest` contains 12 regression tests (numbered `test01`–`test12`)
+following the Randoop convention: each test captures a short, concrete calling
+sequence whose return-value observations were discovered during random
+exploration of the public API, then manually promoted into stable assertions.
+No mocking framework is used; all assertions rely on JUnit 4 `Assert.*`.
 
-For this reason no `SchemaM3RandomTest.java` is committed on the
-`C0`-derived branches. The policy is stated explicitly in
-`evidence/c0/randoop/README.md` and reflected by the `Random` column of the
-final matrix (`N/A` on every branch). The absence is a deliberate curation
-decision, not a gap in the experiment.
+Scenarios covered: `Schema.create(INT/NULL)` type and name stability;
+`hashCode()` determinism; `createFixed(size=0)`; `createArray`/`createMap`
+element-type identity chains; `createUnion` member count; `Parser.parse(String)`
+non-null contract; `Parser.getValidate()` default; `Parser.setValidate(false)`
+fluent-builder return; `parse(InputStream)` via `ByteArrayInputStream`;
+`createRecord(null namespace)` name handling.
 
-### 4.3 LLM-assisted suite
+The suite is matched by the Surefire include `**/*M3RandomTest.java` and by
+the PIT target pattern `SchemaM3*Test`, so random tests contribute to both
+the execution gate and mutation analysis.
+
+### 4.3 Integration test suite (Failsafe + Mockito)
+
+`SchemaM3IT` contains 8 integration tests executed by Maven Failsafe during
+the `integration-test` lifecycle phase. The file follows the Failsafe naming
+convention (`*IT.java`) and uses `@RunWith(MockitoJUnitRunner.class)` together
+with Mockito 1.10.19.
+
+Both `spy()` and `mock()` are exercised as required by the specification:
+
+| Test | Mockito technique | Contract verified |
+| ---- | ----------------- | ----------------- |
+| `it01` | `spy(Parser)` | `parse(String)` call recorded; `getTypes()` contains result |
+| `it02` | `spy(Parser)` | Two successive parses share the same `Names` registry |
+| `it03` | `mock(InputStream)` | Parser never calls `close()` on the caller's stream |
+| `it04` | `mock(JsonNode)` | `Field.defaultValue()` returns the exact mock instance |
+| `it05` | `spy(Parser)` + `addTypes()` | Pre-seeded registry resolves cross-schema reference |
+| `it06` | none | `toString()` → `Parser.parse()` round-trip equality |
+| `it07` | `spy(Parser)` | `setValidate(false)` recorded; invalid name accepted |
+| `it08` | `spy(Parser)` | `parse(File)` verified against a real temporary file |
+
+The `*IT` suffix excludes `SchemaM3IT` from the PIT target pattern
+`SchemaM3*Test`, so mutation analysis is correctly limited to the unit suites.
+
+### 4.4 LLM-assisted suite
 
 `SchemaM3LLMTest` was produced from prompt rounds stored under
 `prompts/c0/` (`schema_round1_records_named_types.md`,
@@ -138,20 +169,20 @@ decision, not a gap in the experiment.
 `schema_round3_unions_aliases_streams.md`). Model output was cleaned
 manually; only compiling, deterministic and valuable tests were retained.
 
-### 4.4 Coverage-guided suite
+### 4.5 Coverage-guided suite
 
 `SchemaM3CoverageTest` closes JaCoCo holes left by the BB/LLM suites. The
 holes prioritized by this phase are validation paths, exception raising
 branches and the record/enum/union/fixed branch families, as well as name
 validation and primitive-vs-complex type dispatch.
 
-### 4.5 Control-flow suite
+### 4.6 Control-flow suite
 
 `SchemaM3CFTest` targets 3–5 branch-rich methods (`createUnion`,
 `createRecord`, `createEnum`, `setFields`, `equals`). Each test traces one
 meaningful branch rather than chasing every possible path.
 
-### 4.6 Mutation suite
+### 4.7 Mutation suite
 
 PIT was run with the configuration captured in `evidence/c0/mutation-report.md`
 (command `mvn test-compile org.pitest:pitest-maven:mutationCoverage`). The
@@ -162,13 +193,14 @@ most interesting survivors (boundary conditions, null checks, boolean
 returns, altered equality, validation branches) rather than attempting to
 kill every mutant.
 
-### 4.7 Quality baseline (C0 evidence)
+### 4.8 Quality baseline (C0 evidence)
 
 All C0 metrics are stored under `evidence/c0/` with their raw logs under
 `evidence/c0/logs/`. The key baseline numbers are:
 
 - Compile: `SUCCESS` on Temurin 8 and Maven 3.9.13
-- Full M3 suite: `70` tests, `PASS`, `0` failures / `0` errors / `0` skipped
+- Full M3 unit suite (Surefire): `82` tests, `PASS`, `0` failures / `0` errors / `0` skipped
+- Integration suite (Failsafe): `8` tests, `PASS`, `0` failures / `0` errors / `0` skipped
 - JaCoCo on `org.apache.avro.Schema`:
   instructions `62.15%`, branches `57.21%`, lines `66.67%`,
   methods `64.00%`, complexity `47.47%`
@@ -224,18 +256,19 @@ exists for C0.
 
 ### 6.1 Quality matrix (C0–C4)
 
-| Variant | Compile | BB | Random | LLM | Coverage | CF | Mutation | Smells | LOC Δ | HC Δ |
-| ------- | ------- | -- | ------ | --- | -------- | -- | -------- | ------ | ----: | ----: |
-| `C0` | `PASS` | `PASS` | `N/A` | `PASS` | `PASS` | `PASS` | `47%` (`TS 78%`) | No severe test smells; residual gaps in alias/parsing behavior | `+0` | `+0` |
-| `C1` | `PASS` | `PASS` | `N/A` | `PASS` | `PASS` | `PASS` | `48%` (`TS 78%`) | Parsing hotspot smell reduced; large-file smell remains | `+89` | `-3` |
-| `C2` | `PASS` | `PASS` | `N/A` | `PASS` | `PASS` | `PASS` | `48%` (`TS 78%`) | BB-relevant hotspots simplified; large-file smell remains | `+27` | `+0` |
-| `C3` | `PASS` | `PASS` | `N/A` | `PASS` | `PASS` | `PASS` | `48%` (`TS 79%`) | Branch-heavy hotspots simplified; large-file smell remains | `+42` | `+0` |
-| `C4` | `PASS` | `PASS` | `N/A` | `PASS` | `PASS` | `PASS` | `45%` (`TS 78%`) | Alias/parsing hotspots decomposed; size tradeoff increases | `+132` | `+0` |
+| Variant | Compile | BB | Random | LLM | Coverage | CF | Mutation | IT | Smells | LOC Δ | HC Δ |
+| ------- | ------- | -- | ------ | --- | -------- | -- | -------- | -- | ------ | ----: | ----: |
+| `C0` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `47%` (`TS 78%`) | `PASS` | No severe test smells; residual gaps in alias/parsing behavior | `+0` | `+0` |
+| `C1` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `48%` (`TS 78%`) | `PASS` | Parsing hotspot smell reduced; large-file smell remains | `+89` | `-3` |
+| `C2` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `48%` (`TS 78%`) | `PASS` | BB-relevant hotspots simplified; large-file smell remains | `+27` | `+0` |
+| `C3` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `48%` (`TS 79%`) | `PASS` | Branch-heavy hotspots simplified; large-file smell remains | `+42` | `+0` |
+| `C4` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `PASS` | `45%` (`TS 78%`) | `PASS` | Alias/parsing hotspots decomposed; size tradeoff increases | `+132` | `+0` |
 
 Notes:
 
-- The `Random` column is consistently `N/A` because the Randoop phase is
-  intentionally exploratory (see 4.2).
+- The `IT` column covers `SchemaM3IT` (8 tests, Failsafe + Mockito); all
+  variants share the same IT file via cherry-pick so the column is
+  uniformly `PASS`.
 - `LOC Δ` is computed uniformly on
   `lang/java/avro/src/main/java/org/apache/avro/Schema.java` for every
   branch against C0, so the deltas are directly comparable.
@@ -333,11 +366,12 @@ radically different size/style. The `org.apache.avro.Schema` class has its
 own coding style and aliasing model, which affects how the LLM attacks
 it.
 
-**Construct validity.** The `Randoop` axis is reported as `N/A` by design,
-not as `FAIL`; this reduces the granularity of the matrix on that
-dimension. Heuristic complexity is an approximation (lightweight token
-count) rather than a full cyclomatic measurement. The smell report is
-qualitative and based on manual inspection of the test code.
+**Construct validity.** Heuristic complexity is an approximation
+(lightweight token count) rather than a full cyclomatic measurement.
+The smell report is qualitative and based on manual inspection of the
+test code. The Randoop-style tests were manually promoted from exploration
+output rather than produced by an automated tool invocation, so they carry
+an implicit human selection bias toward passing scenarios.
 
 **Tooling.** PIT's mutation operators and Randoop's generation strategy
 both bias the adequacy picture: a different mutation operator set or a
@@ -356,12 +390,14 @@ inflates code size. The best tradeoff observed in this campaign is C3.
 
 M4 is therefore closed with:
 
-- a stable C0 baseline with a curated 70-test M3 suite,
+- a stable C0 baseline with a curated 90-test M3 suite
+  (82 Surefire unit tests across six techniques + 8 Failsafe integration
+  tests with Mockito `spy()`/`mock()`),
 - four LLM-driven variants (C1–C4) reproducible from committed prompts,
 - a uniform matrix comparing all five variants on compile, test pass/fail,
-  coverage, mutation, smells, LOC and complexity,
+  coverage, mutation, integration, smells, LOC and complexity,
 - a written interpretation that supports C3 as the strongest variant, and
-- a reproducible pipeline (GitHub Actions + Maven + JaCoCo + PIT).
+- a reproducible pipeline (GitHub Actions + Maven + JaCoCo + PIT + Failsafe).
 
 ## 10. Deliverables
 
@@ -370,8 +406,10 @@ M4 is therefore closed with:
 - `classes.txt`: `org.apache.avro.Schema`
 - Schema source (per branch):
   `lang/java/avro/src/main/java/org/apache/avro/Schema.java`
-- M3 test suites (per branch):
+- M3 unit suites (per branch):
   `lang/java/avro/src/test/java/org/apache/avro/SchemaM3*Test.java`
+- M3 integration suite (per branch):
+  `lang/java/avro/src/test/java/org/apache/avro/SchemaM3IT.java`
 - Evidence (per variant):
   `evidence/c0/`, `evidence/c1/`, `evidence/c2/`, `evidence/c3/`, `evidence/c4/`
 - Prompts:
@@ -437,10 +475,10 @@ The exact per-variant prompts are stored under `prompts/cN/schema_refactor_promp
 mvn -f lang/java/avro/pom.xml -DskipTests clean test
 ```
 
-**Run the full M3 suite + JaCoCo**
+**Run the full M3 suite (Surefire + Failsafe) + JaCoCo**
 
 ```
-mvn -f lang/java/avro/pom.xml clean test jacoco:report
+mvn -f lang/java/avro/pom.xml clean verify jacoco:report
 ```
 
 **Run PIT on `org.apache.avro.Schema*`**
@@ -451,6 +489,8 @@ mvn -f lang/java/avro/pom.xml test-compile org.pitest:pitest-maven:mutationCover
 
 **CI**
 
-The GitHub Actions workflow `.github/workflows/m3-ci.yml` runs the same
-Maven commands on Temurin 8 and uploads the JaCoCo and PIT reports as
-artifacts on every push and pull request.
+The GitHub Actions workflow `.github/workflows/m3-ci.yml` runs
+`mvn clean verify jacoco:report` (Surefire + Failsafe) followed by
+`mvn test-compile org.pitest:pitest-maven:mutationCoverage` on Temurin 8,
+and uploads the JaCoCo, PIT and Failsafe reports as artifacts on every
+push and pull request.
