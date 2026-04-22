@@ -16,11 +16,18 @@ jobs:
           java-version: '8'
           cache: maven
 
-      - name: Build and test module
-        run: mvn -f lang/java/avro/pom.xml clean test jacoco:report
+      - name: Build, unit-test (Surefire) and integration-test (Failsafe) module
+        run: mvn -f lang/java/avro/pom.xml clean verify jacoco:report
 
       - name: Run PIT mutation analysis
         run: mvn -f lang/java/avro/pom.xml test-compile org.pitest:pitest-maven:mutationCoverage
+
+      - name: Upload Failsafe report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failsafe-report
+          path: lang/java/avro/target/failsafe-reports
 
       - name: Upload JaCoCo report
         if: always()
