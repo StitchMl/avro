@@ -7,21 +7,26 @@ This directory documents the exploratory random-testing activity performed on
 
 - Target class: `org.apache.avro.Schema`
 - Java runtime: Temurin 8
-- Strategy: generate a raw regression suite with Randoop, inspect it manually,
-  and retain only the information useful for human-authored follow-up tests
+- Strategy: run Randoop on the target class, inspect the output manually, and
+  promote only readable, single-behavior discoveries into the committed
+  regression suite `SchemaM3RandomTest.java`
 
-## Deliverable policy
+## Deliverable
 
-The random suite is intentionally **not** part of the final accepted regression
-deliverable because the assignment discussion favored:
+`SchemaM3RandomTest.java` (12 tests, `test01`–`test12`) is committed on all
+C0-derived branches and executed by Maven Surefire under the include pattern
+`**/*M3RandomTest.java`.
 
-- small tests
-- readable tests
+The tests follow Randoop's naming convention and capture concrete calling
+sequences whose return-value observations were discovered during random
+exploration. Each retained test satisfies the following curation criteria:
+
+- small (3–6 lines of test body)
+- readable (descriptive JavaDoc)
 - one behavior per test
 - explicit motivation for every retained assertion
 
-Therefore the random phase is treated as an exploratory source of corner cases,
-not as an opaque suite to ship unchanged.
+Raw Randoop output that did not meet these criteria was discarded.
 
 ## Reproducibility artifacts
 
@@ -37,11 +42,12 @@ not as an opaque suite to ship unchanged.
 2. Run Randoop on `org.apache.avro.Schema` only.
 3. Review generated tests manually.
 4. Discard unreadable, redundant or unstable tests.
-5. Translate only valuable discoveries into human-written tests such as
-   `SchemaM3CoverageTest` or `SchemaM3MutationTest`.
+5. Promote only valuable discoveries into `SchemaM3RandomTest.java`.
 
 ## Interpretation
 
-The absence of a checked-in `SchemaM3RandomTest.java` in the final C0-derived
-branches is a deliberate curation decision, not evidence that the random phase
-was skipped.
+The number of committed tests (12) is smaller than a typical raw Randoop batch
+because quality was preferred over quantity. The exploration exercised a wider
+space of calling sequences; the committed suite retains only the observations
+that stabilise regression-relevant behavior and can be maintained as
+readable unit tests.

@@ -1,70 +1,124 @@
-# Smell Report
+# Smell Report — C0 Baseline
+
+---
+
+## Part 1 — Production class: `org.apache.avro.Schema`
+
+Scope: `lang/java/avro/src/main/java/org/apache/avro/Schema.java`  
+Release baseline: `release-1.5.4`  
+Source of metrics: class-level dataset from Milestones 1–2 (`avro_dataset_class.csv`)
+
+### Static metrics at C0
+
+| Metric | Value |
+| --- | ---: |
+| LOC | 1359 |
+| StmtCount | 392 |
+| Cyclomatic complexity | 136 |
+| Cognitive complexity | 65 |
+| MaxNestingDepth | 9 |
+| CodeSmells (total) | 84 |
+| NSmells | 87 |
+| SmellDensity | 0.0640 |
+
+### Smell flags
+
+| Smell | Present |
+| --- | --- |
+| `isLongMethod` | **yes** |
+| `isGodClass` | **yes** |
+| `isFeatureEnvy` | **yes** |
+| `isDuplicatedCode` | no |
+
+### Commentary
+
+`Schema.java` exhibits three active smell flags at the C0 baseline:
+
+- **God class** — The class manages schema construction, validation, aliasing,
+  parsing, serialization, and named-type registration in a single compilation
+  unit. All four variant-prompt contexts (C1–C4) target this entanglement.
+- **Long method** — `parse(JsonNode, Names)` and several factory helpers
+  concentrate multiple responsibilities in long method bodies with high
+  cyclomatic complexity. The parsing subsystem alone accounts for a
+  disproportionate share of the 136-point cyclomatic total.
+- **Feature envy** — Several inner-class methods access fields of `Names`
+  and `Field` more heavily than their own class state, suggesting misplaced
+  responsibilities.
+
+These findings directly motivated the four LLM-assisted refactoring variants
+(C1–C4). The smell diagnostics were supplied verbatim to the LLM as context
+in the C1 prompt so that the model had an explicit quality target beyond
+"preserve behavior".
+
+---
+
+## Part 2 — Test suites: M3 regression code
 
 Scope reviewed:
 
 - `SchemaM3BBTest.java`
-- `SchemaM3CFTest.java`
-- `SchemaM3CoverageTest.java`
+- `SchemaM3RandomTest.java`
 - `SchemaM3LLMTest.java`
+- `SchemaM3CoverageTest.java`
+- `SchemaM3CFTest.java`
 - `SchemaM3MutationTest.java`
+- `SchemaM3IT.java`
 
 Review method:
 
-- Manual inspection of current suites
+- Manual inspection of all suites
 - Cross-check with file size and heuristic complexity metrics
 - Verification of class-level and method-level JavaDoc presence
 
-## Findings
-
 ### No god class / god file smell detected
 
-- The largest current suite is `SchemaM3CFTest.java` at `302` physical lines.
-- The largest code footprint is `SchemaM3BBTest.java` at `137` non-comment code
-  lines.
-- The current size distribution remains compatible with focused suites rather
-  than monolithic test files.
+- The largest suite is `SchemaM3CFTest.java` at 302 physical lines.
+- No suite file exceeds a level compatible with a god-file smell.
 
 ### No severe assertion roulette detected
 
 - Test names are explicit and requirement-oriented.
-- Assertions are generally grouped around a single behavioral property.
-- Multi-assert tests are used only when they describe one coherent public
-  contract, for example schema construction followed by field exposure checks.
+- Assertions are grouped around a single behavioral property per test.
+- Multi-assert tests describe one coherent public contract.
 
 ### No severe mystery guest smell detected
 
-- There is no hidden shared fixture or opaque external dependency.
-- The few file-based interactions are created locally inside the test body and
-  remain fully visible to the reader.
+- No hidden shared fixture or opaque external dependency.
+- File-based interactions (e.g., `it08` in `SchemaM3IT`) create their
+  resources locally inside the test body.
 
 ### Low fixture coupling
 
-- The suites rely on small helper methods instead of broad mutable fixtures.
-- There is no class-level mutable setup that obscures the state under test.
+- Suites rely on small helpers or direct API calls instead of broad mutable
+  fixtures.
+- No class-level mutable `@Before` setup that obscures the state under test.
 
-### Moderate intentional duplication across test-design techniques
+### Moderate intentional duplication across techniques
 
-- Some overlap exists between BB, control-flow, coverage-guided and mutation
-  suites.
-- This duplication is methodologically acceptable because the overlap is driven
-  by different adequacy criteria rather than copy-paste growth.
-- The duplication should still be monitored during future increments to avoid
-  redundant regression noise.
+- Some overlap exists between BB, CF, coverage-guided and mutation suites.
+- This overlap is driven by different adequacy criteria, not copy-paste growth,
+  and is methodologically acceptable.
 
-### Documentation quality requirement satisfied
+### Documentation quality satisfied
 
-- Every current M3 test class contains class-level JavaDoc.
-- Every current helper and test method contains method-level JavaDoc written in
-  a testing-oriented style that states the protected behavior or regression.
+- Every M3 test class has class-level JavaDoc.
+- Every test method has method-level JavaDoc stating the protected behavior.
 
-### Random suite status
+### Integration suite smell assessment
 
-- `SchemaM3RandomTest.java` is not present on the active branch.
-- Consequently, no random-suite smell assessment is applicable to this C0
-  baseline snapshot.
+- `SchemaM3IT` uses `@RunWith(MockitoJUnitRunner.class)` and Mockito
+  `spy()`/`mock()` appropriately.
+- No excessive stubbing: mocks are used only for contract verification
+  (`never().close()`, `verifyZeroInteractions`) or default-value injection.
+- The real-file test (`it08`) uses a temp-file scoped within the test body
+  with `deleteOnExit()`; no mystery guest.
+
+---
 
 ## Overall assessment
 
-The current C0 baseline does not exhibit high-severity test smells. The primary
-quality risk is not structural bloat, but rather residual behavioral gaps in
-alias handling, parsing variants and uncovered mutation points.
+The production class `Schema.java` exhibits three active smells (god class,
+long method, feature envy) that provided the refactoring motivation for C1–C4.
+The M3 test code does not exhibit high-severity smells. The primary quality
+risk in the test suite is moderate intentional duplication across techniques,
+which is expected and should be monitored during future increments.
