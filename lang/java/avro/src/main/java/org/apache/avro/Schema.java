@@ -1349,13 +1349,27 @@ public abstract class Schema {
       Name name = s instanceof NamedSchema ? ((NamedSchema)s).name : null;
       Schema result;
       switch (s.getType()) {
-      case RECORD: result = rewriteRecord(s, name, seen, aliases, fieldAliases); break;
-      case ENUM:   result = rewriteEnum(s, name, aliases); break;
-      case ARRAY:  result = rewriteArray(s, seen, aliases, fieldAliases); break;
-      case MAP:    result = rewriteMap(s, seen, aliases, fieldAliases); break;
-      case UNION:  result = rewriteUnion(s, seen, aliases, fieldAliases); break;
-      case FIXED:  result = rewriteFixed(s, name, aliases); break;
-      default:     result = s; break;
+      case RECORD:
+        result = rewriteRecord(s, name, seen, aliases, fieldAliases);
+        break;
+      case ENUM:
+        result = rewriteEnum(s, name, aliases);
+        break;
+      case ARRAY:
+        result = rewriteArray(s, seen, aliases, fieldAliases);
+        break;
+      case MAP:
+        result = rewriteMap(s, seen, aliases, fieldAliases);
+        break;
+      case UNION:
+        result = rewriteUnion(s, seen, aliases, fieldAliases);
+        break;
+      case FIXED:
+        result = rewriteFixed(s, name, aliases);
+        break;
+      default:
+        result = s;
+        break;
       }
       if (result != s)
         result.props.putAll(s.props);              // copy props
