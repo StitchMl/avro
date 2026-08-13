@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Symbol.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.io.parsing</a> &gt; <span class="el_source">Symbol.java</span></div><h1>Symbol.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.io.parsing;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import org.apache.avro.Schema;
+
+/**
+ * Symbol is the base of all symbols (terminals and non-terminals) of
+ * the grammar.
+ */
+public abstract class Symbol {
+ /*
+ * The type of symbol.
+ */
+<span class="nc" id="L37"> public enum Kind {</span>
+ /** terminal symbols which have no productions */
+<span class="nc" id="L39"> TERMINAL,</span>
+ /** Start symbol for some grammar */
+<span class="nc" id="L41"> ROOT,</span>
+ /** non-terminal symbol which is a sequence of one or more other symbols */
+<span class="nc" id="L43"> SEQUENCE,</span>
+ /** non-termial to represent the contents of an array or map */
+<span class="nc" id="L45"> REPEATER,</span>
+ /** non-terminal to represent the union */
+<span class="nc" id="L47"> ALTERNATIVE,</span>
+ /** non-terminal action symbol which are automatically consumed */
+<span class="nc" id="L49"> IMPLICIT_ACTION,</span>
+ /** non-terminal action symbol which is explicitly consumed */
+<span class="nc" id="L51"> EXPLICIT_ACTION</span>
+ };
+
+ /// The kind of this symbol.
+ public final Kind kind;
+
+ /**
+ * The production for this symbol. If this symbol is a terminal
+ * this is &lt;tt&gt;null&lt;/tt&gt;. Otherwise this holds the the sequence of
+ * the symbols that forms the production for this symbol. The
+ * sequence is in the reverse order of production. This is useful
+ * for easy copying onto parsing stack.
+ *
+ * Please note that this is a final. So the production for a symbol
+ * should be known before that symbol is constructed. This requirement
+ * cannot be met for those symbols which are recursive (e.g. a record that
+ * holds union a branch of which is the record itself). To resolve this
+ * problem, we initialize the symbol with an array of nulls. Later we
+ * fill the symbols. Not clean, but works. The other option is to not have
+ * this field a final. But keeping it final and thus keeping symbol immutable
+ * gives some confort. See various generators how we generate records.
+ */
+ public final Symbol[] production;
+ /**
+ * Constructs a new symbol of the given kind &lt;tt&gt;kind&lt;/tt&gt;.
+ */
+ protected Symbol(Kind kind) {
+<span class="nc" id="L78"> this(kind, null);</span>
+<span class="nc" id="L79"> }</span>
+
+
+<span class="nc" id="L82"> protected Symbol(Kind kind, Symbol[] production) {</span>
+<span class="nc" id="L83"> this.production = production;</span>
+<span class="nc" id="L84"> this.kind = kind;</span>
+<span class="nc" id="L85"> }</span>
+
+ /**
+ * A convenience method to construct a root symbol.
+ */
+ static Symbol root(Symbol... symbols) {
+<span class="nc" id="L91"> return new Root(symbols);</span>
+ }
+ /**
+ * A convenience method to construct a sequence.
+ * @param production The constituent symbols of the sequence.
+ */
+ static Symbol seq(Symbol... production) {
+<span class="nc" id="L98"> return new Sequence(production);</span>
+ }
+
+ /**
+ * A convenience method to construct a repeater.
+ * @param symsToRepeat The symbols to repeat in the repeater.
+ */
+ static Symbol repeat(Symbol endSymbol, Symbol... symsToRepeat) {
+<span class="nc" id="L106"> return new Repeater(endSymbol, symsToRepeat);</span>
+ }
+
+ /**
+ * A convenience method to construct a union.
+ */
+ static Symbol alt(Symbol[] symbols, String[] labels) {
+<span class="nc" id="L113"> return new Alternative(symbols, labels);</span>
+ }
+
+ /**
+ * A convenience method to construct an ErrorAction.
+ * @param e
+ * @return
+ */
+ static Symbol error(String e) {
+<span class="nc" id="L122"> return new ErrorAction(e);</span>
+ }
+
+ /**
+ * A convenience method to construct a ResolvingAction.
+ * @param w The writer symbol
+ * @param r The reader symbol
+ */
+ static Symbol resolve(Symbol w, Symbol r) {
+<span class="nc" id="L131"> return new ResolvingAction(w, r);</span>
+ }
+
+ private static class Fixup {
+ public final Symbol[] symbols;
+ public final int pos;
+
+<span class="nc" id="L138"> public Fixup(Symbol[] symbols, int pos) {</span>
+<span class="nc" id="L139"> this.symbols = symbols;</span>
+<span class="nc" id="L140"> this.pos = pos;</span>
+<span class="nc" id="L141"> }</span>
+ }
+
+ public Symbol flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L146"> return this;</span>
+ }
+
+ public int flattenedSize() {
+<span class="nc" id="L150"> return 1;</span>
+ }
+
+ /**
+ * Flattens the given sub-array of symbols into an sub-array of symbols. Every
+ * &lt;tt&gt;Sequence&lt;/tt&gt; in the input are replaced by its production recursively.
+ * Non-&lt;tt&gt;Sequence&lt;/tt&gt; symbols, they internally have other symbols
+ * those internal symbols also get flattened.
+ *
+ * The algorithm does a few tricks to handle recursive symbol definitions.
+ * In order to avoid infinite recursion with recursive symbols, we have a map
+ * of Symbol-&gt;Symbol. Before fully constructing a flattened symbol for a
+ * &lt;tt&gt;Sequence&lt;/tt&gt; we insert an empty output symbol into the map and then
+ * start filling the production for the &lt;tt&gt;Sequence&lt;/tt&gt;. If the same
+ * &lt;tt&gt;Sequence&lt;/tt&gt; is encountered due to recursion, we simply return the
+ * (empty) output &lt;tt&gt;Sequence&lt;tt&gt; from the map. Then we actually fill out
+ * the production for the &lt;tt&gt;Sequence&lt;/tt&gt;.
+ * As part of the flattening process we copy the production of
+ * &lt;tt&gt;Sequence&lt;/tt&gt;s into larger arrays. If the original &lt;tt&gt;Sequence&lt;/tt&gt;
+ * has not not be fully constructed yet, we copy a bunch of &lt;tt&gt;null&lt;/tt&gt;s.
+ * Fix-up remembers all those &lt;tt&gt;null&lt;/tt&gt; patches. The fix-ups gets finally
+ * filled when we know the symbols to occupy those patches.
+ *
+ * @param in The array of input symbols to flatten
+ * @param start The position where the input sub-array starts.
+ * @param out The output that receives the flattened list of symbols. The
+ * output array should have sufficient space to receive the expanded sub-array
+ * of symbols.
+ * @param skip The position where the output input sub-array starts.
+ * @param map A map of symbols which have already been expanded. Useful for
+ * handling recursive definitions and for caching.
+ * @param map2 A map to to store the list of fix-ups.
+ */
+ static void flatten(Symbol[] in, int start,
+ Symbol[] out, int skip,
+ Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc bnc" id="L187" title="All 2 branches missed."> for (int i = start, j = skip; i &lt; in.length; i++) {</span>
+<span class="nc" id="L188"> Symbol s = in[i].flatten(map, map2);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed."> if (s instanceof Sequence) {</span>
+<span class="nc" id="L190"> Symbol[] p = s.production;</span>
+<span class="nc" id="L191"> List&lt;Fixup&gt; l = map2.get(s);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed."> if (l == null) {</span>
+<span class="nc" id="L193"> System.arraycopy(p, 0, out, j, p.length);</span>
+ } else {
+<span class="nc" id="L195"> l.add(new Fixup(out, j));</span>
+ }
+<span class="nc" id="L197"> j += p.length;</span>
+<span class="nc" id="L198"> } else {</span>
+<span class="nc" id="L199"> out[j++] = s;</span>
+ }
+ }
+<span class="nc" id="L202"> }</span>
+
+ /**
+ * Returns the amount of space required to flatten the given
+ * sub-array of symbols.
+ * @param symbols The array of input symbols.
+ * @param start The index where the subarray starts.
+ * @return The number of symbols that will be produced if one expands
+ * the given input.
+ */
+ protected static int flattenedSize(Symbol[] symbols, int start) {
+<span class="nc" id="L213"> int result = 0;</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed."> for (int i = start; i &lt; symbols.length; i++) {</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed."> if (symbols[i] instanceof Sequence) {</span>
+<span class="nc" id="L216"> Sequence s = (Sequence) symbols[i];</span>
+<span class="nc" id="L217"> result += s.flattenedSize();</span>
+<span class="nc" id="L218"> } else {</span>
+<span class="nc" id="L219"> result += 1;</span>
+ }
+ }
+<span class="nc" id="L222"> return result;</span>
+ }
+
+ private static class Terminal extends Symbol {
+ private final String printName;
+ public Terminal(String printName) {
+<span class="nc" id="L228"> super(Kind.TERMINAL);</span>
+<span class="nc" id="L229"> this.printName = printName;</span>
+<span class="nc" id="L230"> }</span>
+<span class="nc" id="L231"> public String toString() { return printName; }</span>
+ }
+
+ public static class ImplicitAction extends Symbol {
+ /**
+ * Set to &lt;tt&gt;true&lt;/tt&gt; if and only if this implicit action is
+ * a trailing action. That is, it is an action that follows
+ * real symbol. E.g {@link Symbol#DEFAULT_END_ACTION}.
+ */
+ public final boolean isTrailing;
+
+ private ImplicitAction() {
+<span class="nc" id="L243"> this(false);</span>
+<span class="nc" id="L244"> }</span>
+
+ private ImplicitAction(boolean isTrailing) {
+<span class="nc" id="L247"> super(Kind.IMPLICIT_ACTION);</span>
+<span class="nc" id="L248"> this.isTrailing = isTrailing;</span>
+<span class="nc" id="L249"> }</span>
+ }
+
+ protected static class Root extends Symbol {
+ private Root(Symbol... symbols) {
+<span class="nc" id="L254"> super(Kind.ROOT, makeProduction(symbols));</span>
+<span class="nc" id="L255"> production[0] = this;</span>
+<span class="nc" id="L256"> }</span>
+
+ private static Symbol[] makeProduction(Symbol[] symbols) {
+<span class="nc" id="L259"> Symbol[] result = new Symbol[flattenedSize(symbols, 0) + 1];</span>
+<span class="nc" id="L260"> flatten(symbols, 0, result, 1,</span>
+ new HashMap&lt;Sequence, Sequence&gt;(),
+ new HashMap&lt;Sequence, List&lt;Fixup&gt;&gt;());
+<span class="nc" id="L263"> return result;</span>
+ }
+ }
+
+ protected static class Sequence extends Symbol implements Iterable&lt;Symbol&gt; {
+ private Sequence(Symbol[] productions) {
+<span class="nc" id="L269"> super(Kind.SEQUENCE, productions);</span>
+<span class="nc" id="L270"> }</span>
+
+ public Symbol get(int index) {
+<span class="nc" id="L273"> return production[index];</span>
+ }
+
+ public int size() {
+<span class="nc" id="L277"> return production.length;</span>
+ }
+
+ public Iterator&lt;Symbol&gt; iterator() {
+<span class="nc" id="L281"> return new Iterator&lt;Symbol&gt;() {</span>
+<span class="nc" id="L282"> private int pos = production.length;</span>
+
+ public boolean hasNext() {
+<span class="nc bnc" id="L285" title="All 2 branches missed."> return 0 &lt; pos;</span>
+ }
+
+ public Symbol next() {
+<span class="nc bnc" id="L289" title="All 2 branches missed."> if (0 &lt; pos) {</span>
+<span class="nc" id="L290"> return production[--pos];</span>
+ } else {
+<span class="nc" id="L292"> throw new NoSuchElementException();</span>
+ }
+ }
+
+ public void remove() {
+<span class="nc" id="L297"> throw new UnsupportedOperationException();</span>
+ }
+ };
+ }
+ @Override
+ public Sequence flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L304"> Sequence result = map.get(this);</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed."> if (result == null) {</span>
+<span class="nc" id="L306"> result = new Sequence(new Symbol[flattenedSize()]);</span>
+<span class="nc" id="L307"> map.put(this, result);</span>
+<span class="nc" id="L308"> List&lt;Fixup&gt; l = new ArrayList&lt;Fixup&gt;();</span>
+<span class="nc" id="L309"> map2.put(result, l);</span>
+
+<span class="nc" id="L311"> flatten(production, 0,</span>
+ result.production, 0, map, map2);
+<span class="nc bnc" id="L313" title="All 2 branches missed."> for (Fixup f : l) {</span>
+<span class="nc" id="L314"> System.arraycopy(result.production, 0, f.symbols, f.pos,</span>
+ result.production.length);
+<span class="nc" id="L316"> }</span>
+<span class="nc" id="L317"> map2.remove(result);</span>
+ }
+<span class="nc" id="L319"> return result;</span>
+ }
+
+ @Override
+ public final int flattenedSize() {
+<span class="nc" id="L324"> return flattenedSize(production, 0);</span>
+ }
+ }
+
+ public static class Repeater extends Symbol {
+ public final Symbol end;
+
+ private Repeater(Symbol end, Symbol... sequenceToRepeat) {
+<span class="nc" id="L332"> super(Kind.REPEATER, makeProduction(sequenceToRepeat));</span>
+<span class="nc" id="L333"> this.end = end;</span>
+<span class="nc" id="L334"> production[0] = this;</span>
+<span class="nc" id="L335"> }</span>
+
+ private static Symbol[] makeProduction(Symbol[] p) {
+<span class="nc" id="L338"> Symbol[] result = new Symbol[p.length + 1];</span>
+<span class="nc" id="L339"> System.arraycopy(p, 0, result, 1, p.length);</span>
+<span class="nc" id="L340"> return result;</span>
+ }
+
+ @Override
+ public Repeater flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L346"> Repeater result =</span>
+<span class="nc" id="L347"> new Repeater(end, new Symbol[flattenedSize(production, 1)]);</span>
+<span class="nc" id="L348"> flatten(production, 1, result.production, 1, map, map2);</span>
+<span class="nc" id="L349"> return result;</span>
+ }
+
+ }
+
+ public static class Alternative extends Symbol {
+ public final Symbol[] symbols;
+ public final String[] labels;
+ private Alternative(Symbol[] symbols, String[] labels) {
+<span class="nc" id="L358"> super(Kind.ALTERNATIVE);</span>
+<span class="nc" id="L359"> this.symbols = symbols;</span>
+<span class="nc" id="L360"> this.labels = labels;</span>
+<span class="nc" id="L361"> }</span>
+
+ public Symbol getSymbol(int index) {
+<span class="nc" id="L364"> return symbols[index];</span>
+ }
+
+ public String getLabel(int index) {
+<span class="nc" id="L368"> return labels[index];</span>
+ }
+
+ public int size() {
+<span class="nc" id="L372"> return symbols.length;</span>
+ }
+
+ public int findLabel(String label) {
+<span class="nc bnc" id="L376" title="All 2 branches missed."> if (label != null) {</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed."> for (int i = 0; i &lt; labels.length; i++) {</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed."> if (label.equals(labels[i])) {</span>
+<span class="nc" id="L379"> return i;</span>
+ }
+ }
+ }
+<span class="nc" id="L383"> return -1;</span>
+ }
+
+ @Override
+ public Alternative flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L389"> Symbol[] ss = new Symbol[symbols.length];</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed."> for (int i = 0; i &lt; ss.length; i++) {</span>
+<span class="nc" id="L391"> ss[i] = symbols[i].flatten(map, map2);</span>
+ }
+<span class="nc" id="L393"> return new Alternative(ss, labels);</span>
+ }
+ }
+
+ public static class ErrorAction extends ImplicitAction {
+ public final String msg;
+<span class="nc" id="L399"> private ErrorAction(String msg) {</span>
+<span class="nc" id="L400"> this.msg = msg;</span>
+<span class="nc" id="L401"> }</span>
+ }
+
+ public static class IntCheckAction extends Symbol {
+ public final int size;
+ public IntCheckAction(int size) {
+<span class="nc" id="L407"> super(Kind.EXPLICIT_ACTION);</span>
+<span class="nc" id="L408"> this.size = size;</span>
+<span class="nc" id="L409"> }</span>
+ }
+
+ public static class EnumAdjustAction extends IntCheckAction {
+ public final Object[] adjustments;
+ public EnumAdjustAction(int rsymCount, Object[] adjustments) {
+<span class="nc" id="L415"> super(rsymCount);</span>
+<span class="nc" id="L416"> this.adjustments = adjustments;</span>
+<span class="nc" id="L417"> }</span>
+ }
+
+<span class="nc" id="L420"> public static class WriterUnionAction extends ImplicitAction {</span>
+ }
+
+ public static class ResolvingAction extends ImplicitAction {
+ public final Symbol writer;
+ public final Symbol reader;
+<span class="nc" id="L426"> private ResolvingAction(Symbol writer, Symbol reader) {</span>
+<span class="nc" id="L427"> this.writer = writer;</span>
+<span class="nc" id="L428"> this.reader = reader;</span>
+<span class="nc" id="L429"> }</span>
+
+ @Override
+ public ResolvingAction flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L434"> return new ResolvingAction(writer.flatten(map, map2),</span>
+<span class="nc" id="L435"> reader.flatten(map, map2));</span>
+ }
+
+ }
+
+ public static class SkipAction extends ImplicitAction {
+ public final Symbol symToSkip;
+ public SkipAction(Symbol symToSkip) {
+<span class="nc" id="L443"> super(true);</span>
+<span class="nc" id="L444"> this.symToSkip = symToSkip;</span>
+<span class="nc" id="L445"> }</span>
+
+ @Override
+ public SkipAction flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L450"> return new SkipAction(symToSkip.flatten(map, map2));</span>
+ }
+
+ }
+
+ public static class FieldAdjustAction extends ImplicitAction {
+ public final int rindex;
+ public final String fname;
+<span class="nc" id="L458"> public FieldAdjustAction(int rindex, String fname) {</span>
+<span class="nc" id="L459"> this.rindex = rindex;</span>
+<span class="nc" id="L460"> this.fname = fname;</span>
+<span class="nc" id="L461"> }</span>
+ }
+
+ public static final class FieldOrderAction extends ImplicitAction {
+ public final Schema.Field[] fields;
+<span class="nc" id="L466"> public FieldOrderAction(Schema.Field[] fields) {</span>
+<span class="nc" id="L467"> this.fields = fields;</span>
+<span class="nc" id="L468"> }</span>
+ }
+
+ public static class DefaultStartAction extends ImplicitAction {
+ public final byte[] contents;
+<span class="nc" id="L473"> public DefaultStartAction(byte[] contents) {</span>
+<span class="nc" id="L474"> this.contents = contents;</span>
+<span class="nc" id="L475"> }</span>
+ }
+
+ public static class UnionAdjustAction extends ImplicitAction {
+ public final int rindex;
+ public final Symbol symToParse;
+<span class="nc" id="L481"> public UnionAdjustAction(int rindex, Symbol symToParse) {</span>
+<span class="nc" id="L482"> this.rindex = rindex;</span>
+<span class="nc" id="L483"> this.symToParse = symToParse;</span>
+<span class="nc" id="L484"> }</span>
+
+ @Override
+ public UnionAdjustAction flatten(Map&lt;Sequence, Sequence&gt; map,
+ Map&lt;Sequence, List&lt;Fixup&gt;&gt; map2) {
+<span class="nc" id="L489"> return new UnionAdjustAction(rindex, symToParse.flatten(map, map2));</span>
+ }
+
+ }
+
+ /** For JSON. */
+ public static class EnumLabelsAction extends IntCheckAction {
+ public final List&lt;String&gt; symbols;
+ public EnumLabelsAction(List&lt;String&gt; symbols) {
+<span class="nc" id="L498"> super(symbols.size());</span>
+<span class="nc" id="L499"> this.symbols = symbols;</span>
+<span class="nc" id="L500"> }</span>
+
+ public String getLabel(int n) {
+<span class="nc" id="L503"> return symbols.get(n);</span>
+ }
+
+ public int findLabel(String l) {
+<span class="nc bnc" id="L507" title="All 2 branches missed."> if (l != null) {</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed."> for (int i = 0; i &lt; symbols.size(); i++) {</span>
+<span class="nc bnc" id="L509" title="All 2 branches missed."> if (l.equals(symbols.get(i))) {</span>
+<span class="nc" id="L510"> return i;</span>
+ }
+ }
+ }
+<span class="nc" id="L514"> return -1;</span>
+ }
+ }
+
+ /**
+ * The terminal symbols for the grammar.
+ */
+<span class="nc" id="L521"> public static final Symbol NULL = new Symbol.Terminal(&quot;null&quot;);</span>
+<span class="nc" id="L522"> public static final Symbol BOOLEAN = new Symbol.Terminal(&quot;boolean&quot;);</span>
+<span class="nc" id="L523"> public static final Symbol INT = new Symbol.Terminal(&quot;int&quot;);</span>
+<span class="nc" id="L524"> public static final Symbol LONG = new Symbol.Terminal(&quot;long&quot;);</span>
+<span class="nc" id="L525"> public static final Symbol FLOAT = new Symbol.Terminal(&quot;float&quot;);</span>
+<span class="nc" id="L526"> public static final Symbol DOUBLE = new Symbol.Terminal(&quot;double&quot;);</span>
+<span class="nc" id="L527"> public static final Symbol STRING = new Symbol.Terminal(&quot;string&quot;);</span>
+<span class="nc" id="L528"> public static final Symbol BYTES = new Symbol.Terminal(&quot;bytes&quot;);</span>
+<span class="nc" id="L529"> public static final Symbol FIXED = new Symbol.Terminal(&quot;fixed&quot;);</span>
+<span class="nc" id="L530"> public static final Symbol ENUM = new Symbol.Terminal(&quot;enum&quot;);</span>
+<span class="nc" id="L531"> public static final Symbol UNION = new Symbol.Terminal(&quot;union&quot;);</span>
+
+<span class="nc" id="L533"> public static final Symbol ARRAY_START = new Symbol.Terminal(&quot;array-start&quot;);</span>
+<span class="nc" id="L534"> public static final Symbol ARRAY_END = new Symbol.Terminal(&quot;array-end&quot;);</span>
+<span class="nc" id="L535"> public static final Symbol MAP_START = new Symbol.Terminal(&quot;map-start&quot;);</span>
+<span class="nc" id="L536"> public static final Symbol MAP_END = new Symbol.Terminal(&quot;map-end&quot;);</span>
+<span class="nc" id="L537"> public static final Symbol ITEM_END = new Symbol.Terminal(&quot;item-end&quot;);</span>
+
+ /* a pseudo terminal used by parsers */
+<span class="nc" id="L540"> public static final Symbol FIELD_ACTION =</span>
+ new Symbol.Terminal(&quot;field-action&quot;);
+
+<span class="nc" id="L543"> public static final Symbol RECORD_START = new ImplicitAction(false);</span>
+<span class="nc" id="L544"> public static final Symbol RECORD_END = new ImplicitAction(true);</span>
+<span class="nc" id="L545"> public static final Symbol UNION_END = new ImplicitAction(true);</span>
+
+<span class="nc" id="L547"> public static final Symbol DEFAULT_END_ACTION = new ImplicitAction(true);</span>
+<span class="nc" id="L548"> public static final Symbol MAP_KEY_MARKER =</span>
+ new Symbol.Terminal(&quot;map-key-marker&quot;);
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

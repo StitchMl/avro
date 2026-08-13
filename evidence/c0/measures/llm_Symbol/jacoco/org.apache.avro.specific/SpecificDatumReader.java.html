@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpecificDatumReader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.specific</a> &gt; <span class="el_source">SpecificDatumReader.java</span></div><h1>SpecificDatumReader.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.specific;
+
+import java.lang.reflect.Constructor;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumReader;
+
+/** {@link org.apache.avro.io.DatumReader DatumReader} for generated Java classes. */
+public class SpecificDatumReader&lt;T&gt; extends GenericDatumReader&lt;T&gt; {
+ public SpecificDatumReader() {
+<span class="nc" id="L30"> this(null, null, SpecificData.get());</span>
+<span class="nc" id="L31"> }</span>
+
+ public SpecificDatumReader(Class&lt;T&gt; c) {
+<span class="nc" id="L34"> this(SpecificData.get().getSchema(c));</span>
+<span class="nc" id="L35"> }</span>
+
+ /** Construct where the writer's and reader's schemas are the same. */
+ public SpecificDatumReader(Schema schema) {
+<span class="nc" id="L39"> this(schema, schema, SpecificData.get());</span>
+<span class="nc" id="L40"> }</span>
+
+ /** Construct given writer's and reader's schema. */
+ public SpecificDatumReader(Schema writer, Schema reader) {
+<span class="nc" id="L44"> this(writer, reader, SpecificData.get());</span>
+<span class="nc" id="L45"> }</span>
+
+ protected SpecificDatumReader(Schema writer, Schema reader,
+ SpecificData data) {
+<span class="nc" id="L49"> super(writer, reader, data);</span>
+<span class="nc" id="L50"> }</span>
+
+ @Override
+ protected Object newRecord(Object old, Schema schema) {
+<span class="nc" id="L54"> Class c = SpecificData.get().getClass(schema);</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed."> if (c == null) return super.newRecord(old, schema); // punt to generic</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed."> return (c.isInstance(old) ? old : newInstance(c, schema));</span>
+ }
+
+ @Override
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Object createEnum(String symbol, Schema schema) {
+<span class="nc" id="L62"> Class c = SpecificData.get().getClass(schema);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed."> if (c == null) return super.createEnum(symbol, schema); // punt to generic</span>
+<span class="nc" id="L64"> return Enum.valueOf(c, symbol);</span>
+ }
+
+ @Override
+ protected Object createFixed(Object old, Schema schema) {
+<span class="nc" id="L69"> Class c = SpecificData.get().getClass(schema);</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed."> if (c == null) return super.createFixed(old, schema); // punt to generic</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed."> return c.isInstance(old) ? old : newInstance(c, schema);</span>
+ }
+
+<span class="nc" id="L74"> private static final Class&lt;?&gt;[] NO_ARG = new Class[]{};</span>
+<span class="nc" id="L75"> private static final Class&lt;?&gt;[] SCHEMA_ARG = new Class[]{Schema.class};</span>
+<span class="nc" id="L76"> private static final Map&lt;Class,Constructor&gt; CTOR_CACHE =</span>
+ new ConcurrentHashMap&lt;Class,Constructor&gt;();
+
+ /** Tag interface that indicates that a class has a one-argument constructor
+ * that accepts a Schema.
+ * @see SpecificDatumReader#newInstance
+ */
+ public interface SchemaConstructable {}
+
+ /** Create an instance of a class. If the class implements {@link
+ * SchemaConstructable}, call a constructor with a {@link
+ * org.apache.avro.Schema} parameter, otherwise use a no-arg constructor. */
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected static Object newInstance(Class c, Schema s) {
+<span class="nc" id="L90"> boolean useSchema = SchemaConstructable.class.isAssignableFrom(c);</span>
+ Object result;
+ try {
+<span class="nc" id="L93"> Constructor meth = (Constructor)CTOR_CACHE.get(c);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed."> if (meth == null) {</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed."> meth = c.getDeclaredConstructor(useSchema ? SCHEMA_ARG : NO_ARG);</span>
+<span class="nc" id="L96"> meth.setAccessible(true);</span>
+<span class="nc" id="L97"> CTOR_CACHE.put(c, meth);</span>
+ }
+<span class="nc bnc" id="L99" title="All 2 branches missed."> result = meth.newInstance(useSchema ? new Object[]{s} : (Object[])null);</span>
+<span class="nc" id="L100"> } catch (Exception e) {</span>
+<span class="nc" id="L101"> throw new RuntimeException(e);</span>
+<span class="nc" id="L102"> }</span>
+<span class="nc" id="L103"> return result;</span>
+ }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

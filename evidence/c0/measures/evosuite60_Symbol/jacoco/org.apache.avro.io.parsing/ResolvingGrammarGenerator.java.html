@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResolvingGrammarGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.io.parsing</a> &gt; <span class="el_source">ResolvingGrammarGenerator.java</span></div><h1>ResolvingGrammarGenerator.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.io.parsing;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
+import org.codehaus.jackson.JsonNode;
+
+/**
+ * The class that generates a resolving grammar to resolve between two
+ * schemas.
+ */
+<span class="nc" id="L39">public class ResolvingGrammarGenerator extends ValidatingGrammarGenerator {</span>
+ /**
+ * Resolves the writer schema &lt;tt&gt;writer&lt;/tt&gt; and the reader schema
+ * &lt;tt&gt;reader&lt;/tt&gt; and returns the start symbol for the grammar generated.
+ * @param writer The schema used by the writer
+ * @param reader The schema used by the reader
+ * @return The start symbol for the resolving grammar
+ * @throws IOException
+ */
+ public final Symbol generate(Schema writer, Schema reader)
+ throws IOException {
+<span class="nc" id="L50"> return Symbol.root(generate(writer, reader, new HashMap&lt;LitS, Symbol&gt;()));</span>
+ }
+
+ /**
+ * Resolves the writer schema &lt;tt&gt;writer&lt;/tt&gt; and the reader schema
+ * &lt;tt&gt;reader&lt;/tt&gt; and returns the start symbol for the grammar generated.
+ * If there is already a symbol in the map &lt;tt&gt;seen&lt;/tt&gt; for resolving the
+ * two schemas, then that symbol is returned. Otherwise a new symbol is
+ * generated and returnd.
+ * @param writer The schema used by the writer
+ * @param reader The schema used by the reader
+ * @param seen The &amp;lt;reader-schema, writer-schema&amp;gt; to symbol
+ * map of start symbols of resolving grammars so far.
+ * @return The start symbol for the resolving grammar
+ * @throws IOException
+ */
+ public Symbol generate(Schema writer, Schema reader,
+ Map&lt;LitS, Symbol&gt; seen) throws IOException
+ {
+<span class="nc" id="L69"> final Schema.Type writerType = writer.getType();</span>
+<span class="nc" id="L70"> final Schema.Type readerType = reader.getType();</span>
+
+<span class="nc bnc" id="L72" title="All 2 branches missed."> if (writerType == readerType) {</span>
+<span class="nc bnc" id="L73" title="All 15 branches missed."> switch (writerType) {</span>
+ case NULL:
+<span class="nc" id="L75"> return Symbol.NULL;</span>
+ case BOOLEAN:
+<span class="nc" id="L77"> return Symbol.BOOLEAN;</span>
+ case INT:
+<span class="nc" id="L79"> return Symbol.INT;</span>
+ case LONG:
+<span class="nc" id="L81"> return Symbol.LONG;</span>
+ case FLOAT:
+<span class="nc" id="L83"> return Symbol.FLOAT;</span>
+ case DOUBLE:
+<span class="nc" id="L85"> return Symbol.DOUBLE;</span>
+ case STRING:
+<span class="nc" id="L87"> return Symbol.STRING;</span>
+ case BYTES:
+<span class="nc" id="L89"> return Symbol.BYTES;</span>
+ case FIXED:
+<span class="nc bnc" id="L91" title="All 2 branches missed."> if (writer.getFullName().equals(reader.getFullName())</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed."> &amp;&amp; writer.getFixedSize() == reader.getFixedSize()) {</span>
+<span class="nc" id="L93"> return Symbol.seq(new Symbol.IntCheckAction(writer.getFixedSize()),</span>
+ Symbol.FIXED);
+ }
+ break;
+
+ case ENUM:
+<span class="nc bnc" id="L99" title="All 2 branches missed."> if (writer.getFullName() == null</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed."> || writer.getFullName().equals(reader.getFullName())) {</span>
+<span class="nc" id="L101"> return Symbol.seq(mkEnumAdjust(writer.getEnumSymbols(),</span>
+<span class="nc" id="L102"> reader.getEnumSymbols()), Symbol.ENUM);</span>
+ }
+ break;
+
+ case ARRAY:
+<span class="nc" id="L107"> return Symbol.seq(Symbol.repeat(Symbol.ARRAY_END,</span>
+<span class="nc" id="L108"> generate(writer.getElementType(),</span>
+<span class="nc" id="L109"> reader.getElementType(), seen)),</span>
+ Symbol.ARRAY_START);
+
+ case MAP:
+<span class="nc" id="L113"> return Symbol.seq(Symbol.repeat(Symbol.MAP_END,</span>
+<span class="nc" id="L114"> generate(writer.getValueType(),</span>
+<span class="nc" id="L115"> reader.getValueType(), seen), Symbol.STRING),</span>
+ Symbol.MAP_START);
+ case RECORD:
+<span class="nc" id="L118"> return resolveRecords(writer, reader, seen);</span>
+ case UNION:
+<span class="nc" id="L120"> return resolveUnion(writer, reader, seen);</span>
+ default:
+<span class="nc" id="L122"> throw new AvroTypeException(&quot;Unkown type for schema: &quot; + writerType);</span>
+ }
+ } else { // writer and reader are of different types
+<span class="nc bnc" id="L125" title="All 2 branches missed."> if (writerType == Schema.Type.UNION) {</span>
+<span class="nc" id="L126"> return resolveUnion(writer, reader, seen);</span>
+ }
+
+<span class="nc bnc" id="L129" title="All 6 branches missed."> switch (readerType) {</span>
+ case LONG:
+<span class="nc bnc" id="L131" title="All 2 branches missed."> switch (writerType) {</span>
+ case INT:
+<span class="nc" id="L133"> return Symbol.resolve(super.generate(writer, seen), Symbol.LONG);</span>
+ }
+<span class="nc" id="L135"> break;</span>
+
+ case FLOAT:
+<span class="nc bnc" id="L138" title="All 2 branches missed."> switch (writerType) {</span>
+ case INT:
+ case LONG:
+<span class="nc" id="L141"> return Symbol.resolve(super.generate(writer, seen), Symbol.FLOAT);</span>
+ }
+<span class="nc" id="L143"> break;</span>
+
+ case DOUBLE:
+<span class="nc bnc" id="L146" title="All 2 branches missed."> switch (writerType) {</span>
+ case INT:
+ case LONG:
+ case FLOAT:
+<span class="nc" id="L150"> return Symbol.resolve(super.generate(writer, seen), Symbol.DOUBLE);</span>
+ }
+<span class="nc" id="L152"> break;</span>
+
+ case UNION:
+<span class="nc" id="L155"> int j = bestBranch(reader, writer);</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed."> if (j &gt;= 0) {</span>
+<span class="nc" id="L157"> Symbol s = generate(writer, reader.getTypes().get(j), seen);</span>
+<span class="nc" id="L158"> return Symbol.seq(new Symbol.UnionAdjustAction(j, s), Symbol.UNION);</span>
+ }
+ break;
+ case NULL:
+ case BOOLEAN:
+ case INT:
+ case STRING:
+ case BYTES:
+ case ENUM:
+ case ARRAY:
+ case MAP:
+ case RECORD:
+<span class="nc" id="L170"> break;</span>
+ default:
+<span class="nc" id="L172"> throw new RuntimeException(&quot;Unexpected schema type: &quot; + readerType);</span>
+ }
+ }
+<span class="nc" id="L175"> return Symbol.error(&quot;Found &quot; + writer.toString(true)</span>
+<span class="nc" id="L176"> + &quot;, expecting &quot; + reader.toString(true));</span>
+ }
+
+ private Symbol resolveUnion(Schema writer, Schema reader,
+ Map&lt;LitS, Symbol&gt; seen) throws IOException {
+<span class="nc" id="L181"> List&lt;Schema&gt; alts = writer.getTypes();</span>
+<span class="nc" id="L182"> final int size = alts.size();</span>
+<span class="nc" id="L183"> Symbol[] symbols = new Symbol[size];</span>
+<span class="nc" id="L184"> String[] labels = new String[size];</span>
+
+ /**
+ * We construct a symbol without filling the arrays. Please see
+ * {@link Symbol#production} for the reason.
+ */
+<span class="nc" id="L190"> int i = 0;</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed."> for (Schema w : alts) {</span>
+<span class="nc" id="L192"> symbols[i] = generate(w, reader, seen);</span>
+<span class="nc" id="L193"> labels[i] = w.getFullName();</span>
+<span class="nc" id="L194"> i++;</span>
+<span class="nc" id="L195"> }</span>
+<span class="nc" id="L196"> return Symbol.seq(Symbol.alt(symbols, labels),</span>
+ new Symbol.WriterUnionAction());
+ }
+
+ private Symbol resolveRecords(Schema writer, Schema reader,
+ Map&lt;LitS, Symbol&gt; seen) throws IOException {
+<span class="nc" id="L202"> LitS wsc = new LitS2(writer, reader);</span>
+<span class="nc" id="L203"> Symbol result = seen.get(wsc);</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed."> if (result == null) {</span>
+<span class="nc" id="L205"> List&lt;Field&gt; wfields = writer.getFields();</span>
+<span class="nc" id="L206"> List&lt;Field&gt; rfields = reader.getFields();</span>
+
+ // First, compute reordering of reader fields, plus
+ // number elements in the result's production
+<span class="nc" id="L210"> Field[] reordered = new Field[rfields.size()];</span>
+<span class="nc" id="L211"> int ridx = 0;</span>
+<span class="nc" id="L212"> int count = 1 + wfields.size();</span>
+
+<span class="nc bnc" id="L214" title="All 2 branches missed."> for (Field f : wfields) {</span>
+<span class="nc" id="L215"> Field rdrField = reader.getField(f.name());</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed."> if (rdrField != null) {</span>
+<span class="nc" id="L217"> reordered[ridx++] = rdrField;</span>
+ }
+<span class="nc" id="L219"> }</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed."> for (Field rf : rfields) {</span>
+<span class="nc" id="L222"> String fname = rf.name();</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed."> if (writer.getField(fname) == null) {</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed."> if (rf.defaultValue() == null) {</span>
+<span class="nc" id="L225"> result = Symbol.error(&quot;Found &quot; + writer.toString(true)</span>
+<span class="nc" id="L226"> + &quot;, expecting &quot; + reader.toString(true));</span>
+<span class="nc" id="L227"> seen.put(wsc, result);</span>
+<span class="nc" id="L228"> return result;</span>
+ } else {
+<span class="nc" id="L230"> reordered[ridx++] = rf;</span>
+<span class="nc" id="L231"> count += 3;</span>
+ }
+ }
+<span class="nc" id="L234"> }</span>
+
+<span class="nc" id="L236"> Symbol[] production = new Symbol[count];</span>
+<span class="nc" id="L237"> production[--count] = new Symbol.FieldOrderAction(reordered);</span>
+
+ /**
+ * We construct a symbol without filling the array. Please see
+ * {@link Symbol#production} for the reason.
+ */
+<span class="nc" id="L243"> result = Symbol.seq(production);</span>
+<span class="nc" id="L244"> seen.put(wsc, result);</span>
+
+ /*
+ * For now every field in read-record with no default value
+ * must be in write-record.
+ * Write record may have additional fields, which will be
+ * skipped during read.
+ */
+
+ // Handle all the writer's fields
+<span class="nc bnc" id="L254" title="All 2 branches missed."> for (Field wf : wfields) {</span>
+<span class="nc" id="L255"> String fname = wf.name();</span>
+<span class="nc" id="L256"> Field rf = reader.getField(fname);</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed."> if (rf == null) {</span>
+<span class="nc" id="L258"> production[--count] =</span>
+<span class="nc" id="L259"> new Symbol.SkipAction(generate(wf.schema(), wf.schema(), seen));</span>
+ } else {
+<span class="nc" id="L261"> production[--count] =</span>
+<span class="nc" id="L262"> generate(wf.schema(), rf.schema(), seen);</span>
+ }
+<span class="nc" id="L264"> }</span>
+
+ // Add default values for fields missing from Writer
+<span class="nc bnc" id="L267" title="All 2 branches missed."> for (Field rf : rfields) {</span>
+<span class="nc" id="L268"> String fname = rf.name();</span>
+<span class="nc" id="L269"> Field wf = writer.getField(fname);</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed."> if (wf == null) {</span>
+<span class="nc" id="L271"> byte[] bb = getBinary(rf.schema(), rf.defaultValue());</span>
+<span class="nc" id="L272"> production[--count] = new Symbol.DefaultStartAction(bb);</span>
+<span class="nc" id="L273"> production[--count] = generate(rf.schema(), rf.schema(), seen);</span>
+<span class="nc" id="L274"> production[--count] = Symbol.DEFAULT_END_ACTION;</span>
+ }
+<span class="nc" id="L276"> }</span>
+ }
+<span class="nc" id="L278"> return result;</span>
+ }
+
+<span class="nc" id="L281"> private static EncoderFactory factory = new EncoderFactory().configureBufferSize(32);</span>
+ /**
+ * Returns the Avro binary encoded version of &lt;tt&gt;n&lt;/tt&gt; according to
+ * the schema &lt;tt&gt;s&lt;/tt&gt;.
+ * @param s The schema for encoding
+ * @param n The Json node that has the value to be encoded.
+ * @return The binary encoded version of &lt;tt&gt;n&lt;/tt&gt;.
+ * @throws IOException
+ */
+ private static byte[] getBinary(Schema s, JsonNode n) throws IOException {
+<span class="nc" id="L291"> ByteArrayOutputStream out = new ByteArrayOutputStream();</span>
+<span class="nc" id="L292"> Encoder e = factory.binaryEncoder(out, null);</span>
+<span class="nc" id="L293"> encode(e, s, n);</span>
+<span class="nc" id="L294"> e.flush();</span>
+<span class="nc" id="L295"> return out.toByteArray();</span>
+ }
+
+ /**
+ * Encodes the given Json node &lt;tt&gt;n&lt;/tt&gt; on to the encoder &lt;tt&gt;e&lt;/tt&gt;
+ * according to the schema &lt;tt&gt;s&lt;/tt&gt;.
+ * @param e The encoder to encode into.
+ * @param s The schema for the object being encoded.
+ * @param n The Json node to encode.
+ * @throws IOException
+ */
+
+ static void encode(Encoder e, Schema s, JsonNode n)
+ throws IOException {
+<span class="nc bnc" id="L309" title="All 15 branches missed."> switch (s.getType()) {</span>
+ case RECORD:
+<span class="nc bnc" id="L311" title="All 2 branches missed."> for (Field f : s.getFields()) {</span>
+<span class="nc" id="L312"> String name = f.name();</span>
+<span class="nc" id="L313"> JsonNode v = n.get(name);</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed."> if (v == null) {</span>
+<span class="nc" id="L315"> v = f.defaultValue();</span>
+ }
+<span class="nc bnc" id="L317" title="All 2 branches missed."> if (v == null) {</span>
+<span class="nc" id="L318"> throw new AvroTypeException(&quot;No default value for: &quot; + name);</span>
+ }
+<span class="nc" id="L320"> encode(e, f.schema(), v);</span>
+<span class="nc" id="L321"> }</span>
+<span class="nc" id="L322"> break;</span>
+ case ENUM:
+<span class="nc" id="L324"> e.writeEnum(s.getEnumOrdinal(n.getTextValue()));</span>
+<span class="nc" id="L325"> break;</span>
+ case ARRAY:
+<span class="nc" id="L327"> e.writeArrayStart();</span>
+<span class="nc" id="L328"> e.setItemCount(n.size());</span>
+<span class="nc" id="L329"> Schema i = s.getElementType();</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed."> for (JsonNode node : n) {</span>
+<span class="nc" id="L331"> e.startItem();</span>
+<span class="nc" id="L332"> encode(e, i, node);</span>
+<span class="nc" id="L333"> }</span>
+<span class="nc" id="L334"> e.writeArrayEnd();</span>
+<span class="nc" id="L335"> break;</span>
+ case MAP:
+<span class="nc" id="L337"> e.writeMapStart();</span>
+<span class="nc" id="L338"> e.setItemCount(n.size());</span>
+<span class="nc" id="L339"> Schema v = s.getValueType();</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed."> for (Iterator&lt;String&gt; it = n.getFieldNames(); it.hasNext();) {</span>
+<span class="nc" id="L341"> e.startItem();</span>
+<span class="nc" id="L342"> String key = it.next();</span>
+<span class="nc" id="L343"> e.writeString(key);</span>
+<span class="nc" id="L344"> encode(e, v, n.get(key));</span>
+<span class="nc" id="L345"> }</span>
+<span class="nc" id="L346"> e.writeMapEnd();</span>
+<span class="nc" id="L347"> break;</span>
+ case UNION:
+<span class="nc" id="L349"> e.writeIndex(0);</span>
+<span class="nc" id="L350"> encode(e, s.getTypes().get(0), n);</span>
+<span class="nc" id="L351"> break;</span>
+ case FIXED:
+<span class="nc bnc" id="L353" title="All 2 branches missed."> if (!n.isTextual())</span>
+<span class="nc" id="L354"> throw new AvroTypeException(&quot;Non-string default value for fixed: &quot;+n);</span>
+<span class="nc" id="L355"> byte[] bb = n.getTextValue().getBytes(&quot;ISO-8859-1&quot;);</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed."> if (bb.length != s.getFixedSize()) {</span>
+<span class="nc" id="L357"> bb = Arrays.copyOf(bb, s.getFixedSize());</span>
+ }
+<span class="nc" id="L359"> e.writeFixed(bb);</span>
+<span class="nc" id="L360"> break;</span>
+ case STRING:
+<span class="nc bnc" id="L362" title="All 2 branches missed."> if (!n.isTextual())</span>
+<span class="nc" id="L363"> throw new AvroTypeException(&quot;Non-string default value for string: &quot;+n);</span>
+<span class="nc" id="L364"> e.writeString(n.getTextValue());</span>
+<span class="nc" id="L365"> break;</span>
+ case BYTES:
+<span class="nc bnc" id="L367" title="All 2 branches missed."> if (!n.isTextual())</span>
+<span class="nc" id="L368"> throw new AvroTypeException(&quot;Non-string default value for bytes: &quot;+n);</span>
+<span class="nc" id="L369"> e.writeBytes(n.getTextValue().getBytes(&quot;ISO-8859-1&quot;));</span>
+<span class="nc" id="L370"> break;</span>
+ case INT:
+<span class="nc bnc" id="L372" title="All 2 branches missed."> if (!n.isNumber())</span>
+<span class="nc" id="L373"> throw new AvroTypeException(&quot;Non-numeric default value for int: &quot;+n);</span>
+<span class="nc" id="L374"> e.writeInt(n.getIntValue());</span>
+<span class="nc" id="L375"> break;</span>
+ case LONG:
+<span class="nc bnc" id="L377" title="All 2 branches missed."> if (!n.isNumber())</span>
+<span class="nc" id="L378"> throw new AvroTypeException(&quot;Non-numeric default value for long: &quot;+n);</span>
+<span class="nc" id="L379"> e.writeLong(n.getLongValue());</span>
+<span class="nc" id="L380"> break;</span>
+ case FLOAT:
+<span class="nc bnc" id="L382" title="All 2 branches missed."> if (!n.isNumber())</span>
+<span class="nc" id="L383"> throw new AvroTypeException(&quot;Non-numeric default value for float: &quot;+n);</span>
+<span class="nc" id="L384"> e.writeFloat((float) n.getDoubleValue());</span>
+<span class="nc" id="L385"> break;</span>
+ case DOUBLE:
+<span class="nc bnc" id="L387" title="All 2 branches missed."> if (!n.isNumber())</span>
+<span class="nc" id="L388"> throw new AvroTypeException(&quot;Non-numeric default value for double: &quot;+n);</span>
+<span class="nc" id="L389"> e.writeDouble(n.getDoubleValue());</span>
+<span class="nc" id="L390"> break;</span>
+ case BOOLEAN:
+<span class="nc bnc" id="L392" title="All 2 branches missed."> if (!n.isBoolean())</span>
+<span class="nc" id="L393"> throw new AvroTypeException(&quot;Non-boolean default for boolean: &quot;+n);</span>
+<span class="nc" id="L394"> e.writeBoolean(n.getBooleanValue());</span>
+<span class="nc" id="L395"> break;</span>
+ case NULL:
+<span class="nc bnc" id="L397" title="All 2 branches missed."> if (!n.isNull())</span>
+<span class="nc" id="L398"> throw new AvroTypeException(&quot;Non-null default value for null type: &quot;+n);</span>
+<span class="nc" id="L399"> e.writeNull();</span>
+ break;
+ }
+<span class="nc" id="L402"> }</span>
+
+ private static Symbol mkEnumAdjust(List&lt;String&gt; wsymbols,
+ List&lt;String&gt; rsymbols){
+<span class="nc" id="L406"> Object[] adjustments = new Object[wsymbols.size()];</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed."> for (int i = 0; i &lt; adjustments.length; i++) {</span>
+<span class="nc" id="L408"> int j = rsymbols.indexOf(wsymbols.get(i));</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed."> adjustments[i] = (j == -1 ? &quot;No match for &quot; + wsymbols.get(i)</span>
+ : new Integer(j));
+ }
+<span class="nc" id="L412"> return new Symbol.EnumAdjustAction(rsymbols.size(), adjustments);</span>
+ }
+
+ private static int bestBranch(Schema r, Schema w) {
+<span class="nc" id="L416"> Schema.Type vt = w.getType();</span>
+ // first scan for exact match
+<span class="nc" id="L418"> int j = 0;</span>
+<span class="nc bnc" id="L419" title="All 2 branches missed."> for (Schema b : r.getTypes()) {</span>
+<span class="nc bnc" id="L420" title="All 2 branches missed."> if (vt == b.getType())</span>
+<span class="nc bnc" id="L421" title="All 6 branches missed."> if (vt == Schema.Type.RECORD || vt == Schema.Type.ENUM ||</span>
+ vt == Schema.Type.FIXED) {
+<span class="nc" id="L423"> String vname = w.getFullName();</span>
+<span class="nc" id="L424"> String bname = b.getFullName();</span>
+<span class="nc bnc" id="L425" title="All 8 branches missed."> if ((vname != null &amp;&amp; vname.equals(bname))</span>
+ || vname == bname &amp;&amp; vt == Schema.Type.RECORD)
+<span class="nc" id="L427"> return j;</span>
+<span class="nc" id="L428"> } else</span>
+<span class="nc" id="L429"> return j;</span>
+<span class="nc" id="L430"> j++;</span>
+<span class="nc" id="L431"> }</span>
+
+ // then scan match via numeric promotion
+<span class="nc" id="L434"> j = 0;</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed."> for (Schema b : r.getTypes()) {</span>
+<span class="nc bnc" id="L436" title="All 3 branches missed."> switch (vt) {</span>
+ case INT:
+<span class="nc bnc" id="L438" title="All 2 branches missed."> switch (b.getType()) {</span>
+ case LONG: case DOUBLE:
+<span class="nc" id="L440"> return j;</span>
+ }
+<span class="nc" id="L442"> break;</span>
+ case LONG:
+ case FLOAT:
+<span class="nc bnc" id="L445" title="All 2 branches missed."> switch (b.getType()) {</span>
+ case DOUBLE:
+<span class="nc" id="L447"> return j;</span>
+ }
+ break;
+ }
+<span class="nc" id="L451"> j++;</span>
+<span class="nc" id="L452"> }</span>
+<span class="nc" id="L453"> return -1;</span>
+ }
+
+ /**
+ * Clever trick which differentiates items put into
+ * &lt;code&gt;seen&lt;/code&gt; by {@link ValidatingGrammarGenerator#validating validating()}
+ * from those put in by {@link ValidatingGrammarGenerator#resolving resolving()}.
+ */
+ static class LitS2 extends ValidatingGrammarGenerator.LitS {
+ public Schema expected;
+ public LitS2(Schema actual, Schema expected) {
+<span class="nc" id="L464"> super(actual);</span>
+<span class="nc" id="L465"> this.expected = expected;</span>
+<span class="nc" id="L466"> }</span>
+ public boolean equals(Object o) {
+<span class="nc bnc" id="L468" title="All 2 branches missed."> if (! (o instanceof LitS2)) return false;</span>
+<span class="nc" id="L469"> LitS2 other = (LitS2) o;</span>
+<span class="nc bnc" id="L470" title="All 4 branches missed."> return actual == other.actual &amp;&amp; expected == other.expected;</span>
+ }
+ public int hashCode() {
+<span class="nc" id="L473"> return super.hashCode() + expected.hashCode();</span>
+ }
+ }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

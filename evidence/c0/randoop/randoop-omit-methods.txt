@@ -1,0 +1,5 @@
+java\.lang\.Object\.wait\(.*\)
+java\.lang\.Object\.notify\(.*\)
+java\.lang\.Object\.notifyAll\(.*\)
+org\.apache\.avro\.Schema\$LockableArrayList\..*
+org\.apache\.avro\.Schema\.parseJson\(.*\)

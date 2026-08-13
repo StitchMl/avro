@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpecificData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.specific</a> &gt; <span class="el_source">SpecificData.java</span></div><h1>SpecificData.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.specific;
+
+import java.util.Map;
+import java.util.Collection;
+import java.util.List;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
+import java.nio.ByteBuffer;
+import java.lang.reflect.ParameterizedType;
+
+import org.apache.avro.Schema;
+import org.apache.avro.Protocol;
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Schema.Type;
+import org.apache.avro.generic.GenericData;
+
+/** Utilities for generated Java classes and interfaces. */
+public class SpecificData extends GenericData {
+
+<span class="nc" id="L39"> private static final SpecificData INSTANCE = new SpecificData();</span>
+
+<span class="nc" id="L41"> protected SpecificData() {}</span>
+
+ /** Return the singleton instance. */
+<span class="nc" id="L44"> public static SpecificData get() { return INSTANCE; }</span>
+
+ @Override
+ protected boolean isEnum(Object datum) {
+<span class="nc bnc" id="L48" title="All 4 branches missed."> return datum instanceof Enum || super.isEnum(datum);</span>
+ }
+
+ @Override
+ protected Schema getEnumSchema(Object datum) {
+<span class="nc bnc" id="L53" title="All 2 branches missed."> return (datum instanceof Enum)</span>
+<span class="nc" id="L54"> ? getSchema(datum.getClass())</span>
+<span class="nc" id="L55"> : super.getEnumSchema(datum);</span>
+ }
+
+<span class="nc" id="L58"> private Map&lt;String,Class&gt; classCache = new ConcurrentHashMap&lt;String,Class&gt;();</span>
+
+<span class="nc" id="L60"> private static final Class NO_CLASS = new Object(){}.getClass();</span>
+<span class="nc" id="L61"> private static final Schema NULL_SCHEMA = Schema.create(Schema.Type.NULL);</span>
+
+ /** Return the class that implements a schema, or null if none exists. */
+ public Class getClass(Schema schema) {
+<span class="nc bnc" id="L65" title="All 13 branches missed."> switch (schema.getType()) {</span>
+ case FIXED:
+ case RECORD:
+ case ENUM:
+<span class="nc" id="L69"> String name = schema.getFullName();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed."> if (name == null) return null;</span>
+<span class="nc" id="L71"> Class c = classCache.get(name);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed."> if (c == null) {</span>
+ try {
+<span class="nc" id="L74"> c = Class.forName(getClassName(schema));</span>
+<span class="nc" id="L75"> } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L76"> c = NO_CLASS;</span>
+<span class="nc" id="L77"> }</span>
+<span class="nc" id="L78"> classCache.put(name, c);</span>
+ }
+<span class="nc bnc" id="L80" title="All 2 branches missed."> return c == NO_CLASS ? null : c;</span>
+<span class="nc" id="L81"> case ARRAY: return List.class;</span>
+<span class="nc" id="L82"> case MAP: return Map.class;</span>
+ case UNION:
+<span class="nc" id="L84"> List&lt;Schema&gt; types = schema.getTypes(); // elide unions with null</span>
+<span class="nc bnc" id="L85" title="All 4 branches missed."> if ((types.size() == 2) &amp;&amp; types.contains(NULL_SCHEMA))</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed."> return getClass(types.get(types.get(0).equals(NULL_SCHEMA) ? 1 : 0));</span>
+<span class="nc" id="L87"> return Object.class;</span>
+<span class="nc" id="L88"> case STRING: return CharSequence.class;</span>
+<span class="nc" id="L89"> case BYTES: return ByteBuffer.class;</span>
+<span class="nc" id="L90"> case INT: return Integer.TYPE;</span>
+<span class="nc" id="L91"> case LONG: return Long.TYPE;</span>
+<span class="nc" id="L92"> case FLOAT: return Float.TYPE;</span>
+<span class="nc" id="L93"> case DOUBLE: return Double.TYPE;</span>
+<span class="nc" id="L94"> case BOOLEAN: return Boolean.TYPE;</span>
+<span class="nc" id="L95"> case NULL: return Void.TYPE;</span>
+<span class="nc" id="L96"> default: throw new AvroRuntimeException(&quot;Unknown type: &quot;+schema);</span>
+ }
+ }
+
+ /** Returns the Java class name indicated by a schema's name and namespace. */
+ public String getClassName(Schema schema) {
+<span class="nc" id="L102"> String namespace = schema.getNamespace();</span>
+<span class="nc" id="L103"> String name = schema.getName();</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed."> if (namespace == null || &quot;&quot;.equals(namespace))</span>
+<span class="nc" id="L105"> return name;</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed."> String dot = namespace.endsWith(&quot;$&quot;) ? &quot;&quot; : &quot;.&quot;;</span>
+<span class="nc" id="L107"> return namespace + dot + name;</span>
+ }
+
+<span class="nc" id="L110"> private final WeakHashMap&lt;java.lang.reflect.Type,Schema&gt; schemaCache =</span>
+ new WeakHashMap&lt;java.lang.reflect.Type,Schema&gt;();
+
+ /** Find the schema for a Java type. */
+ public Schema getSchema(java.lang.reflect.Type type) {
+<span class="nc" id="L115"> Schema schema = schemaCache.get(type);</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed."> if (schema == null) {</span>
+<span class="nc" id="L117"> schema = createSchema(type, new LinkedHashMap&lt;String,Schema&gt;());</span>
+<span class="nc" id="L118"> schemaCache.put(type, schema);</span>
+ }
+<span class="nc" id="L120"> return schema;</span>
+ }
+
+ /** Create the schema for a Java type. */
+ @SuppressWarnings(value=&quot;unchecked&quot;)
+ protected Schema createSchema(java.lang.reflect.Type type,
+ Map&lt;String,Schema&gt; names) {
+<span class="nc bnc" id="L127" title="All 2 branches missed."> if (type instanceof Class</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed."> &amp;&amp; CharSequence.class.isAssignableFrom((Class)type))</span>
+<span class="nc" id="L129"> return Schema.create(Type.STRING);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed."> else if (type == ByteBuffer.class)</span>
+<span class="nc" id="L131"> return Schema.create(Type.BYTES);</span>
+<span class="nc bnc" id="L132" title="All 4 branches missed."> else if ((type == Integer.class) || (type == Integer.TYPE))</span>
+<span class="nc" id="L133"> return Schema.create(Type.INT);</span>
+<span class="nc bnc" id="L134" title="All 4 branches missed."> else if ((type == Long.class) || (type == Long.TYPE))</span>
+<span class="nc" id="L135"> return Schema.create(Type.LONG);</span>
+<span class="nc bnc" id="L136" title="All 4 branches missed."> else if ((type == Float.class) || (type == Float.TYPE))</span>
+<span class="nc" id="L137"> return Schema.create(Type.FLOAT);</span>
+<span class="nc bnc" id="L138" title="All 4 branches missed."> else if ((type == Double.class) || (type == Double.TYPE))</span>
+<span class="nc" id="L139"> return Schema.create(Type.DOUBLE);</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed."> else if ((type == Boolean.class) || (type == Boolean.TYPE))</span>
+<span class="nc" id="L141"> return Schema.create(Type.BOOLEAN);</span>
+<span class="nc bnc" id="L142" title="All 4 branches missed."> else if ((type == Void.class) || (type == Void.TYPE))</span>
+<span class="nc" id="L143"> return Schema.create(Type.NULL);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed."> else if (type instanceof ParameterizedType) {</span>
+<span class="nc" id="L145"> ParameterizedType ptype = (ParameterizedType)type;</span>
+<span class="nc" id="L146"> Class raw = (Class)ptype.getRawType();</span>
+<span class="nc" id="L147"> java.lang.reflect.Type[] params = ptype.getActualTypeArguments();</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed."> if (Collection.class.isAssignableFrom(raw)) { // array</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed."> if (params.length != 1)</span>
+<span class="nc" id="L150"> throw new AvroTypeException(&quot;No array type specified.&quot;);</span>
+<span class="nc" id="L151"> return Schema.createArray(createSchema(params[0], names));</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed."> } else if (Map.class.isAssignableFrom(raw)) { // map</span>
+<span class="nc" id="L153"> java.lang.reflect.Type key = params[0];</span>
+<span class="nc" id="L154"> java.lang.reflect.Type value = params[1];</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed."> if (!(type instanceof Class</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed."> &amp;&amp; CharSequence.class.isAssignableFrom((Class)type)))</span>
+<span class="nc" id="L157"> throw new AvroTypeException(&quot;Map key class not CharSequence: &quot;+key);</span>
+<span class="nc" id="L158"> return Schema.createMap(createSchema(value, names));</span>
+ } else {
+<span class="nc" id="L160"> return createSchema(raw, names);</span>
+ }
+<span class="nc bnc" id="L162" title="All 2 branches missed."> } else if (type instanceof Class) { // class</span>
+<span class="nc" id="L163"> Class c = (Class)type;</span>
+<span class="nc" id="L164"> String fullName = c.getName();</span>
+<span class="nc" id="L165"> Schema schema = names.get(fullName);</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed."> if (schema == null)</span>
+ try {
+<span class="nc" id="L168"> schema = (Schema)(c.getDeclaredField(&quot;SCHEMA$&quot;).get(null));</span>
+<span class="nc" id="L169"> } catch (NoSuchFieldException e) {</span>
+<span class="nc" id="L170"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L171"> } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L172"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L173"> }</span>
+<span class="nc" id="L174"> names.put(fullName, schema);</span>
+<span class="nc" id="L175"> return schema;</span>
+ }
+<span class="nc" id="L177"> throw new AvroTypeException(&quot;Unknown type: &quot;+type);</span>
+ }
+
+ /** Return the protocol for a Java interface. */
+ public Protocol getProtocol(Class iface) {
+ try {
+<span class="nc" id="L183"> return (Protocol)(iface.getDeclaredField(&quot;PROTOCOL&quot;).get(null));</span>
+<span class="nc" id="L184"> } catch (NoSuchFieldException e) {</span>
+<span class="nc" id="L185"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L186"> } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L187"> throw new AvroRuntimeException(e);</span>
+ }
+ }
+
+ @Override
+ protected int compare(Object o1, Object o2, Schema s, boolean eq) {
+<span class="nc bnc" id="L193" title="All 2 branches missed."> switch (s.getType()) {</span>
+ case ENUM:
+<span class="nc bnc" id="L195" title="All 2 branches missed."> if (o1 instanceof Enum)</span>
+<span class="nc" id="L196"> return ((Enum)o1).ordinal() - ((Enum)o2).ordinal();</span>
+ default:
+<span class="nc" id="L198"> return super.compare(o1, o2, s, eq);</span>
+ }
+ }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

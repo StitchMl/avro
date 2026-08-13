@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericDatumReader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.generic</a> &gt; <span class="el_source">GenericDatumReader.java</span></div><h1>GenericDatumReader.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.generic;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Collection;
+import java.nio.ByteBuffer;
+
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.ResolvingDecoder;
+import org.apache.avro.util.Utf8;
+import org.apache.avro.util.WeakIdentityHashMap;
+
+/** {@link DatumReader} for generic Java objects. */
+public class GenericDatumReader&lt;D&gt; implements DatumReader&lt;D&gt; {
+ private final GenericData data;
+ private Schema actual;
+ private Schema expected;
+
+<span class="nc" id="L42"> private ResolvingDecoder creatorResolver = null;</span>
+ private final Thread creator;
+
+ public GenericDatumReader() {
+<span class="nc" id="L46"> this(null, null, GenericData.get());</span>
+<span class="nc" id="L47"> }</span>
+
+ /** Construct where the writer's and reader's schemas are the same. */
+ public GenericDatumReader(Schema schema) {
+<span class="nc" id="L51"> this(schema, schema, GenericData.get());</span>
+<span class="nc" id="L52"> }</span>
+
+ /** Construct given writer's and reader's schema. */
+ public GenericDatumReader(Schema writer, Schema reader) {
+<span class="nc" id="L56"> this(writer, reader, GenericData.get());</span>
+<span class="nc" id="L57"> }</span>
+
+<span class="nc" id="L59"> protected GenericDatumReader(Schema writer, Schema reader, GenericData data) {</span>
+<span class="nc" id="L60"> this.actual = writer;</span>
+<span class="nc" id="L61"> this.expected = reader;</span>
+<span class="nc" id="L62"> this.data = data;</span>
+<span class="nc" id="L63"> this.creator = Thread.currentThread();</span>
+<span class="nc" id="L64"> }</span>
+
+ /** Return the {@link GenericData} implementation. */
+<span class="nc" id="L67"> public GenericData getData() { return data; }</span>
+
+ @Override
+ public void setSchema(Schema writer) {
+<span class="nc" id="L71"> this.actual = writer;</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed."> if (expected == null) {</span>
+<span class="nc" id="L73"> expected = actual;</span>
+ }
+<span class="nc" id="L75"> creatorResolver = null;</span>
+<span class="nc" id="L76"> }</span>
+
+ /** Set the reader's schema. */
+ public void setExpected(Schema reader) throws IOException {
+<span class="nc" id="L80"> this.expected = reader;</span>
+<span class="nc" id="L81"> creatorResolver = null;</span>
+<span class="nc" id="L82"> }</span>
+
+ private static final ThreadLocal&lt;Map&lt;Schema,Map&lt;Schema,ResolvingDecoder&gt;&gt;&gt;
+<span class="nc" id="L85"> RESOLVER_CACHE =</span>
+<span class="nc" id="L86"> new ThreadLocal&lt;Map&lt;Schema,Map&lt;Schema,ResolvingDecoder&gt;&gt;&gt;() {</span>
+ protected Map&lt;Schema,Map&lt;Schema,ResolvingDecoder&gt;&gt; initialValue() {
+<span class="nc" id="L88"> return new WeakIdentityHashMap&lt;Schema,Map&lt;Schema,ResolvingDecoder&gt;&gt;();</span>
+ }
+ };
+
+ /** Gets a resolving decoder for use by this GenericDatumReader.
+ * Unstable API.
+ * Currently uses a thread local cache to prevent constructing the
+ * resolvers too often, because that is very expensive.
+ */
+ protected final ResolvingDecoder getResolver(Schema actual, Schema expected)
+ throws IOException {
+<span class="nc" id="L99"> Thread currThread = Thread.currentThread();</span>
+ ResolvingDecoder resolver;
+<span class="nc bnc" id="L101" title="All 4 branches missed."> if (currThread == creator &amp;&amp; creatorResolver != null) {</span>
+<span class="nc" id="L102"> return creatorResolver;</span>
+ }
+
+<span class="nc" id="L105"> Map&lt;Schema,ResolvingDecoder&gt; cache = RESOLVER_CACHE.get().get(actual);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed."> if (cache == null) {</span>
+<span class="nc" id="L107"> cache = new WeakIdentityHashMap&lt;Schema,ResolvingDecoder&gt;();</span>
+<span class="nc" id="L108"> RESOLVER_CACHE.get().put(actual, cache);</span>
+ }
+<span class="nc" id="L110"> resolver = cache.get(expected);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed."> if (resolver == null) {</span>
+<span class="nc" id="L112"> resolver = DecoderFactory.get().resolvingDecoder(</span>
+<span class="nc" id="L113"> Schema.applyAliases(actual, expected), expected, null);</span>
+<span class="nc" id="L114"> cache.put(expected, resolver);</span>
+ }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed."> if (currThread == creator){</span>
+<span class="nc" id="L118"> creatorResolver = resolver;</span>
+ }
+
+<span class="nc" id="L121"> return resolver;</span>
+ }
+
+ @Override
+ @SuppressWarnings(&quot;unchecked&quot;)
+ public D read(D reuse, Decoder in) throws IOException {
+<span class="nc" id="L127"> ResolvingDecoder resolver = getResolver(actual, expected);</span>
+<span class="nc" id="L128"> resolver.configure(in);</span>
+<span class="nc" id="L129"> D result = (D) read(reuse, expected, resolver);</span>
+<span class="nc" id="L130"> resolver.drain();</span>
+<span class="nc" id="L131"> return result;</span>
+ }
+
+ /** Called to read data.*/
+ protected Object read(Object old, Schema expected,
+ ResolvingDecoder in) throws IOException {
+<span class="nc bnc" id="L137" title="All 15 branches missed."> switch (expected.getType()) {</span>
+<span class="nc" id="L138"> case RECORD: return readRecord(old, expected, in);</span>
+<span class="nc" id="L139"> case ENUM: return readEnum(expected, in);</span>
+<span class="nc" id="L140"> case ARRAY: return readArray(old, expected, in);</span>
+<span class="nc" id="L141"> case MAP: return readMap(old, expected, in);</span>
+<span class="nc" id="L142"> case UNION: return read(old, expected.getTypes().get(in.readIndex()), in);</span>
+<span class="nc" id="L143"> case FIXED: return readFixed(old, expected, in);</span>
+<span class="nc" id="L144"> case STRING: return readString(old, expected, in);</span>
+<span class="nc" id="L145"> case BYTES: return readBytes(old, in);</span>
+<span class="nc" id="L146"> case INT: return readInt(old, expected, in);</span>
+<span class="nc" id="L147"> case LONG: return in.readLong();</span>
+<span class="nc" id="L148"> case FLOAT: return in.readFloat();</span>
+<span class="nc" id="L149"> case DOUBLE: return in.readDouble();</span>
+<span class="nc" id="L150"> case BOOLEAN: return in.readBoolean();</span>
+<span class="nc" id="L151"> case NULL: in.readNull(); return null;</span>
+<span class="nc" id="L152"> default: throw new AvroRuntimeException(&quot;Unknown type: &quot; + expected);</span>
+ }
+ }
+
+ /** Called to read a record instance. May be overridden for alternate record
+ * representations.*/
+ protected Object readRecord(Object old, Schema expected,
+ ResolvingDecoder in) throws IOException {
+<span class="nc" id="L160"> Object record = newRecord(old, expected);</span>
+
+<span class="nc bnc" id="L162" title="All 2 branches missed."> for (Field f : in.readFieldOrder()) {</span>
+<span class="nc" id="L163"> int pos = f.pos();</span>
+<span class="nc" id="L164"> String name = f.name();</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed."> Object oldDatum = (old != null) ? data.getField(record, name, pos) : null;</span>
+<span class="nc" id="L166"> data.setField(record, name, pos, read(oldDatum, f.schema(), in));</span>
+ }
+
+<span class="nc" id="L169"> return record;</span>
+ }
+
+ /** Called to read an enum value. May be overridden for alternate enum
+ * representations. By default, returns a GenericEnumSymbol. */
+ protected Object readEnum(Schema expected, Decoder in) throws IOException {
+<span class="nc" id="L175"> return createEnum(expected.getEnumSymbols().get(in.readEnum()), expected);</span>
+ }
+
+ /** Called to create an enum value. May be overridden for alternate enum
+ * representations. By default, returns a GenericEnumSymbol. */
+ protected Object createEnum(String symbol, Schema schema) {
+<span class="nc" id="L181"> return new GenericData.EnumSymbol(schema, symbol);</span>
+ }
+
+ /** Called to read an array instance. May be overridden for alternate array
+ * representations.*/
+ protected Object readArray(Object old, Schema expected,
+ ResolvingDecoder in) throws IOException {
+<span class="nc" id="L188"> Schema expectedType = expected.getElementType();</span>
+<span class="nc" id="L189"> long l = in.readArrayStart();</span>
+<span class="nc" id="L190"> long base = 0;</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed."> if (l &gt; 0) {</span>
+<span class="nc" id="L192"> Object array = newArray(old, (int) l, expected);</span>
+ do {
+<span class="nc bnc" id="L194" title="All 2 branches missed."> for (long i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L195"> addToArray(array, base + i, read(peekArray(array), expectedType, in));</span>
+ }
+<span class="nc" id="L197"> base += l;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed."> } while ((l = in.arrayNext()) &gt; 0);</span>
+<span class="nc" id="L199"> return array;</span>
+ } else {
+<span class="nc" id="L201"> return newArray(old, 0, expected);</span>
+ }
+ }
+
+ /** Called by the default implementation of {@link #readArray} to retrieve a
+ * value from a reused instance. The default implementation is for {@link
+ * GenericArray}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Object peekArray(Object array) {
+<span class="nc bnc" id="L210" title="All 2 branches missed."> return (array instanceof GenericArray)</span>
+<span class="nc" id="L211"> ? ((GenericArray)array).peek()</span>
+ : null;
+ }
+
+ /** Called by the default implementation of {@link #readArray} to add a
+ * value. The default implementation is for {@link Collection}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected void addToArray(Object array, long pos, Object e) {
+<span class="nc" id="L219"> ((Collection) array).add(e);</span>
+<span class="nc" id="L220"> }</span>
+
+ /** Called to read a map instance. May be overridden for alternate map
+ * representations.*/
+ protected Object readMap(Object old, Schema expected,
+ ResolvingDecoder in) throws IOException {
+<span class="nc" id="L226"> Schema eValue = expected.getValueType();</span>
+<span class="nc" id="L227"> long l = in.readMapStart();</span>
+<span class="nc" id="L228"> Object map = newMap(old, (int) l);</span>
+<span class="nc bnc" id="L229" title="All 2 branches missed."> if (l &gt; 0) {</span>
+ do {
+<span class="nc bnc" id="L231" title="All 2 branches missed."> for (int i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L232"> addToMap(map, readString(null, in), read(null, eValue, in));</span>
+ }
+<span class="nc bnc" id="L234" title="All 2 branches missed."> } while ((l = in.mapNext()) &gt; 0);</span>
+ }
+<span class="nc" id="L236"> return map;</span>
+ }
+
+ /** Called by the default implementation of {@link #readMap} to add a
+ * key/value pair. The default implementation is for {@link Map}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected void addToMap(Object map, Object key, Object value) {
+<span class="nc" id="L243"> ((Map) map).put(key, value);</span>
+<span class="nc" id="L244"> }</span>
+
+ /** Called to read a fixed value. May be overridden for alternate fixed
+ * representations. By default, returns {@link GenericFixed}. */
+ protected Object readFixed(Object old, Schema expected, Decoder in)
+ throws IOException {
+<span class="nc" id="L250"> GenericFixed fixed = (GenericFixed)createFixed(old, expected);</span>
+<span class="nc" id="L251"> in.readFixed(fixed.bytes(), 0, expected.getFixedSize());</span>
+<span class="nc" id="L252"> return fixed;</span>
+ }
+
+ /** Called to create an fixed value. May be overridden for alternate fixed
+ * representations. By default, returns {@link GenericFixed}. */
+ protected Object createFixed(Object old, Schema schema) {
+<span class="nc bnc" id="L258" title="All 2 branches missed."> if ((old instanceof GenericFixed)</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed."> &amp;&amp; ((GenericFixed)old).bytes().length == schema.getFixedSize())</span>
+<span class="nc" id="L260"> return old;</span>
+<span class="nc" id="L261"> return new GenericData.Fixed(schema);</span>
+ }
+
+ /** Called to create an fixed value. May be overridden for alternate fixed
+ * representations. By default, returns {@link GenericFixed}. */
+ protected Object createFixed(Object old, byte[] bytes, Schema schema) {
+<span class="nc" id="L267"> GenericFixed fixed = (GenericFixed)createFixed(old, schema);</span>
+<span class="nc" id="L268"> System.arraycopy(bytes, 0, fixed.bytes(), 0, schema.getFixedSize());</span>
+<span class="nc" id="L269"> return fixed;</span>
+ }
+ /**
+ * Called to create new record instances. Subclasses may override to use a
+ * different record implementation. The returned instance must conform to the
+ * schema provided. If the old object contains fields not present in the
+ * schema, they should either be removed from the old object, or it should
+ * create a new instance that conforms to the schema. By default, this returns
+ * a {@link GenericData.Record}.
+ */
+ protected Object newRecord(Object old, Schema schema) {
+<span class="nc bnc" id="L280" title="All 2 branches missed."> if (old instanceof IndexedRecord) {</span>
+<span class="nc" id="L281"> IndexedRecord record = (IndexedRecord)old;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed."> if (record.getSchema() == schema)</span>
+<span class="nc" id="L283"> return record;</span>
+ }
+<span class="nc" id="L285"> return new GenericData.Record(schema);</span>
+ }
+
+ /** Called to create new array instances. Subclasses may override to use a
+ * different array implementation. By default, this returns a {@link
+ * GenericData.Array}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Object newArray(Object old, int size, Schema schema) {
+<span class="nc bnc" id="L293" title="All 2 branches missed."> if (old instanceof Collection) {</span>
+<span class="nc" id="L294"> ((Collection) old).clear();</span>
+<span class="nc" id="L295"> return old;</span>
+<span class="nc" id="L296"> } else return new GenericData.Array(size, schema);</span>
+ }
+
+ /** Called to create new array instances. Subclasses may override to use a
+ * different map implementation. By default, this returns a {@link
+ * HashMap}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Object newMap(Object old, int size) {
+<span class="nc bnc" id="L304" title="All 2 branches missed."> if (old instanceof Map) {</span>
+<span class="nc" id="L305"> ((Map) old).clear();</span>
+<span class="nc" id="L306"> return old;</span>
+<span class="nc" id="L307"> } else return new HashMap&lt;Object, Object&gt;(size);</span>
+ }
+
+ /** Called to read strings. Subclasses may override to use a different
+ * string representation. By default, this calls {@link
+ * #readString(Object,Decoder)}.*/
+ protected Object readString(Object old, Schema expected,
+ Decoder in) throws IOException {
+<span class="nc" id="L315"> return readString(old, in);</span>
+ }
+ /** Called to read strings. Subclasses may override to use a different
+ * string representation. By default, this calls {@link
+ * Decoder#readString(Utf8)}.*/
+ protected Object readString(Object old, Decoder in) throws IOException {
+<span class="nc bnc" id="L321" title="All 2 branches missed."> return in.readString(old instanceof Utf8 ? (Utf8)old : null);</span>
+ }
+
+ /** Called to create a string from a default value. Subclasses may override
+ * to use a different string representation. By default, this calls {@link
+ * Utf8#Utf8(String)}.*/
+<span class="nc" id="L327"> protected Object createString(String value) { return new Utf8(value); }</span>
+
+ /** Called to read byte arrays. Subclasses may override to use a different
+ * byte array representation. By default, this calls {@link
+ * Decoder#readBytes(ByteBuffer)}.*/
+ protected Object readBytes(Object old, Decoder in) throws IOException {
+<span class="nc bnc" id="L333" title="All 2 branches missed."> return in.readBytes(old instanceof ByteBuffer ? (ByteBuffer) old : null);</span>
+ }
+
+ /** Called to read integers. Subclasses may override to use a different
+ * integer representation. By default, this calls {@link
+ * Decoder#readInt()}.*/
+ protected Object readInt(Object old, Schema expected, Decoder in)
+ throws IOException {
+<span class="nc" id="L341"> return in.readInt();</span>
+ }
+
+ /** Called to create byte arrays from default values. Subclasses may
+ * override to use a different byte array representation. By default, this
+ * calls {@link ByteBuffer#wrap(byte[])}.*/
+<span class="nc" id="L347"> protected Object createBytes(byte[] value) { return ByteBuffer.wrap(value); }</span>
+
+ /** Skip an instance of a schema. */
+ public static void skip(Schema schema, Decoder in) throws IOException {
+<span class="nc bnc" id="L351" title="All 15 branches missed."> switch (schema.getType()) {</span>
+ case RECORD:
+<span class="nc bnc" id="L353" title="All 2 branches missed."> for (Field field : schema.getFields())</span>
+<span class="nc" id="L354"> skip(field.schema(), in);</span>
+<span class="nc" id="L355"> break;</span>
+ case ENUM:
+<span class="nc" id="L357"> in.readInt();</span>
+<span class="nc" id="L358"> break;</span>
+ case ARRAY:
+<span class="nc" id="L360"> Schema elementType = schema.getElementType();</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed."> for (long l = in.skipArray(); l &gt; 0; l = in.skipArray()) {</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed."> for (long i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L363"> skip(elementType, in);</span>
+ }
+ }
+<span class="nc" id="L366"> break;</span>
+ case MAP:
+<span class="nc" id="L368"> Schema value = schema.getValueType();</span>
+<span class="nc bnc" id="L369" title="All 2 branches missed."> for (long l = in.skipMap(); l &gt; 0; l = in.skipMap()) {</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed."> for (long i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L371"> in.skipString();</span>
+<span class="nc" id="L372"> skip(value, in);</span>
+ }
+ }
+<span class="nc" id="L375"> break;</span>
+ case UNION:
+<span class="nc" id="L377"> skip(schema.getTypes().get((int)in.readIndex()), in);</span>
+<span class="nc" id="L378"> break;</span>
+ case FIXED:
+<span class="nc" id="L380"> in.skipFixed(schema.getFixedSize());</span>
+<span class="nc" id="L381"> break;</span>
+ case STRING:
+<span class="nc" id="L383"> in.skipString();</span>
+<span class="nc" id="L384"> break;</span>
+ case BYTES:
+<span class="nc" id="L386"> in.skipBytes();</span>
+<span class="nc" id="L387"> break;</span>
+<span class="nc" id="L388"> case INT: in.readInt(); break;</span>
+<span class="nc" id="L389"> case LONG: in.readLong(); break;</span>
+<span class="nc" id="L390"> case FLOAT: in.readFloat(); break;</span>
+<span class="nc" id="L391"> case DOUBLE: in.readDouble(); break;</span>
+<span class="nc" id="L392"> case BOOLEAN: in.readBoolean(); break;</span>
+<span class="nc" id="L393"> case NULL: break;</span>
+<span class="nc" id="L394"> default: throw new RuntimeException(&quot;Unknown type: &quot;+schema);</span>
+ }
+<span class="nc" id="L396"> }</span>
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

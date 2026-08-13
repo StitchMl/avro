@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BufferedBinaryEncoder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.io</a> &gt; <span class="el_source">BufferedBinaryEncoder.java</span></div><h1>BufferedBinaryEncoder.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.io;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import org.apache.avro.AvroRuntimeException;
+
+/**
+ * An {@link Encoder} for Avro's binary encoding.
+ * &lt;p/&gt;
+ * This implementation buffers output to enhance performance.
+ * Output may not appear on the underlying output until flush() is called.
+ * &lt;p/&gt;
+ * {@link DirectBinaryEncoder} can be used in place of this implementation if
+ * the buffering semantics are not desired, and the performance difference
+ * is acceptable.
+ * &lt;p/&gt;
+ * To construct or reconfigure, use
+ * {@link EncoderFactory#binaryEncoder(OutputStream, BinaryEncoder)}.
+ * &lt;p/&gt;
+ * To change the buffer size, configure the factory instance used to
+ * create instances with {@link EncoderFactory#configureBufferSize(int)}
+ * @see Encoder
+ * @see EncoderFactory
+ * @see BlockingBinaryEncoder
+ * @see DirectBinaryEncoder
+ */
+public class BufferedBinaryEncoder extends BinaryEncoder {
+ private byte[] buf;
+ private int pos;
+ private ByteSink sink;
+ private int bulkLimit;
+
+<span class="nc" id="L51"> BufferedBinaryEncoder(OutputStream out, int bufferSize) {</span>
+<span class="nc" id="L52"> configure(out, bufferSize);</span>
+<span class="nc" id="L53"> }</span>
+
+ BufferedBinaryEncoder configure(OutputStream out, int bufferSize) {
+<span class="nc bnc" id="L56" title="All 2 branches missed."> if (null == out)</span>
+<span class="nc" id="L57"> throw new NullPointerException(&quot;OutputStream cannot be null!&quot;);</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed."> if (null != this.sink) {</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed."> if ( pos &gt; 0) {</span>
+ try {
+<span class="nc" id="L61"> flushBuffer();</span>
+<span class="nc" id="L62"> } catch (IOException e) {</span>
+<span class="nc" id="L63"> throw new AvroRuntimeException(&quot;Failure flushing old output&quot;, e);</span>
+<span class="nc" id="L64"> }</span>
+ }
+ }
+<span class="nc" id="L67"> this.sink = new OutputStreamSink(out);</span>
+<span class="nc" id="L68"> pos = 0;</span>
+<span class="nc bnc" id="L69" title="All 4 branches missed."> if (null == buf || buf.length != bufferSize) {</span>
+<span class="nc" id="L70"> buf = new byte[bufferSize];</span>
+ }
+<span class="nc" id="L72"> bulkLimit = buf.length &gt;&gt;&gt; 1;</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed."> if (bulkLimit &gt; 512) {</span>
+<span class="nc" id="L74"> bulkLimit = 512;</span>
+ }
+<span class="nc" id="L76"> return this;</span>
+ }
+
+ @Override
+ public void flush() throws IOException {
+<span class="nc" id="L81"> flushBuffer();</span>
+<span class="nc" id="L82"> sink.innerFlush();</span>
+<span class="nc" id="L83"> }</span>
+
+ /** Flushes the internal buffer to the underlying output.
+ * Does not flush the underlying output.
+ */
+ private void flushBuffer() throws IOException {
+<span class="nc bnc" id="L89" title="All 2 branches missed."> if (pos &gt; 0) {</span>
+<span class="nc" id="L90"> sink.innerWrite(buf, 0, pos);</span>
+<span class="nc" id="L91"> pos = 0;</span>
+ }
+<span class="nc" id="L93"> }</span>
+
+ /** Ensures that the buffer has at least num bytes free to write to between its
+ * current position and the end. This will not expand the buffer larger than
+ * its current size, for writes larger than or near to the size of the buffer,
+ * we flush the buffer and write directly to the output, bypassing the buffer.
+ * @param num
+ * @throws IOException
+ */
+ private void ensureBounds(int num) throws IOException {
+<span class="nc" id="L103"> int remaining = buf.length - pos;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed."> if (remaining &lt; num) {</span>
+<span class="nc" id="L105"> flushBuffer();</span>
+ }
+<span class="nc" id="L107"> }</span>
+
+ @Override
+ public void writeBoolean(boolean b) throws IOException {
+ // inlined, shorter version of ensureBounds
+<span class="nc bnc" id="L112" title="All 2 branches missed."> if (buf.length == pos) {</span>
+<span class="nc" id="L113"> flushBuffer();</span>
+ }
+<span class="nc" id="L115"> pos += BinaryData.encodeBoolean(b, buf, pos);</span>
+<span class="nc" id="L116"> }</span>
+
+ @Override
+ public void writeInt(int n) throws IOException {
+<span class="nc" id="L120"> ensureBounds(5);</span>
+<span class="nc" id="L121"> pos += BinaryData.encodeInt(n, buf, pos);</span>
+<span class="nc" id="L122"> }</span>
+
+ @Override
+ public void writeLong(long n) throws IOException {
+<span class="nc" id="L126"> ensureBounds(10);</span>
+<span class="nc" id="L127"> pos += BinaryData.encodeLong(n, buf, pos);</span>
+<span class="nc" id="L128"> }</span>
+
+ @Override
+ public void writeFloat(float f) throws IOException {
+<span class="nc" id="L132"> ensureBounds(4);</span>
+<span class="nc" id="L133"> pos += BinaryData.encodeFloat(f, buf, pos);</span>
+<span class="nc" id="L134"> }</span>
+
+ @Override
+ public void writeDouble(double d) throws IOException {
+<span class="nc" id="L138"> ensureBounds(8);</span>
+<span class="nc" id="L139"> pos += BinaryData.encodeDouble(d, buf, pos);</span>
+<span class="nc" id="L140"> }</span>
+
+ @Override
+ public void writeFixed(byte[] bytes, int start, int len) throws IOException {
+<span class="nc bnc" id="L144" title="All 2 branches missed."> if (len &gt; bulkLimit) {</span>
+ //too big, write direct
+<span class="nc" id="L146"> flushBuffer();</span>
+<span class="nc" id="L147"> sink.innerWrite(bytes, start, len);</span>
+<span class="nc" id="L148"> return;</span>
+ }
+<span class="nc" id="L150"> ensureBounds(len);</span>
+<span class="nc" id="L151"> System.arraycopy(bytes, start, buf, pos, len);</span>
+<span class="nc" id="L152"> pos += len;</span>
+<span class="nc" id="L153"> }</span>
+
+ @Override
+ protected void writeZero() throws IOException {
+<span class="nc" id="L157"> writeByte(0);</span>
+<span class="nc" id="L158"> }</span>
+
+ private void writeByte(int b) throws IOException {
+<span class="nc bnc" id="L161" title="All 2 branches missed."> if (pos == buf.length) {</span>
+<span class="nc" id="L162"> flushBuffer();</span>
+ }
+<span class="nc" id="L164"> buf[pos++] = (byte) (b &amp; 0xFF);</span>
+<span class="nc" id="L165"> }</span>
+
+ @Override
+ public int bytesBuffered() {
+<span class="nc" id="L169"> return pos;</span>
+ }
+
+ /**
+ * ByteSink abstracts the destination of written data from the core workings
+ * of BinaryEncoder.
+ * &lt;p/&gt;
+ * Currently the only destination option is an OutputStream, but we may later
+ * want to handle other constructs or specialize for certain OutputStream
+ * Implementations such as ByteBufferOutputStream.
+ * &lt;p/&gt;
+ */
+ private abstract static class ByteSink {
+<span class="nc" id="L182"> protected ByteSink() {}</span>
+ /** Write data from bytes, starting at off, for len bytes **/
+ protected abstract void innerWrite(byte[] bytes, int off, int len) throws IOException;
+ /** Flush the underlying output, if supported **/
+ protected abstract void innerFlush() throws IOException;
+ }
+
+ static class OutputStreamSink extends ByteSink {
+ private final OutputStream out;
+ private OutputStreamSink(OutputStream out) {
+<span class="nc" id="L192"> super();</span>
+<span class="nc" id="L193"> this.out = out;</span>
+<span class="nc" id="L194"> }</span>
+ @Override
+ protected void innerWrite(byte[] bytes, int off, int len)
+ throws IOException {
+<span class="nc" id="L198"> out.write(bytes, off, len);</span>
+<span class="nc" id="L199"> }</span>
+ @Override
+ protected void innerFlush() throws IOException {
+<span class="nc" id="L202"> out.flush();</span>
+<span class="nc" id="L203"> }</span>
+ }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

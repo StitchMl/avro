@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReflectDatumReader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.reflect</a> &gt; <span class="el_source">ReflectDatumReader.java</span></div><h1>ReflectDatumReader.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.reflect;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
+
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.io.Decoder;
+
+/**
+ * {@link org.apache.avro.io.DatumReader DatumReader} for existing classes via
+ * Java reflection.
+ */
+public class ReflectDatumReader&lt;T&gt; extends SpecificDatumReader&lt;T&gt; {
+ public ReflectDatumReader() {
+<span class="nc" id="L38"> this(null, null, ReflectData.get());</span>
+<span class="nc" id="L39"> }</span>
+
+ public ReflectDatumReader(Class&lt;T&gt; c) {
+<span class="nc" id="L42"> this(ReflectData.get().getSchema(c));</span>
+<span class="nc" id="L43"> }</span>
+
+ /** Construct where the writer's and reader's schemas are the same. */
+ public ReflectDatumReader(Schema root) {
+<span class="nc" id="L47"> this(root, root, ReflectData.get());</span>
+<span class="nc" id="L48"> }</span>
+
+ /** Construct given writer's and reader's schema. */
+ public ReflectDatumReader(Schema writer, Schema reader) {
+<span class="nc" id="L52"> this(writer, reader, ReflectData.get());</span>
+<span class="nc" id="L53"> }</span>
+
+ protected ReflectDatumReader(Schema writer, Schema reader, ReflectData data){
+<span class="nc" id="L56"> super(writer, reader, data);</span>
+<span class="nc" id="L57"> }</span>
+
+ @Override
+ @SuppressWarnings(value=&quot;unchecked&quot;)
+ protected Object newArray(Object old, int size, Schema schema) {
+<span class="nc" id="L62"> ReflectData data = ReflectData.get();</span>
+<span class="nc" id="L63"> Class collectionClass = ReflectData.getClassProp(schema, ReflectData.CLASS_PROP);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed."> if (collectionClass != null) {</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed."> if (old instanceof Collection) {</span>
+<span class="nc" id="L66"> ((Collection)old).clear();</span>
+<span class="nc" id="L67"> return old;</span>
+ }
+<span class="nc bnc" id="L69" title="All 2 branches missed."> if (collectionClass.isAssignableFrom(ArrayList.class))</span>
+<span class="nc" id="L70"> return new ArrayList();</span>
+<span class="nc" id="L71"> return newInstance(collectionClass, schema);</span>
+ }
+<span class="nc" id="L73"> Class elementClass = ReflectData.getClassProp(schema, ReflectData.ELEMENT_PROP);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed."> if (elementClass == null)</span>
+<span class="nc" id="L75"> elementClass = data.getClass(schema.getElementType());</span>
+<span class="nc" id="L76"> return Array.newInstance(elementClass, size);</span>
+ }
+
+ @Override
+ protected Object peekArray(Object array) {
+<span class="nc" id="L81"> return null;</span>
+ }
+
+ @Override
+ @SuppressWarnings(value=&quot;unchecked&quot;)
+ protected void addToArray(Object array, long pos, Object e) {
+<span class="nc bnc" id="L87" title="All 2 branches missed."> if (array instanceof Collection) {</span>
+<span class="nc" id="L88"> ((Collection)array).add(e);</span>
+ } else {
+<span class="nc" id="L90"> Array.set(array, (int)pos, e);</span>
+ }
+<span class="nc" id="L92"> }</span>
+
+ @Override
+ @SuppressWarnings(value=&quot;unchecked&quot;)
+ protected Object readString(Object old, Schema s,
+ Decoder in) throws IOException {
+<span class="nc" id="L98"> String value = (String)readString(null, in);</span>
+<span class="nc" id="L99"> Class c = ReflectData.getClassProp(s, ReflectData.CLASS_PROP);</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed."> if (c != null) // Stringable annotated class</span>
+ try { // use String-arg ctor
+<span class="nc" id="L102"> return c.getConstructor(String.class).newInstance(value);</span>
+<span class="nc" id="L103"> } catch (NoSuchMethodException e) {</span>
+<span class="nc" id="L104"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L105"> } catch (InstantiationException e) {</span>
+<span class="nc" id="L106"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L107"> } catch (IllegalAccessException e) {</span>
+<span class="nc" id="L108"> throw new AvroRuntimeException(e);</span>
+<span class="nc" id="L109"> } catch (InvocationTargetException e) {</span>
+<span class="nc" id="L110"> throw new AvroRuntimeException(e);</span>
+ }
+<span class="nc" id="L112"> return value;</span>
+ }
+
+ @Override
+ protected Object readString(Object old, Decoder in) throws IOException {
+<span class="nc" id="L117"> return super.readString(null, in).toString();</span>
+ }
+
+ @Override
+<span class="nc" id="L121"> protected Object createString(String value) { return value; }</span>
+
+ @Override
+ protected Object readBytes(Object old, Decoder in) throws IOException {
+<span class="nc" id="L125"> ByteBuffer bytes = in.readBytes(null);</span>
+<span class="nc" id="L126"> byte[] result = new byte[bytes.remaining()];</span>
+<span class="nc" id="L127"> bytes.get(result);</span>
+<span class="nc" id="L128"> return result;</span>
+ }
+
+ @Override
+ protected Object readInt(Object old,
+ Schema expected, Decoder in) throws IOException {
+<span class="nc" id="L134"> Object value = in.readInt();</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed."> if (Short.class.getName().equals(expected.getProp(ReflectData.CLASS_PROP)))</span>
+<span class="nc" id="L136"> value = ((Integer)value).shortValue();</span>
+<span class="nc" id="L137"> return value;</span>
+ }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="it"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericDatumWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Avro</a> &gt; <a href="index.source.html" class="el_package">org.apache.avro.generic</a> &gt; <span class="el_source">GenericDatumWriter.java</span></div><h1>GenericDatumWriter.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.avro.generic;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Collection;
+
+import org.apache.avro.AvroTypeException;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.Encoder;
+
+/** {@link DatumWriter} for generic Java objects. */
+public class GenericDatumWriter&lt;D&gt; implements DatumWriter&lt;D&gt; {
+ private final GenericData data;
+ private Schema root;
+
+<span class="nc" id="L37"> public GenericDatumWriter() { this(GenericData.get()); }</span>
+
+<span class="nc" id="L39"> protected GenericDatumWriter(GenericData data) { this.data = data; }</span>
+
+ public GenericDatumWriter(Schema root) {
+<span class="nc" id="L42"> this();</span>
+<span class="nc" id="L43"> setSchema(root);</span>
+<span class="nc" id="L44"> }</span>
+
+ protected GenericDatumWriter(Schema root, GenericData data) {
+<span class="nc" id="L47"> this(data);</span>
+<span class="nc" id="L48"> setSchema(root);</span>
+<span class="nc" id="L49"> }</span>
+
+ /** Return the {@link GenericData} implementation. */
+<span class="nc" id="L52"> public GenericData getData() { return data; }</span>
+
+<span class="nc" id="L54"> public void setSchema(Schema root) { this.root = root; }</span>
+
+ public void write(D datum, Encoder out) throws IOException {
+<span class="nc" id="L57"> write(root, datum, out);</span>
+<span class="nc" id="L58"> }</span>
+
+ /** Called to write data.*/
+ protected void write(Schema schema, Object datum, Encoder out)
+ throws IOException {
+ try {
+<span class="nc bnc" id="L64" title="All 15 branches missed."> switch (schema.getType()) {</span>
+<span class="nc" id="L65"> case RECORD: writeRecord(schema, datum, out); break;</span>
+<span class="nc" id="L66"> case ENUM: writeEnum(schema, datum, out); break;</span>
+<span class="nc" id="L67"> case ARRAY: writeArray(schema, datum, out); break;</span>
+<span class="nc" id="L68"> case MAP: writeMap(schema, datum, out); break;</span>
+ case UNION:
+<span class="nc" id="L70"> int index = data.resolveUnion(schema, datum);</span>
+<span class="nc" id="L71"> out.writeIndex(index);</span>
+<span class="nc" id="L72"> write(schema.getTypes().get(index), datum, out);</span>
+<span class="nc" id="L73"> break;</span>
+<span class="nc" id="L74"> case FIXED: writeFixed(schema, datum, out); break;</span>
+<span class="nc" id="L75"> case STRING: writeString(schema, datum, out); break;</span>
+<span class="nc" id="L76"> case BYTES: writeBytes(datum, out); break;</span>
+<span class="nc" id="L77"> case INT: out.writeInt((Integer)datum); break;</span>
+<span class="nc" id="L78"> case LONG: out.writeLong((Long)datum); break;</span>
+<span class="nc" id="L79"> case FLOAT: out.writeFloat((Float)datum); break;</span>
+<span class="nc" id="L80"> case DOUBLE: out.writeDouble((Double)datum); break;</span>
+<span class="nc" id="L81"> case BOOLEAN: out.writeBoolean((Boolean)datum); break;</span>
+<span class="nc" id="L82"> case NULL: out.writeNull(); break;</span>
+<span class="nc" id="L83"> default: error(schema,datum);</span>
+ }
+<span class="nc" id="L85"> } catch (NullPointerException e) {</span>
+<span class="nc" id="L86"> throw npe(e, &quot; of &quot;+schema.getFullName());</span>
+<span class="nc" id="L87"> }</span>
+<span class="nc" id="L88"> }</span>
+
+ /** Helper method for adding a message to an NPE. */
+ protected NullPointerException npe(NullPointerException e, String s) {
+<span class="nc" id="L92"> NullPointerException result = new NullPointerException(e.getMessage()+s);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed."> result.initCause(e.getCause() == null ? e : e.getCause());</span>
+<span class="nc" id="L94"> return result;</span>
+ }
+
+ /** Called to write a record. May be overridden for alternate record
+ * representations.*/
+ protected void writeRecord(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc bnc" id="L101" title="All 2 branches missed."> for (Field f : schema.getFields()) {</span>
+<span class="nc" id="L102"> Object value = data.getField(datum, f.name(), f.pos());</span>
+ try {
+<span class="nc" id="L104"> write(f.schema(), value, out);</span>
+<span class="nc" id="L105"> } catch (NullPointerException e) {</span>
+<span class="nc" id="L106"> throw npe(e, &quot; in field &quot;+f.name());</span>
+<span class="nc" id="L107"> }</span>
+<span class="nc" id="L108"> }</span>
+<span class="nc" id="L109"> }</span>
+
+ /** Called to write an enum value. May be overridden for alternate enum
+ * representations.*/
+ protected void writeEnum(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc" id="L115"> out.writeEnum(schema.getEnumOrdinal(datum.toString()));</span>
+<span class="nc" id="L116"> }</span>
+
+ /** Called to write a array. May be overridden for alternate array
+ * representations.*/
+ protected void writeArray(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc" id="L122"> Schema element = schema.getElementType();</span>
+<span class="nc" id="L123"> long size = getArraySize(datum);</span>
+<span class="nc" id="L124"> out.writeArrayStart();</span>
+<span class="nc" id="L125"> out.setItemCount(size);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed."> for (Iterator&lt;? extends Object&gt; it = getArrayElements(datum); it.hasNext();) {</span>
+<span class="nc" id="L127"> out.startItem();</span>
+<span class="nc" id="L128"> write(element, it.next(), out);</span>
+ }
+<span class="nc" id="L130"> out.writeArrayEnd();</span>
+<span class="nc" id="L131"> }</span>
+
+ /** Called by the default implementation of {@link #writeArray} to get the
+ * size of an array. The default implementation is for {@link Collection}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected long getArraySize(Object array) {
+<span class="nc" id="L137"> return ((Collection) array).size();</span>
+ }
+
+ /** Called by the default implementation of {@link #writeArray} to enumerate
+ * array elements. The default implementation is for {@link Collection}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Iterator&lt;? extends Object&gt; getArrayElements(Object array) {
+<span class="nc" id="L144"> return ((Collection) array).iterator();</span>
+ }
+
+ /** Called to write a map. May be overridden for alternate map
+ * representations.*/
+ protected void writeMap(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc" id="L151"> Schema value = schema.getValueType();</span>
+<span class="nc" id="L152"> int size = getMapSize(datum);</span>
+<span class="nc" id="L153"> out.writeMapStart();</span>
+<span class="nc" id="L154"> out.setItemCount(size);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed."> for (Map.Entry&lt;Object,Object&gt; entry : getMapEntries(datum)) {</span>
+<span class="nc" id="L156"> out.startItem();</span>
+<span class="nc" id="L157"> writeString(entry.getKey(), out);</span>
+<span class="nc" id="L158"> write(value, entry.getValue(), out);</span>
+<span class="nc" id="L159"> }</span>
+<span class="nc" id="L160"> out.writeMapEnd();</span>
+<span class="nc" id="L161"> }</span>
+
+ /** Called by the default implementation of {@link #writeMap} to get the size
+ * of a map. The default implementation is for {@link Map}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected int getMapSize(Object map) {
+<span class="nc" id="L167"> return ((Map) map).size();</span>
+ }
+
+ /** Called by the default implementation of {@link #writeMap} to enumerate
+ * map elements. The default implementation is for {@link Map}.*/
+ @SuppressWarnings(&quot;unchecked&quot;)
+ protected Iterable&lt;Map.Entry&lt;Object,Object&gt;&gt; getMapEntries(Object map) {
+<span class="nc" id="L174"> return ((Map) map).entrySet();</span>
+ }
+
+ /** Called to write a string. May be overridden for alternate string
+ * representations.*/
+ protected void writeString(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc" id="L181"> writeString(datum, out);</span>
+<span class="nc" id="L182"> }</span>
+ /** Called to write a string. May be overridden for alternate string
+ * representations.*/
+ protected void writeString(Object datum, Encoder out) throws IOException {
+<span class="nc" id="L186"> out.writeString((CharSequence) datum);</span>
+<span class="nc" id="L187"> }</span>
+
+ /** Called to write a bytes. May be overridden for alternate bytes
+ * representations.*/
+ protected void writeBytes(Object datum, Encoder out) throws IOException {
+<span class="nc" id="L192"> out.writeBytes((ByteBuffer)datum);</span>
+<span class="nc" id="L193"> }</span>
+
+ /** Called to write a fixed value. May be overridden for alternate fixed
+ * representations.*/
+ protected void writeFixed(Schema schema, Object datum, Encoder out)
+ throws IOException {
+<span class="nc" id="L199"> out.writeFixed(((GenericFixed)datum).bytes(), 0, schema.getFixedSize());</span>
+<span class="nc" id="L200"> }</span>
+
+ private void error(Schema schema, Object datum) {
+<span class="nc" id="L203"> throw new AvroTypeException(&quot;Not a &quot;+schema+&quot;: &quot;+datum);</span>
+ }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
