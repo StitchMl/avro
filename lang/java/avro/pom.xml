@@ -65,10 +65,70 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Milestone 4 (ISW2): esegui SOLO i test propri (com.milestone4.*),
+           disabilitando di fatto i test nativi di AVRO. combine.self=override
+           sostituisce (non appende) gli includes ereditati dal parent. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes combine.self="override">
+            <include>**/milestone4/**/Test*.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+
+      <!-- Milestone 4 (ISW2): coverage strutturale (statement/branch) -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.11</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals><goal>prepare-agent</goal></goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals><goal>report</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <profiles>
+    <!-- Milestone 4 (ISW2): mutation testing (opt-in, non tocca il build normale).
+         Uso: mvn -Pmutation org.pitest:pitest-maven:mutationCoverage
+         Se la versione PIT non è compatibile con il tuo JDK, aggiorna <version>. -->
+    <profile>
+      <id>mutation</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.25.9</version>
+            <configuration>
+              <targetClasses>
+                <param>org.apache.avro.generic.GenericData*</param>
+                <param>org.apache.avro.io.JsonDecoder*</param>
+              </targetClasses>
+              <targetTests>
+                <param>com.milestone4.*</param>
+              </targetTests>
+              <outputFormats>
+                <param>HTML</param>
+                <param>XML</param>
+              </outputFormats>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>interop-data-generate</id>
       <build>
