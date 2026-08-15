@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 package org.apache.avro.generic;
-
 import java.nio.ByteBuffer;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
@@ -32,24 +30,19 @@ import org.apache.avro.Schema.Type;
 import org.apache.avro.UnresolvedUnionException;
 import org.apache.avro.io.BinaryData;
 import org.apache.avro.util.Utf8;
-
 /** Utilities for generic Java data. */
 public class GenericData {
-
   private static final GenericData INSTANCE = new GenericData();
-  
   /** Return the singleton instance. */
   public static GenericData get() { return INSTANCE; }
-
   protected GenericData() {}
-  
   /** Default implementation of {@link GenericRecord}. */
   public static class Record implements GenericRecord, Comparable<Record> {
     private final Schema schema;
     private final Object[] values;
     public Record(Schema schema) {
       if (schema == null || !Type.RECORD.equals(schema.getType()))
-        throw new AvroRuntimeException("Not a record schema: "+schema);
+        throw new AvroRuntimeException("Not a record schema: " + schema);
       this.schema = schema;
       this.values = new Object[schema.getFields().size()];
     }
@@ -67,7 +60,7 @@ public class GenericData {
     @Override public boolean equals(Object o) {
       if (o == this) return true;                 // identical object
       if (!(o instanceof Record)) return false;   // not a record
-      Record that = (Record)o;
+      Record that = (Record) o;
       if (!schema.getFullName().equals(that.schema.getFullName()))
         return false;                             // not the same schema
       return GenericData.get().compare(this, that, schema, true) == 0;
@@ -82,18 +75,17 @@ public class GenericData {
       return GenericData.get().toString(this);
     }
   }
-
   /** Default implementation of an array. */
-  @SuppressWarnings(value="unchecked")
+  @SuppressWarnings(value = "unchecked")
   public static class Array<T> extends AbstractList<T>
-    implements GenericArray<T>, Comparable<GenericArray<T>> {
+      implements GenericArray<T>, Comparable<GenericArray<T>> {
     private static final Object[] EMPTY = new Object[0];
     private final Schema schema;
     private int size;
     private Object[] elements = EMPTY;
     public Array(int capacity, Schema schema) {
       if (schema == null || !Type.ARRAY.equals(schema.getType()))
-        throw new AvroRuntimeException("Not an array schema: "+schema);
+        throw new AvroRuntimeException("Not an array schema: " + schema);
       this.schema = schema;
       if (capacity != 0)
         elements = new Object[capacity];
@@ -105,18 +97,18 @@ public class GenericData {
       return new Iterator<T>() {
         private int position = 0;
         public boolean hasNext() { return position < size; }
-        public T next() { return (T)elements[position++]; }
+        public T next() { return (T) elements[position++]; }
         public void remove() { throw new UnsupportedOperationException(); }
       };
     }
     @Override public T get(int i) {
       if (i >= size)
         throw new IndexOutOfBoundsException("Index " + i + " out of bounds.");
-      return (T)elements[i];
+      return (T) elements[i];
     }
     @Override public boolean add(T o) {
       if (size == elements.length) {
-        Object[] newElements = new Object[(size * 3)/2 + 1];
+        Object[] newElements = new Object[(size * 3) / 2 + 1];
         System.arraycopy(elements, 0, newElements, 0, size);
         elements = newElements;
       }
@@ -126,21 +118,21 @@ public class GenericData {
     @Override public T set(int i, T o) {
       if (i >= size)
         throw new IndexOutOfBoundsException("Index " + i + " out of bounds.");
-      T response = (T)elements[i];
+      T response = (T) elements[i];
       elements[i] = o;
       return response;
     }
     @Override public T remove(int i) {
       if (i >= size)
         throw new IndexOutOfBoundsException("Index " + i + " out of bounds.");
-      T result = (T)elements[i];
+      T result = (T) elements[i];
       --size;
-      System.arraycopy(elements, i+1, elements, i, (size-i));
+      System.arraycopy(elements, i + 1, elements, i, (size - i));
       elements[size] = null;
       return result;
     }
     public T peek() {
-      return (size < elements.length) ? (T)elements[size] : null;
+      return (size < elements.length) ? (T) elements[size] : null;
     }
     @Override
     public int hashCode() {
@@ -150,23 +142,22 @@ public class GenericData {
     public boolean equals(Object o) {
       if (o == this) return true;                 // identical object
       if (!(o instanceof Array)) return false;    // not an array
-      Array that = (Array)o;
+      Array that = (Array) o;
       if (!schema.equals(that.schema))
         return false;                             // not the same schema
       return this.compareTo(that) == 0;
     }
+    @Override
     public int compareTo(GenericArray<T> that) {
       return GenericData.get().compare(this, that, this.getSchema());
     }
     public void reverse() {
       int left = 0;
       int right = elements.length - 1;
-      
       while (left < right) {
         Object tmp = elements[left];
         elements[left] = elements[right];
         elements[right] = tmp;
-        
         left++;
         right--;
       }
@@ -177,7 +168,7 @@ public class GenericData {
       buffer.append("[");
       int count = 0;
       for (T e : this) {
-        buffer.append(e==null ? "null" : e.toString());
+        buffer.append(e == null ? "null" : e.toString());
         if (++count < size())
           buffer.append(", ");
       }
@@ -185,124 +176,145 @@ public class GenericData {
       return buffer.toString();
     }
   }
-
   /** Default implementation of {@link GenericFixed}. */
   public static class Fixed implements GenericFixed, Comparable<Fixed> {
     private Schema schema;
     private byte[] bytes;
-
     public Fixed(Schema schema) { setSchema(schema); }
-
     public Fixed(Schema schema, byte[] bytes) {
       this.schema = schema;
       this.bytes = bytes;
     }
-
     protected Fixed() {}
-
     protected void setSchema(Schema schema) {
       this.schema = schema;
       this.bytes = new byte[schema.getFixedSize()];
     }
-
     @Override public Schema getSchema() { return schema; }
-
     public void bytes(byte[] bytes) { this.bytes = bytes; }
-
     public byte[] bytes() { return bytes; }
-
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
       return o instanceof GenericFixed
-        && Arrays.equals(bytes, ((GenericFixed)o).bytes());
+          && Arrays.equals(bytes, ((GenericFixed) o).bytes());
     }
-
     @Override
     public int hashCode() { return Arrays.hashCode(bytes); }
-
     @Override
     public String toString() { return Arrays.toString(bytes); }
-
+    @Override
     public int compareTo(Fixed that) {
       return BinaryData.compareBytes(this.bytes, 0, this.bytes.length,
-                                     that.bytes, 0, that.bytes.length);
+                                    that.bytes, 0, that.bytes.length);
     }
   }
-
   /** Default implementation of {@link GenericEnumSymbol}. */
   public static class EnumSymbol implements GenericEnumSymbol {
     private Schema schema;
     private String symbol;
-
     public EnumSymbol(Schema schema, String symbol) {
       this.schema = schema;
       this.symbol = symbol;
     }
-
     @Override public Schema getSchema() { return schema; }
-
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
       return o instanceof GenericEnumSymbol
-        && symbol.equals(o.toString());
+          && symbol.equals(o.toString());
     }
-
     @Override
     public int hashCode() { return symbol.hashCode(); }
-
     @Override
     public String toString() { return symbol; }
   }
-
   /** Returns true if a Java datum matches a schema. */
   public boolean validate(Schema schema, Object datum) {
     switch (schema.getType()) {
     case RECORD:
-      if (!(datum instanceof IndexedRecord)) return false;
-      IndexedRecord fields = (IndexedRecord)datum;
-      for (Field f : schema.getFields()) {
-        if (!validate(f.schema(), fields.get(f.pos())))
-          return false;
-      }
-      return true;
+      return validateRecord(schema, datum);
     case ENUM:
-      return schema.getEnumSymbols().contains(datum.toString());
+      return validateEnum(schema, datum);
     case ARRAY:
-      if (!(datum instanceof Collection)) return false;
-      for (Object element : (Collection<?>)datum)
-        if (!validate(schema.getElementType(), element))
-          return false;
-      return true;
+      return validateArray(schema, datum);
     case MAP:
-      if (!(datum instanceof Map)) return false;
-      @SuppressWarnings(value="unchecked")
-      Map<Object,Object> map = (Map<Object,Object>)datum;
-      for (Map.Entry<Object,Object> entry : map.entrySet())
-        if (!validate(schema.getValueType(), entry.getValue()))
-          return false;
-      return true;
+      return validateMap(schema, datum);
     case UNION:
-      for (Schema type : schema.getTypes())
-        if (validate(type, datum))
-          return true;
-      return false;
+      return validateUnion(schema, datum);
     case FIXED:
-      return datum instanceof GenericFixed
-        && ((GenericFixed)datum).bytes().length==schema.getFixedSize();
-    case STRING:  return isString(datum);
-    case BYTES:   return isBytes(datum);
-    case INT:     return datum instanceof Integer;
-    case LONG:    return datum instanceof Long;
-    case FLOAT:   return datum instanceof Float;
-    case DOUBLE:  return datum instanceof Double;
-    case BOOLEAN: return datum instanceof Boolean;
-    case NULL:    return datum == null;
-    default: return false;
+      return validateFixed(schema, datum);
+    case STRING:
+      return isString(datum);
+    case BYTES:
+      return isBytes(datum);
+    case INT:
+      return datum instanceof Integer;
+    case LONG:
+      return datum instanceof Long;
+    case FLOAT:
+      return datum instanceof Float;
+    case DOUBLE:
+      return datum instanceof Double;
+    case BOOLEAN:
+      return datum instanceof Boolean;
+    case NULL:
+      return datum == null;
+    default:
+      return false;
     }
   }
-
+  private boolean validateRecord(Schema schema, Object datum) {
+    if (!(datum instanceof IndexedRecord)) {
+      return false;
+    }
+    IndexedRecord record = (IndexedRecord) datum;
+    for (Field field : schema.getFields()) {
+      if (!validate(field.schema(), record.get(field.pos()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  private boolean validateEnum(Schema schema, Object datum) {
+    return schema.getEnumSymbols().contains(datum.toString());
+  }
+  private boolean validateArray(Schema schema, Object datum) {
+    if (!(datum instanceof Collection)) {
+      return false;
+    }
+    for (Object element : (Collection<?>) datum) {
+      if (!validate(schema.getElementType(), element)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  @SuppressWarnings("unchecked")
+  private boolean validateMap(Schema schema, Object datum) {
+    if (!(datum instanceof Map)) {
+      return false;
+    }
+    Map<Object, Object> map = (Map<Object, Object>) datum;
+    for (Map.Entry<Object, Object> entry : map.entrySet()) {
+      if (!validate(schema.getValueType(), entry.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
+  private boolean validateUnion(Schema schema, Object datum) {
+    for (Schema type : schema.getTypes()) {
+      if (validate(type, datum)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  private boolean validateFixed(Schema schema, Object datum) {
+    return datum instanceof GenericFixed
+        && ((GenericFixed) datum).bytes().length == schema.getFixedSize();
+  }
   /** Renders a Java datum as <a href="http://www.json.org/">JSON</a>. */
   public String toString(Object datum) {
     StringBuilder buffer = new StringBuilder();
@@ -312,164 +324,234 @@ public class GenericData {
   /** Renders a Java datum as <a href="http://www.json.org/">JSON</a>. */
   protected void toString(Object datum, StringBuilder buffer) {
     if (datum instanceof IndexedRecord) {
-      buffer.append("{");
-      int count = 0;
-      IndexedRecord record = (IndexedRecord)datum;
-      for (Field f : record.getSchema().getFields()) {
-        toString(f.name(), buffer);
-        buffer.append(": ");
-        toString(record.get(f.pos()), buffer);
-        if (++count < record.getSchema().getFields().size())
-          buffer.append(", ");
-      }
-      buffer.append("}");
-    } else if (datum instanceof Collection) {
-      Collection<?> array = (Collection<?>)datum;
-      buffer.append("[");
-      long last = array.size()-1;
-      int i = 0;
-      for (Object element : array) {
-        toString(element, buffer);
-        if (i++ < last)
-          buffer.append(", ");
-      }        
-      buffer.append("]");
-    } else if (datum instanceof Map) {
-      buffer.append("{");
-      int count = 0;
-      @SuppressWarnings(value="unchecked")
-      Map<Object,Object> map = (Map<Object,Object>)datum;
-      for (Map.Entry<Object,Object> entry : map.entrySet()) {
-        toString(entry.getKey(), buffer);
-        buffer.append(": ");
-        toString(entry.getValue(), buffer);
-        if (++count < map.size())
-          buffer.append(", ");
-      }
-      buffer.append("}");
-    } else if (datum instanceof CharSequence
-               || datum instanceof GenericEnumSymbol) {
-      buffer.append("\"");
-      writeEscapedString(datum.toString(), buffer);
-      buffer.append("\"");
-    } else if (datum instanceof ByteBuffer) {
-      buffer.append("{\"bytes\": \"");
-      ByteBuffer bytes = (ByteBuffer)datum;
-      for (int i = bytes.position(); i < bytes.limit(); i++)
-        buffer.append((char)bytes.get(i));
-      buffer.append("\"}");
-    } else {
-      buffer.append(datum);
+      appendRecordToString((IndexedRecord) datum, buffer);
+      return;
     }
+    if (datum instanceof Collection) {
+      appendCollectionToString((Collection<?>) datum, buffer);
+      return;
+    }
+    if (datum instanceof Map) {
+      appendMapToString((Map<?, ?>) datum, buffer);
+      return;
+    }
+    if (datum instanceof CharSequence || datum instanceof GenericEnumSymbol) {
+      appendQuotedString(buffer, datum.toString());
+      return;
+    }
+    if (datum instanceof ByteBuffer) {
+      appendByteBufferToString(buffer, (ByteBuffer) datum);
+      return;
+    }
+    buffer.append(datum);
   }
-  
+  private void appendRecordToString(IndexedRecord record, StringBuilder buffer) {
+    buffer.append("{");
+    int count = 0;
+    for (Field field : record.getSchema().getFields()) {
+      toString(field.name(), buffer);
+      buffer.append(": ");
+      toString(record.get(field.pos()), buffer);
+      if (++count < record.getSchema().getFields().size()) {
+        buffer.append(", ");
+      }
+    }
+    buffer.append("}");
+  }
+  private void appendCollectionToString(Collection<?> array, StringBuilder buffer) {
+    buffer.append("[");
+    long last = array.size() - 1;
+    int i = 0;
+    for (Object element : array) {
+      toString(element, buffer);
+      if (i++ < last) {
+        buffer.append(", ");
+      }
+    }
+    buffer.append("]");
+  }
+  @SuppressWarnings("unchecked")
+  private void appendMapToString(Map<?, ?> map, StringBuilder buffer) {
+    buffer.append("{");
+    int count = 0;
+    for (Map.Entry<?, ?> entry : map.entrySet()) {
+      toString(entry.getKey(), buffer);
+      buffer.append(": ");
+      toString(entry.getValue(), buffer);
+      if (++count < map.size()) {
+        buffer.append(", ");
+      }
+    }
+    buffer.append("}");
+  }
+  private void appendQuotedString(StringBuilder buffer, String value) {
+    buffer.append("\"");
+    writeEscapedString(value, buffer);
+    buffer.append("\"");
+  }
+  private void appendByteBufferToString(StringBuilder buffer, ByteBuffer bytes) {
+    buffer.append("{\"bytes\": \"");
+    for (int i = bytes.position(); i < bytes.limit(); i++) {
+      buffer.append((char) bytes.get(i));
+    }
+    buffer.append("\"}");
+  }
   /* Adapted from http://code.google.com/p/json-simple */
   private void writeEscapedString(String string, StringBuilder builder) {
-    for(int i = 0; i < string.length(); i++){
+    for (int i = 0; i < string.length(); i++) {
       char ch = string.charAt(i);
-      switch(ch){
-        case '"':
-          builder.append("\\\"");
-          break;
-        case '\\':
-          builder.append("\\\\");
-          break;
-        case '\b':
-          builder.append("\\b");
-          break;
-        case '\f':
-          builder.append("\\f");
-          break;
-        case '\n':
-          builder.append("\\n");
-          break;
-        case '\r':
-          builder.append("\\r");
-          break;
-        case '\t':
-          builder.append("\\t");
-          break;
-        case '/':
-          builder.append("\\/");
-          break;
-        default:
-          // Reference: http://www.unicode.org/versions/Unicode5.1.0/
-          if((ch>='\u0000' && ch<='\u001F') || (ch>='\u007F' && ch<='\u009F') || (ch>='\u2000' && ch<='\u20FF')){
-            String hex = Integer.toHexString(ch);
-            builder.append("\\u");
-            for(int j = 0; j < 4-builder.length(); j++)
-              builder.append('0');
-            builder.append(string.toUpperCase());
-          } else {
-            builder.append(ch);
-          }
-        }
+      if (isEscapedCharacter(ch)) {
+        appendEscapedCharacter(builder, ch);
+      } else if (requiresUnicodeEscape(ch)) {
+        appendUnicodeEscape(builder, ch);
+      } else {
+        builder.append(ch);
+      }
     }
   }
-
+  private boolean isEscapedCharacter(char ch) {
+    switch (ch) {
+    case '"':
+    case '\\':
+    case '\b':
+    case '\f':
+    case '\n':
+    case '\r':
+    case '\t':
+    case '/':
+      return true;
+    default:
+      return false;
+    }
+  }
+  private void appendEscapedCharacter(StringBuilder builder, char ch) {
+    switch (ch) {
+    case '"':
+      builder.append("\\\"");
+      break;
+    case '\\':
+      builder.append("\\\\");
+      break;
+    case '\b':
+      builder.append("\\b");
+      break;
+    case '\f':
+      builder.append("\\f");
+      break;
+    case '\n':
+      builder.append("\\n");
+      break;
+    case '\r':
+      builder.append("\\r");
+      break;
+    case '\t':
+      builder.append("\\t");
+      break;
+    case '/':
+      builder.append("\\/");
+      break;
+    default:
+      break;
+    }
+  }
+  private boolean requiresUnicodeEscape(char ch) {
+    return (ch >= '\u0000' && ch <= '\u001F')
+        || (ch >= '\u007F' && ch <= '\u009F')
+        || (ch >= '\u2000' && ch <= '\u20FF');
+  }
+  private void appendUnicodeEscape(StringBuilder builder, char ch) {
+    builder.append("\\u");
+    String hexValue = Integer.toHexString(ch);
+    for (int index = 0; index < 4 - hexValue.length(); index++) {
+      builder.append('0');
+    }
+    builder.append(hexValue.toUpperCase());
+  }
   /** Create a schema given an example datum. */
   public Schema induce(Object datum) {
     if (datum instanceof IndexedRecord) {
-      return ((IndexedRecord)datum).getSchema();
-    } else if (datum instanceof Collection) {
-      Schema elementType = null;
-      for (Object element : (Collection<?>)datum) {
-        if (elementType == null) {
-          elementType = induce(element);
-        } else if (!elementType.equals(induce(element))) {
-          throw new AvroTypeException("No mixed type arrays.");
-        }
-      }
-      if (elementType == null) {
-        throw new AvroTypeException("Empty array: "+datum);
-      }
-      return Schema.createArray(elementType);
-
-    } else if (datum instanceof Map) {
-      @SuppressWarnings(value="unchecked")
-      Map<Object,Object> map = (Map<Object,Object>)datum;
-      Schema value = null;
-      for (Map.Entry<Object,Object> entry : map.entrySet()) {
-        if (value == null) {
-          value = induce(entry.getValue());
-        } else if (!value.equals(induce(entry.getValue()))) {
-          throw new AvroTypeException("No mixed type map values.");
-        }
-      }
-      if (value == null) {
-        throw new AvroTypeException("Empty map: "+datum);
-      }
-      return Schema.createMap(value);
-    } else if (datum instanceof GenericFixed) {
-      return Schema.createFixed(null, null, null,
-                                ((GenericFixed)datum).bytes().length);
+      return ((IndexedRecord) datum).getSchema();
     }
-    else if (datum instanceof CharSequence) return Schema.create(Type.STRING);
-    else if (datum instanceof ByteBuffer) return Schema.create(Type.BYTES);
-    else if (datum instanceof Integer)    return Schema.create(Type.INT);
-    else if (datum instanceof Long)       return Schema.create(Type.LONG);
-    else if (datum instanceof Float)      return Schema.create(Type.FLOAT);
-    else if (datum instanceof Double)     return Schema.create(Type.DOUBLE);
-    else if (datum instanceof Boolean)    return Schema.create(Type.BOOLEAN);
-    else if (datum == null)               return Schema.create(Type.NULL);
-
-    else throw new AvroTypeException("Can't create schema for: "+datum);
+    if (datum instanceof Collection) {
+      return induceCollection((Collection<?>) datum);
+    }
+    if (datum instanceof Map) {
+      return induceMap((Map<?, ?>) datum);
+    }
+    if (datum instanceof GenericFixed) {
+      return induceFixed((GenericFixed) datum);
+    }
+    if (datum instanceof CharSequence) {
+      return Schema.create(Type.STRING);
+    }
+    if (datum instanceof ByteBuffer) {
+      return Schema.create(Type.BYTES);
+    }
+    if (datum instanceof Integer) {
+      return Schema.create(Type.INT);
+    }
+    if (datum instanceof Long) {
+      return Schema.create(Type.LONG);
+    }
+    if (datum instanceof Float) {
+      return Schema.create(Type.FLOAT);
+    }
+    if (datum instanceof Double) {
+      return Schema.create(Type.DOUBLE);
+    }
+    if (datum instanceof Boolean) {
+      return Schema.create(Type.BOOLEAN);
+    }
+    if (datum == null) {
+      return Schema.create(Type.NULL);
+    }
+    throw new AvroTypeException("Can't create schema for: " + datum);
   }
-
+  private Schema induceCollection(Collection<?> data) {
+    Schema elementType = null;
+    for (Object element : data) {
+      Schema candidateType = induce(element);
+      if (elementType == null) {
+        elementType = candidateType;
+      } else if (!elementType.equals(candidateType)) {
+        throw new AvroTypeException("No mixed type arrays.");
+      }
+    }
+    if (elementType == null) {
+      throw new AvroTypeException("Empty array: " + data);
+    }
+    return Schema.createArray(elementType);
+  }
+  private Schema induceMap(Map<?, ?> data) {
+    Schema valueType = null;
+    for (Map.Entry<?, ?> entry : data.entrySet()) {
+      Schema candidateType = induce(entry.getValue());
+      if (valueType == null) {
+        valueType = candidateType;
+      } else if (!valueType.equals(candidateType)) {
+        throw new AvroTypeException("No mixed type map values.");
+      }
+    }
+    if (valueType == null) {
+      throw new AvroTypeException("Empty map: " + data);
+    }
+    return Schema.createMap(valueType);
+  }
+  private Schema induceFixed(GenericFixed fixed) {
+    return Schema.createFixed(null, null, null, fixed.bytes().length);
+  }
   /** Called by {@link GenericDatumReader#readRecord} to set a record fields
    * value to a record instance.  The default implementation is for {@link
    * IndexedRecord}.*/
-  public void setField(Object record, String name, int position, Object o) {
-    ((IndexedRecord)record).put(position, o);
+  public void setField(Object record, String fieldName, int position, Object o) {
+    ((IndexedRecord) record).put(position, o);
   }
-  
   /** Called by {@link GenericDatumReader#readRecord} to retrieve a record
    * field value from a reused instance.  The default implementation is for
    * {@link IndexedRecord}.*/
-  public Object getField(Object record, String name, int position) {
-    return ((IndexedRecord)record).get(position);
+  public Object getField(Object record, String fieldName, int position) {
+    return ((IndexedRecord) record).get(position);
   }
-
   /** Return the index for a datum within a union.  Implemented with {@link
    * #instanceOf(Schema,Object)}.*/
   public int resolveUnion(Schema union, Object datum) {
@@ -481,7 +563,6 @@ public class GenericData {
     }
     throw new UnresolvedUnionException(union, datum);
   }
-
   /** Called by {@link #resolveUnion(Schema,Object)}.  May be overridden for
       alternate data representations.*/
   protected boolean instanceOf(Schema schema, Object datum) {
@@ -489,8 +570,8 @@ public class GenericData {
     case RECORD:
       if (!isRecord(datum)) return false;
       return (schema.getFullName() == null)
-        ? getRecordSchema(datum).getFullName() == null
-        : schema.getFullName().equals(getRecordSchema(datum).getFullName());
+          ? getRecordSchema(datum).getFullName() == null
+          : schema.getFullName().equals(getRecordSchema(datum).getFullName());
     case ENUM:
       if (!isEnum(datum)) return false;
       return schema.getFullName().equals(getEnumSchema(datum).getFullName());
@@ -507,66 +588,55 @@ public class GenericData {
     case DOUBLE:  return datum instanceof Double;
     case BOOLEAN: return datum instanceof Boolean;
     case NULL:    return datum == null;
-    default: throw new AvroRuntimeException("Unexpected type: " +schema);
+    default: throw new AvroRuntimeException("Unexpected type: " + schema);
     }
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isArray(Object datum) {
     return datum instanceof Collection;
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isRecord(Object datum) {
     return datum instanceof IndexedRecord;
   }
-
   /** Called to obtain the schema of a record.  By default calls
    * {GenericContainer#getSchema().  May be overridden for alternate record
    * representations. */
-  protected Schema getRecordSchema(Object record) {
-    return ((GenericContainer)record).getSchema();
+  protected Schema getRecordSchema(Object recordData) {
+    return ((GenericContainer) recordData).getSchema();
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isEnum(Object datum) {
     return datum instanceof GenericEnumSymbol;
   }
-  
   /** Called to obtain the schema of a enum.  By default calls
-   * {GenericContainer#getSchema().  May be overridden for alternate enum
-   * representations. */
-  protected Schema getEnumSchema(Object enu) {
-    return ((GenericContainer)enu).getSchema();
+    * {GenericContainer#getSchema().  May be overridden for alternate enum
+    * representations. */
+  protected Schema getEnumSchema(Object enumSymbol) {
+    return ((GenericContainer) enumSymbol).getSchema();
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isMap(Object datum) {
     return datum instanceof Map;
   }
-  
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isFixed(Object datum) {
     return datum instanceof GenericFixed;
   }
-
   /** Called to obtain the schema of a fixed.  By default calls
    * {GenericContainer#getSchema().  May be overridden for alternate fixed
    * representations. */
   protected Schema getFixedSchema(Object fixed) {
-    return ((GenericContainer)fixed).getSchema();
+    return ((GenericContainer) fixed).getSchema();
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isString(Object datum) {
     return datum instanceof CharSequence;
   }
-
   /** Called by the default implementation of {@link #instanceOf}.*/
   protected boolean isBytes(Object datum) {
     return datum instanceof ByteBuffer;
   }
-
   /** Compute a hash code according to a schema, consistent with {@link
    * #compare(Object,Object,Schema)}. */
   public int hashCode(Object o, Schema s) {
@@ -574,7 +644,7 @@ public class GenericData {
     int hashCode = 1;
     switch (s.getType()) {
     case RECORD:
-      IndexedRecord r = (IndexedRecord)o;
+      IndexedRecord r = (IndexedRecord) o;
       for (Field f : s.getFields()) {
         if (f.order() == Field.Order.IGNORE)
           continue;
@@ -582,7 +652,7 @@ public class GenericData {
       }
       return hashCode;
     case ARRAY:
-      Collection<?> a = (Collection<?>)o;
+      Collection<?> a = (Collection<?>) o;
       Schema elementType = s.getElementType();
       for (Object e : a)
         hashCode = hashCodeAdd(hashCode, e, elementType);
@@ -599,12 +669,10 @@ public class GenericData {
       return o.hashCode();
     }
   }
-
   /** Add the hash code for an object into an accumulated hash code. */
   protected int hashCodeAdd(int hashCode, Object o, Schema s) {
-    return 31*hashCode + hashCode(o, s);
+    return 31 * hashCode + hashCode(o, s);
   }
-
   /** Compare objects according to their schema.  If equal, return zero.  If
    * greater-than, return 1, if less than return -1.  Order is consistent with
    * that of {@link BinaryData#compare(byte[], int, byte[], int, Schema)}.
@@ -612,58 +680,96 @@ public class GenericData {
   public int compare(Object o1, Object o2, Schema s) {
     return compare(o1, o2, s, false);
   }
-
   /** Comparison implementation.  When equals is true, only checks for equality,
    * not for order. */
-  @SuppressWarnings(value="unchecked")
+  @SuppressWarnings("unchecked")
   protected int compare(Object o1, Object o2, Schema s, boolean equals) {
-    if (o1 == o2) return 0;
+    if (o1 == o2) {
+      return 0;
+    }
     switch (s.getType()) {
     case RECORD:
-      for (Field f : s.getFields()) {
-        if (f.order() == Field.Order.IGNORE)
-          continue;                               // ignore this field
-        int pos = f.pos();
-        String name = f.name();
-        int compare =
-          compare(getField(o1, name, pos), getField(o2, name, pos),
-                  f.schema(), equals);
-        if (compare != 0)                         // not equal
-          return f.order() == Field.Order.DESCENDING ? -compare : compare;
-      }
-      return 0;
+      return compareRecord(o1, o2, s, equals);
     case ENUM:
-      return s.getEnumOrdinal(o1.toString()) - s.getEnumOrdinal(o2.toString());
+      return compareEnum(o1, o2, s);
     case ARRAY:
-      Collection a1 = (Collection)o1;
-      Collection a2 = (Collection)o2;
-      Iterator e1 = a1.iterator();
-      Iterator e2 = a2.iterator();
-      Schema elementType = s.getElementType();
-      while(e1.hasNext() && e2.hasNext()) {
-        int compare = compare(e1.next(), e2.next(), elementType, equals);
-        if (compare != 0) return compare;
-      }
-      return e1.hasNext() ? 1 : (e2.hasNext() ? -1 : 0);
+      return compareArray(o1, o2, s, equals);
     case MAP:
-      if (equals)
-        return ((Map)o1).equals(o2) ? 0 : 1;
-      throw new AvroRuntimeException("Can't compare maps!");
+      return compareMap(o1, o2, equals);
     case UNION:
-      int i1 = resolveUnion(s, o1);
-      int i2 = resolveUnion(s, o2);
-      return (i1 == i2)
-        ? compare(o1, o2, s.getTypes().get(i1), equals)
-        : i1 - i2;
+      return compareUnion(o1, o2, s, equals);
     case NULL:
       return 0;
     case STRING:
-      Utf8 u1 = o1 instanceof Utf8 ? (Utf8)o1 : new Utf8(o1.toString());
-      Utf8 u2 = o2 instanceof Utf8 ? (Utf8)o2 : new Utf8(o2.toString());
-      return u1.compareTo(u2);
+      return compareString(o1, o2);
     default:
-      return ((Comparable)o1).compareTo(o2);
+      return compareComparable(o1, o2);
     }
   }
-
+  private int compareRecord(Object o1, Object o2, Schema schema, boolean equals) {
+    for (Field field : schema.getFields()) {
+      if (field.order() == Field.Order.IGNORE) {
+        continue;
+      }
+      int position = field.pos();
+      String name = field.name();
+      int comparison = compare(getField(o1, name, position),
+          getField(o2, name, position), field.schema(), equals);
+      if (comparison != 0) {
+        return applyFieldOrder(field.order(), comparison);
+      }
+    }
+    return 0;
+  }
+  private int applyFieldOrder(Field.Order order, int comparison) {
+    return order == Field.Order.DESCENDING ? -comparison : comparison;
+  }
+  private int compareEnum(Object o1, Object o2, Schema schema) {
+    return schema.getEnumOrdinal(o1.toString()) - schema.getEnumOrdinal(o2.toString());
+  }
+  private int compareArray(Object o1, Object o2, Schema schema, boolean equals) {
+    Collection<?> first = (Collection<?>) o1;
+    Collection<?> second = (Collection<?>) o2;
+    Iterator<?> firstIterator = first.iterator();
+    Iterator<?> secondIterator = second.iterator();
+    Schema elementType = schema.getElementType();
+    while (firstIterator.hasNext() && secondIterator.hasNext()) {
+      int comparison = compare(firstIterator.next(), secondIterator.next(), elementType, equals);
+      if (comparison != 0) {
+        return comparison;
+      }
+    }
+    return compareArrayLength(firstIterator.hasNext(), secondIterator.hasNext());
+  }
+  private int compareArrayLength(boolean leftHasMore, boolean rightHasMore) {
+    if (leftHasMore) {
+      return 1;
+    }
+    if (rightHasMore) {
+      return -1;
+    }
+    return 0;
+  }
+  private int compareMap(Object o1, Object o2, boolean equals) {
+    if (equals) {
+      return ((Map<?, ?>) o1).equals(o2) ? 0 : 1;
+    }
+    throw new AvroRuntimeException("Can't compare maps!");
+  }
+  private int compareUnion(Object o1, Object o2, Schema schema, boolean equals) {
+    int firstIndex = resolveUnion(schema, o1);
+    int secondIndex = resolveUnion(schema, o2);
+    if (firstIndex == secondIndex) {
+      return compare(o1, o2, schema.getTypes().get(firstIndex), equals);
+    }
+    return firstIndex - secondIndex;
+  }
+  private int compareString(Object o1, Object o2) {
+    Utf8 left = o1 instanceof Utf8 ? (Utf8) o1 : new Utf8(o1.toString());
+    Utf8 right = o2 instanceof Utf8 ? (Utf8) o2 : new Utf8(o2.toString());
+    return left.compareTo(right);
+  }
+  private int compareComparable(Object o1, Object o2) {
+    return ((Comparable<Object>) o1).compareTo(o2);
+  }
 }
