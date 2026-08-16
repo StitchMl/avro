@@ -68,9 +68,11 @@ jobs:
           java-version: '17'
           cache: maven
 
+      # test-compile popola target/classes e target/test-classes (checkout pulito):
+      # senza, PIT trova 0 classi -> "No mutations found".
       - name: PIT mutationCoverage (GenericData + JsonDecoder)
         working-directory: lang/java
-        run: mvn -B -ntp -pl avro -Pmutation org.pitest:pitest-maven:mutationCoverage
+        run: mvn -B -ntp -pl avro test-compile -Pmutation org.pitest:pitest-maven:mutationCoverage
 
       - name: Upload report PIT (mutation)
         if: always()
