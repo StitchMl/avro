@@ -1,0 +1,5 @@
+# Milestone (De Angelis): usa il mockmaker "subclass" invece dell'inline.
+# Motivo: su JDK molto recenti (es. 25) l'inline mockmaker non riesce a strumentare
+# classi bootstrap del JDK come java.io.InputStream. Il subclass mockmaker genera una
+# sottoclasse (i metodi di InputStream non sono final) e funziona su JDK 17 (CI) e 25 (locale).
+mock-maker-subclass
