@@ -3,3 +3,17 @@
 /build
 test-output
 /dist
+
+# --- ISW2 De Angelis: igiene repo (build artifacts, IDE, scanner) ---
+target/
+**/target/
+.scannerwork/
+**/.scannerwork/
+.idea/
+*.iml
+*.ipr
+*.iws
+*.class
+.mvn/maven-build-cache-config.xml
+.DS_Store
+Thumbs.db
