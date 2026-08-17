@@ -17,3 +17,8 @@ target/
 .mvn/maven-build-cache-config.xml
 .DS_Store
 Thumbs.db
+
+# Tool di generazione automatica (jar, output grezzi) - non versionare
+tools/
+randoop-out/
+evosuite-out/
