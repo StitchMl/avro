@@ -83,6 +83,12 @@
           <includes combine.self="override">
             <include>**/milestone4/**/Test*.java</include>
           </includes>
+          <!-- Gli auto-generati (LLM/Randoop/EvoSuite) sono fragili e volutamente
+               possono fallire (oracoli spec-based vs implementazione): fuori dal gate.
+               Si eseguono a parte con -Dtest=... per misurarne l'adeguatezza. -->
+          <excludes>
+            <exclude>**/milestone4/auto/**</exclude>
+          </excludes>
         </configuration>
       </plugin>
 
