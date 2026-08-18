@@ -30,6 +30,15 @@
   <url>http://avro.apache.org</url>
   <description>Avro core components</description>
 
+  <!-- Milestone (De Angelis): filtri test per PIT. Default = SOLO test manuali+mock
+       (verdi), escludendo gli auto-generati (che possono fallire di proposito e farebbero
+       abortire PIT). Per misurare una singola sorgente: override tt1/tt2 (es.
+       -Dpit.tt1=com.milestone4.auto.llm.* -Dpit.tt2=com.milestone4.auto.llm.*). -->
+  <properties>
+    <pit.tt1>com.milestone4.manual.*</pit.tt1>
+    <pit.tt2>com.milestone4.mock.*</pit.tt2>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
@@ -57,6 +66,13 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>5.14.2</version>
+        <scope>test</scope>
+      </dependency>
+      <!-- Milestone (De Angelis): runtime EvoSuite per compilare/eseguire i test generati. -->
+      <dependency>
+        <groupId>org.evosuite</groupId>
+        <artifactId>evosuite-standalone-runtime</artifactId>
+        <version>1.2.0</version>
         <scope>test</scope>
       </dependency>
   </dependencies>
@@ -139,7 +155,8 @@
                 <param>org.apache.avro.io.JsonDecoder*</param>
               </targetClasses>
               <targetTests>
-                <param>com.milestone4.*</param>
+                <param>${pit.tt1}</param>
+                <param>${pit.tt2}</param>
               </targetTests>
               <outputFormats>
                 <param>HTML</param>

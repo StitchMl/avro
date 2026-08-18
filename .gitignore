@@ -22,3 +22,5 @@ Thumbs.db
 tools/
 randoop-out/
 evosuite-out/
+evosuite-tests/
+evosuite-report/
