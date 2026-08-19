@@ -68,13 +68,11 @@
         <version>5.14.2</version>
         <scope>test</scope>
       </dependency>
-      <!-- Milestone (De Angelis): runtime EvoSuite per compilare/eseguire i test generati. -->
-      <dependency>
-        <groupId>org.evosuite</groupId>
-        <artifactId>evosuite-standalone-runtime</artifactId>
-        <version>1.2.0</version>
-        <scope>test</scope>
-      </dependency>
+      <!-- Nota (De Angelis): la dipendenza org.evosuite:evosuite-standalone-runtime NON e' su
+           Maven Central (solo in .m2 locale). I test EvoSuite sono generati/eseguiti in locale su
+           JDK 8 e NON committati (nessun test importa org.evosuite), quindi la dipendenza e' stata
+           rimossa: sul runner CI (checkout pulito) causava un fallimento di risoluzione dipendenze
+           prima ancora della compilazione. -->
   </dependencies>
 
   <build>
